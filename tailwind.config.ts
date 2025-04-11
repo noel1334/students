@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Custom colors that match the image
+				'blue': {
+					DEFAULT: '#1a4aa6',
+					dark: '#0f3c8c',
+					light: '#2657b3'
+				},
+				'orange': {
+					DEFAULT: '#f18c3d',
+					dark: '#e67e2e'
 				}
 			},
 			borderRadius: {
