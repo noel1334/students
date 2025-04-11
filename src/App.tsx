@@ -36,64 +36,61 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={
-                <Layout>
-                  <Landing />
-                </Layout>
-              } />
-              <Route path="/dashboard" element={
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              } />
-              <Route path="/courses" element={
-                <Layout>
-                  <Courses />
-                </Layout>
-              } />
-              <Route path="/results" element={
-                <Layout>
-                  <Results />
-                </Layout>
-              } />
-              <Route path="/payments" element={
-                <Layout>
-                  <Payments />
-                </Layout>
-              } />
-              <Route path="/notifications" element={
-                <Layout>
-                  <Notifications />
-                </Layout>
-              } />
-              <Route path="/hostel" element={
-                <Layout>
-                  <Hostel />
-                </Layout>
-              } />
-              <Route path="/profile" element={
-                <Layout>
-                  <Profile />
-                </Layout>
-              } />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={
-                <Layout>
-                  <NotFound />
-                </Layout>
-              } />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={
+              <Layout>
+                <Landing />
+              </Layout>
+            } />
+            <Route path="/dashboard" element={
+              <Layout>
+                <Dashboard />
+              </Layout>
+            } />
+            <Route path="/courses" element={
+              <Layout>
+                <Courses />
+              </Layout>
+            } />
+            <Route path="/results" element={
+              <Layout>
+                <Results />
+              </Layout>
+            } />
+            <Route path="/payments" element={
+              <Layout>
+                <Payments />
+              </Layout>
+            } />
+            <Route path="/notifications" element={
+              <Layout>
+                <Notifications />
+              </Layout>
+            } />
+            <Route path="/hostel" element={
+              <Layout>
+                <Hostel />
+              </Layout>
+            } />
+            <Route path="/profile" element={
+              <Layout>
+                <Profile />
+              </Layout>
+            } />
+            <Route path="*" element={
+              <Layout>
+                <NotFound />
+              </Layout>
+            } />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 
