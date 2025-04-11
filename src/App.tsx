@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,9 +7,16 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
+import Courses from "./pages/Courses";
+import Results from "./pages/Results";
+import Payments from "./pages/Payments";
+import Notifications from "./pages/Notifications";
+import Hostel from "./pages/Hostel";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Sidebar";
 
+// Create a client
 const queryClient = new QueryClient();
 
 // Layout component to conditionally render the sidebar
@@ -26,33 +34,67 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={
-            <Layout>
-              <Landing />
-            </Layout>
-          } />
-          <Route path="/dashboard" element={
-            <Layout>
-              <Dashboard />
-            </Layout>
-          } />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={
-            <Layout>
-              <NotFound />
-            </Layout>
-          } />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={
+                <Layout>
+                  <Landing />
+                </Layout>
+              } />
+              <Route path="/dashboard" element={
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              } />
+              <Route path="/courses" element={
+                <Layout>
+                  <Courses />
+                </Layout>
+              } />
+              <Route path="/results" element={
+                <Layout>
+                  <Results />
+                </Layout>
+              } />
+              <Route path="/payments" element={
+                <Layout>
+                  <Payments />
+                </Layout>
+              } />
+              <Route path="/notifications" element={
+                <Layout>
+                  <Notifications />
+                </Layout>
+              } />
+              <Route path="/hostel" element={
+                <Layout>
+                  <Hostel />
+                </Layout>
+              } />
+              <Route path="/profile" element={
+                <Layout>
+                  <Profile />
+                </Layout>
+              } />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
