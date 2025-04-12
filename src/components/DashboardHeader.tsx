@@ -19,10 +19,10 @@ const DashboardHeader = () => {
           {/* Empty space where logo would be on desktop */}
         </div>
         
-        <div className="flex items-center space-x-2">
-          <div className="text-right mr-2">
+        <div className="flex items-center ml-auto">
+          <div className="text-right mr-3">
             <h2 className="font-medium text-gray-800">{studentInfo.name}</h2>
-            <p className="text-sm text-gray-500">Profile</p>
+            <p className="text-sm text-gray-500">Profile ▼</p>
           </div>
           <div className="bg-green-200 text-green-800 rounded-full w-10 h-10 flex items-center justify-center font-medium">
             {studentInfo.profileInitials}
