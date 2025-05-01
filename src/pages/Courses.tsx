@@ -1,17 +1,33 @@
 
 import React, { useState } from 'react';
-import { Printer, Check } from 'lucide-react';
+import { Printer, Check, Edit } from 'lucide-react';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseCard from '@/components/CourseCard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Courses = () => {
   const [session, setSession] = useState('2024/2025');
   const [semester, setSemester] = useState('First Semester');
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
 
   // Sample courses data
@@ -69,6 +85,18 @@ const Courses = () => {
     setShowRegistrationConfirm(false);
   };
 
+  const handleEditRegistration = () => {
+    setIsEditing(true);
+    setIsRegistered(false);
+    // Pre-populate selected courses with all courses when editing
+    setSelectedCourses(courses.map(course => course.code));
+  };
+
+  const handleUpdateRegistration = () => {
+    setIsRegistered(true);
+    setIsEditing(false);
+  };
+
   return (
     <>
       <DashboardHeader />
@@ -90,12 +118,25 @@ const Courses = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
-                    <div className="inline-block border rounded px-3 py-1 mr-3 text-sm">
-                      {session} <span className="text-xs text-gray-500">▼</span>
-                    </div>
-                    <div className="inline-block border rounded px-3 py-1 text-sm">
-                      {semester} <span className="text-xs text-gray-500">▼</span>
-                    </div>
+                    <Select value={session} onValueChange={setSession}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select session" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2023/2024">2023/2024</SelectItem>
+                        <SelectItem value="2024/2025">2024/2025</SelectItem>
+                        <SelectItem value="2025/2026">2025/2026</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={semester} onValueChange={setSemester} className="mt-2">
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select semester" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="First Semester">First Semester</SelectItem>
+                        <SelectItem value="Second Semester">Second Semester</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -104,6 +145,12 @@ const Courses = () => {
                     </Button>
                     <Button variant="outline" className="border-gray-300">
                       Generate Exam Card
+                    </Button>
+                    <Button 
+                      onClick={handleEditRegistration}
+                      className="bg-amber-600 hover:bg-amber-700"
+                    >
+                      <Edit className="mr-2 h-4 w-4" /> Edit Registration
                     </Button>
                   </div>
                 </div>
@@ -118,6 +165,8 @@ const Courses = () => {
                       isSelected={true}
                       onSelect={() => {}}
                       isRegistered={true}
+                      isElective={course.isElective}
+                      isCarryOver={course.isCarryOver}
                     />
                   ))}
                 </div>
@@ -128,12 +177,25 @@ const Courses = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
-                    <div className="inline-block border rounded px-3 py-1 mr-3 text-sm">
-                      {session} <span className="text-xs text-gray-500">▼</span>
-                    </div>
-                    <div className="inline-block border rounded px-3 py-1 text-sm">
-                      {semester} <span className="text-xs text-gray-500">▼</span>
-                    </div>
+                    <Select value={session} onValueChange={setSession}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select session" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2023/2024">2023/2024</SelectItem>
+                        <SelectItem value="2024/2025">2024/2025</SelectItem>
+                        <SelectItem value="2025/2026">2025/2026</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={semester} onValueChange={setSemester} className="mt-2">
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select semester" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="First Semester">First Semester</SelectItem>
+                        <SelectItem value="Second Semester">Second Semester</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 
@@ -157,9 +219,9 @@ const Courses = () => {
                   <div className="mt-6 flex justify-center">
                     <Button 
                       className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
-                      onClick={handleRegister}
+                      onClick={isEditing ? handleUpdateRegistration : handleRegister}
                     >
-                      Register Selected Courses
+                      {isEditing ? 'Update Course Registration' : 'Register Selected Courses'}
                     </Button>
                   </div>
                 )}
@@ -168,25 +230,42 @@ const Courses = () => {
           )}
           
           {/* Registration confirmation dialog */}
-          {showRegistrationConfirm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-lg p-6 max-w-md w-full">
-                <h3 className="text-lg font-medium mb-4">Confirm Course Registration</h3>
-                <p className="mb-6">You are about to register {selectedCourses.length} courses for {session} {semester}. This action cannot be undone.</p>
-                <div className="flex justify-end gap-3">
-                  <Button variant="outline" onClick={handleCancelRegistration}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    className="bg-blue-700 hover:bg-blue-800"
-                    onClick={handleConfirmRegistration}
-                  >
-                    Submit Course Registration
-                  </Button>
-                </div>
+          <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Course Registration</DialogTitle>
+                <DialogDescription>
+                  You are about to register {selectedCourses.length} courses for {session} {semester}.
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="my-4 max-h-[300px] overflow-y-auto">
+                {courses
+                  .filter(course => selectedCourses.includes(course.code))
+                  .map(course => (
+                    <div key={course.code} className="mb-2 flex justify-between">
+                      <div>
+                        <p className="font-medium">{course.code}</p>
+                        <p className="text-sm text-gray-600">{course.title}</p>
+                      </div>
+                      <p className="text-sm">{course.units} units</p>
+                    </div>
+                  ))
+                }
               </div>
-            </div>
-          )}
+              <DialogFooter className="flex justify-end gap-3">
+                <Button variant="outline" onClick={handleCancelRegistration}>
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-blue-700 hover:bg-blue-800"
+                  onClick={handleConfirmRegistration}
+                >
+                  Submit Course Registration
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </>
