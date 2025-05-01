@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -118,25 +117,29 @@ const Courses = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
-                    <Select value={session} onValueChange={setSession}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select session" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2023/2024">2023/2024</SelectItem>
-                        <SelectItem value="2024/2025">2024/2025</SelectItem>
-                        <SelectItem value="2025/2026">2025/2026</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={semester} onValueChange={setSemester} className="mt-2">
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="First Semester">First Semester</SelectItem>
-                        <SelectItem value="Second Semester">Second Semester</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mb-2">
+                      <Select value={session} onValueChange={setSession}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select session" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2023/2024">2023/2024</SelectItem>
+                          <SelectItem value="2024/2025">2024/2025</SelectItem>
+                          <SelectItem value="2025/2026">2025/2026</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Select value={semester} onValueChange={setSemester}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="First Semester">First Semester</SelectItem>
+                          <SelectItem value="Second Semester">Second Semester</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -177,25 +180,29 @@ const Courses = () => {
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
-                    <Select value={session} onValueChange={setSession}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select session" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="2023/2024">2023/2024</SelectItem>
-                        <SelectItem value="2024/2025">2024/2025</SelectItem>
-                        <SelectItem value="2025/2026">2025/2026</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select value={semester} onValueChange={setSemester} className="mt-2">
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select semester" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="First Semester">First Semester</SelectItem>
-                        <SelectItem value="Second Semester">Second Semester</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="mb-2">
+                      <Select value={session} onValueChange={setSession}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select session" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="2023/2024">2023/2024</SelectItem>
+                          <SelectItem value="2024/2025">2024/2025</SelectItem>
+                          <SelectItem value="2025/2026">2025/2026</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Select value={semester} onValueChange={setSemester}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select semester" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="First Semester">First Semester</SelectItem>
+                          <SelectItem value="Second Semester">Second Semester</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
                 
