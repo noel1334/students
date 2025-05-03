@@ -91,6 +91,7 @@ const hostelBlocks = [
 const HostelBookingForm = () => {
   const [selectedBlock, setSelectedBlock] = useState<any>(null);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"paystack" | "stripe" | "flutterwave" | null>(null);
   
   // Mock user data - in a real application, this would come from authentication
   const user = {
@@ -134,6 +135,7 @@ const HostelBookingForm = () => {
   
   // Handle payment method selection
   const handlePaymentMethodSelect = (method: "paystack" | "stripe" | "flutterwave") => {
+    setSelectedPaymentMethod(method);
     form.setValue("paymentMethod", method);
     
     // In a real app, this would call an API to process the payment
@@ -153,6 +155,7 @@ const HostelBookingForm = () => {
       // Reset form and close dialog
       form.reset();
       setShowPaymentDialog(false);
+      setSelectedPaymentMethod(null);
     }, 2000);
   };
   
@@ -290,7 +293,7 @@ const HostelBookingForm = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">Amount</p>
-                    <p className="text-sm">₦{selectedBlock.price.toLocaleString()}</p>
+                    <p className="text-lg font-bold text-primary">₦{selectedBlock.price.toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -298,10 +301,10 @@ const HostelBookingForm = () => {
             
             <RadioGroup defaultValue="paystack" className="grid grid-cols-1 gap-3">
               <div 
-                className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors"
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "paystack" ? "border-primary bg-primary/5" : ""}`}
                 onClick={() => handlePaymentMethodSelect("paystack")}
               >
-                <RadioGroupItem value="paystack" id="paystack" />
+                <RadioGroupItem value="paystack" id="paystack" checked={selectedPaymentMethod === "paystack"} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="paystack" className="flex items-center space-x-2 cursor-pointer">
                     <CreditCard className="h-5 w-5" />
@@ -311,10 +314,10 @@ const HostelBookingForm = () => {
                 </div>
               </div>
               <div 
-                className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors"
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "stripe" ? "border-primary bg-primary/5" : ""}`}
                 onClick={() => handlePaymentMethodSelect("stripe")}
               >
-                <RadioGroupItem value="stripe" id="stripe" />
+                <RadioGroupItem value="stripe" id="stripe" checked={selectedPaymentMethod === "stripe"} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="stripe" className="flex items-center space-x-2 cursor-pointer">
                     <CreditCard className="h-5 w-5" />
@@ -324,10 +327,10 @@ const HostelBookingForm = () => {
                 </div>
               </div>
               <div 
-                className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors"
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "flutterwave" ? "border-primary bg-primary/5" : ""}`}
                 onClick={() => handlePaymentMethodSelect("flutterwave")}
               >
-                <RadioGroupItem value="flutterwave" id="flutterwave" />
+                <RadioGroupItem value="flutterwave" id="flutterwave" checked={selectedPaymentMethod === "flutterwave"} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="flutterwave" className="flex items-center space-x-2 cursor-pointer">
                     <Wallet className="h-5 w-5" />
