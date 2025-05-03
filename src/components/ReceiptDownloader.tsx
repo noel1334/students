@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import HostelReceipt from './HostelReceipt';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from "sonner";
 
 interface ReceiptDownloaderProps {
   receiptData: {
@@ -21,11 +23,18 @@ interface ReceiptDownloaderProps {
 
 const ReceiptDownloader = ({ receiptData }: ReceiptDownloaderProps) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
     documentTitle: `Hostel_Receipt_${receiptData.receiptNumber}`,
-    onAfterPrint: () => console.log('Receipt printed/downloaded successfully!'),
+    onAfterPrint: () => {
+      toast.success('Receipt downloaded successfully!');
+      console.log('Receipt printed/downloaded successfully!');
+    },
+    onPrintError: () => {
+      toast.error('Failed to download receipt. Please try again.');
+    },
   });
 
   return (
@@ -34,13 +43,16 @@ const ReceiptDownloader = ({ receiptData }: ReceiptDownloaderProps) => {
         onClick={handlePrint}
         variant="outline" 
         className="flex items-center gap-2"
+        size={isMobile ? "sm" : "default"}
       >
-        <Download className="h-4 w-4" />
+        <Download className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
         Download Receipt
       </Button>
       
       <div className="hidden">
-        <HostelReceipt ref={receiptRef} {...receiptData} />
+        <div ref={receiptRef}>
+          <HostelReceipt {...receiptData} />
+        </div>
       </div>
     </div>
   );

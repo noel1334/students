@@ -1,18 +1,33 @@
 
 import React, { useState } from 'react';
-import { Home, MapPin, Calendar, Users, Download, Info } from 'lucide-react';
+import { Home, MapPin, Calendar, Users, Download, Info, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import ReceiptDownloader from './ReceiptDownloader';
 import HostelReceipt from './HostelReceipt';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 const HostelStatus = () => {
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedSession, setSelectedSession] = useState("2023/2024");
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
+  const isMobile = useIsMobile();
   
   // This would come from an API in a real application
   const hostelData = {
@@ -50,8 +65,27 @@ const HostelStatus = () => {
     amount: hostelData.payment.amount,
     paymentDate: hostelData.payment.date,
     paymentId: hostelData.payment.id,
-    academicYear: hostelData.payment.academicYear,
+    academicYear: selectedSession,
     receiptNumber: hostelData.payment.receiptNumber
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setPaymentMethod(method);
+  };
+
+  const handlePayment = () => {
+    // In a real app, this would process the payment via the selected gateway
+    toast.success(`Processing payment via ${paymentMethod}`, {
+      description: "You'll be redirected to complete your payment."
+    });
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      toast.success("Payment successful!", {
+        description: "Your hostel payment has been confirmed."
+      });
+      setShowPaymentDialog(false);
+    }, 2000);
   };
 
   return (
@@ -113,13 +147,21 @@ const HostelStatus = () => {
                 <span className="text-sm text-muted-foreground">Receipt Number:</span>
                 <span>{hostelData.payment.receiptNumber}</span>
               </div>
-              <Button 
-                variant="outline" 
-                className="w-full flex gap-2 items-center"
-                onClick={() => setShowReceiptDialog(true)}
-              >
-                <Download size={14} /> View/Download Receipt
-              </Button>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  className="w-full flex gap-2 items-center"
+                  onClick={() => setShowReceiptDialog(true)}
+                >
+                  <Download size={14} /> View/Download Receipt
+                </Button>
+                <Button 
+                  className="w-full flex gap-2 items-center"
+                  onClick={() => setShowPaymentDialog(true)}
+                >
+                  <CreditCard size={14} /> Make Payment
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -167,18 +209,118 @@ const HostelStatus = () => {
         </div>
       </div>
       
+      {/* Receipt Dialog - Improved for mobile */}
       <Dialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
+        <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw] p-3 sm:p-6" : "sm:max-w-3xl"}>
+          <DialogHeader className="space-y-2">
             <DialogTitle>Hostel Payment Receipt</DialogTitle>
+            <DialogDescription>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm">Academic Year:</span>
+                <Select
+                  value={selectedSession}
+                  onValueChange={setSelectedSession}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select Session" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="2023/2024">2023/2024</SelectItem>
+                    <SelectItem value="2022/2023">2022/2023</SelectItem>
+                    <SelectItem value="2021/2022">2021/2022</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </DialogDescription>
           </DialogHeader>
           
-          <div className="border rounded-lg overflow-hidden">
+          <div className={`border rounded-lg overflow-hidden ${isMobile ? "max-h-[60vh] overflow-y-auto" : ""}`}>
             <HostelReceipt {...receiptData} />
           </div>
           
           <div className="flex justify-end mt-4">
             <ReceiptDownloader receiptData={receiptData} />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw] p-3 sm:p-6" : "sm:max-w-md"}>
+          <DialogHeader>
+            <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogDescription>
+              Choose your preferred payment method to complete your hostel payment
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 py-4">
+            <div className="bg-muted p-3 rounded-md">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="text-sm font-medium">{hostelData.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {hostelData.room}, {hostelData.block}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Academic Year: {selectedSession}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">Amount</p>
+                  <p className="text-sm">₦{hostelData.payment.amount.toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+            
+            <RadioGroup defaultValue="paystack" className="grid grid-cols-1 gap-3">
+              <div 
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "paystack" ? "border-primary bg-primary/5" : ""}`}
+                onClick={() => handlePaymentMethodSelect("paystack")}
+              >
+                <RadioGroupItem value="paystack" id="paystack" checked={paymentMethod === "paystack"} />
+                <div className="flex flex-1 items-center justify-between">
+                  <label htmlFor="paystack" className="flex items-center space-x-2 cursor-pointer">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Pay with Paystack</span>
+                  </label>
+                  <img src="https://paystack.com/assets/img/logo/paystack-logo-vector.svg" alt="Paystack" className="h-6" />
+                </div>
+              </div>
+              <div 
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "stripe" ? "border-primary bg-primary/5" : ""}`}
+                onClick={() => handlePaymentMethodSelect("stripe")}
+              >
+                <RadioGroupItem value="stripe" id="stripe" checked={paymentMethod === "stripe"} />
+                <div className="flex flex-1 items-center justify-between">
+                  <label htmlFor="stripe" className="flex items-center space-x-2 cursor-pointer">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Pay with Stripe</span>
+                  </label>
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-6" />
+                </div>
+              </div>
+              <div 
+                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "flutterwave" ? "border-primary bg-primary/5" : ""}`}
+                onClick={() => handlePaymentMethodSelect("flutterwave")}
+              >
+                <RadioGroupItem value="flutterwave" id="flutterwave" checked={paymentMethod === "flutterwave"} />
+                <div className="flex flex-1 items-center justify-between">
+                  <label htmlFor="flutterwave" className="flex items-center space-x-2 cursor-pointer">
+                    <CreditCard className="h-5 w-5" />
+                    <span>Pay with Flutterwave</span>
+                  </label>
+                  <img src="https://cdn.filestackcontent.com/OITnhSPCSzOuiw9ohCBG" alt="Flutterwave" className="h-6" />
+                </div>
+              </div>
+            </RadioGroup>
+            
+            <Button 
+              onClick={handlePayment} 
+              className="w-full mt-2"
+            >
+              Proceed with Payment
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

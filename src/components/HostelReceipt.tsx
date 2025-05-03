@@ -1,6 +1,6 @@
 
 import React, { forwardRef } from 'react';
-import { Card } from '@/components/ui/card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HostelReceiptProps {
   studentName: string;
@@ -26,15 +26,17 @@ const HostelReceipt = forwardRef<HTMLDivElement, HostelReceiptProps>(
     academicYear,
     receiptNumber,
   }, ref) => {
+    const isMobile = useIsMobile();
+    
     return (
-      <div ref={ref} className="p-8 bg-white max-w-2xl mx-auto shadow-sm">
+      <div ref={ref} className={`p-4 ${isMobile ? 'px-3' : 'p-8'} bg-white max-w-2xl mx-auto shadow-sm print:p-8`}>
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between items-center'} mb-6`}>
           <div>
-            <h1 className="text-2xl font-bold text-blue">University Hostel Service</h1>
+            <h1 className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-blue`}>University Hostel Service</h1>
             <p className="text-gray-600 text-sm">Student Accommodation Receipt</p>
           </div>
-          <div className="text-right">
+          <div className={`${isMobile ? '' : 'text-right'}`}>
             <p className="text-sm font-medium">Receipt #: {receiptNumber}</p>
             <p className="text-sm text-gray-600">Date: {paymentDate}</p>
           </div>
@@ -44,14 +46,14 @@ const HostelReceipt = forwardRef<HTMLDivElement, HostelReceiptProps>(
         <div className="border-t-2 border-blue mb-6"></div>
         
         {/* Content */}
-        <div className="mb-8 grid grid-cols-2 gap-6">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <h2 className="text-sm text-gray-600 mb-1">Student Information</h2>
             <p className="font-medium">{studentName}</p>
             <p className="text-sm text-gray-600">ID: {studentId}</p>
             <p className="text-sm text-gray-600">Academic Year: {academicYear}</p>
           </div>
-          <div>
+          <div className={`${isMobile ? 'mt-4 md:mt-0' : ''}`}>
             <h2 className="text-sm text-gray-600 mb-1">Accommodation Details</h2>
             <p className="font-medium">{blockName}</p>
             <p className="text-sm text-gray-600">Room: {roomNumber}</p>
@@ -82,12 +84,12 @@ const HostelReceipt = forwardRef<HTMLDivElement, HostelReceiptProps>(
         
         {/* Footer */}
         <div className="border-t pt-4">
-          <div className="flex justify-between text-sm text-gray-600">
+          <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'justify-between'} text-sm text-gray-600`}>
             <div>
               <p>Payment Reference: {paymentId}</p>
               <p>Payment Method: Online Payment</p>
             </div>
-            <div className="text-right">
+            <div className={`${isMobile ? '' : 'text-right'}`}>
               <p>Status: <span className="text-green-600 font-medium">PAID</span></p>
             </div>
           </div>
