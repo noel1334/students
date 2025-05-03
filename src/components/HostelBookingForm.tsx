@@ -113,6 +113,7 @@ const HostelBookingForm = () => {
   
   // Watch the blockId field to update rooms when block changes
   const watchBlockId = form.watch("blockId");
+  const watchRoomId = form.watch("roomId");
   
   // When block selection changes, update the selected block and reset room selection
   React.useEffect(() => {
@@ -127,14 +128,16 @@ const HostelBookingForm = () => {
   
   // Handler for form submission
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // If there's no payment method selected, open the payment dialog
-    if (!values.paymentMethod) {
-      setShowPaymentDialog(true);
-      return;
-    }
+    // Open the payment dialog when submitting the form
+    setShowPaymentDialog(true);
+  };
+  
+  // Handle payment method selection
+  const handlePaymentMethodSelect = (method: "paystack" | "stripe" | "flutterwave") => {
+    form.setValue("paymentMethod", method);
     
-    // In a real app, this would call an API to process the booking
-    console.log("Form submitted:", values);
+    // In a real app, this would call an API to process the payment
+    console.log("Processing payment with:", method);
     
     // Show success message
     toast.success("Hostel booking confirmed! Redirecting to payment...", {
@@ -153,11 +156,9 @@ const HostelBookingForm = () => {
     }, 2000);
   };
   
-  // Handle payment method selection
-  const handlePaymentMethodSelect = (method: "paystack" | "stripe" | "flutterwave") => {
-    form.setValue("paymentMethod", method);
-    onSubmit(form.getValues());
-  };
+  // Get the selected room details
+  const selectedRoom = selectedBlock && watchRoomId ? 
+    selectedBlock.rooms.find(room => room.id === watchRoomId) : null;
   
   return (
     <div>
@@ -278,13 +279,13 @@ const HostelBookingForm = () => {
           </DialogHeader>
           
           <div className="flex flex-col gap-4 py-4">
-            {selectedBlock && (
+            {selectedBlock && selectedRoom && (
               <div className="bg-muted p-3 rounded-md">
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm font-medium">{selectedBlock.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {selectedBlock.rooms.find(r => r.id === form.getValues().roomId)?.number}
+                      Room {selectedRoom.number}
                     </p>
                   </div>
                   <div className="text-right">
