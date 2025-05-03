@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import ReceiptDownloader from './ReceiptDownloader';
+import HostelReceipt from './HostelReceipt';
 
 const HostelStatus = () => {
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
