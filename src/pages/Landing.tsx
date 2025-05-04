@@ -15,7 +15,11 @@ const Landing = () => {
           <h1 className="font-bold">My Home</h1>
         </div>
         <div className="flex space-x-2">
-          <Button variant="secondary" className="text-primary bg-[#f18c3d] hover:bg-[#e67e2e] text-white">
+          <Button 
+            variant="secondary" 
+            className="text-primary bg-[#f18c3d] hover:bg-[#e67e2e] text-white"
+            onClick={() => navigate('/support')}
+          >
             Support
           </Button>
           <Button variant="outline" className="bg-transparent text-white border-white hover:bg-white/20">
@@ -84,12 +88,18 @@ const Landing = () => {
             <h3 className="text-xl font-medium">Follow the steps to get you started for the new session</h3>
             
             <div className="mt-4 space-y-3">
-              <div className="bg-white/10 p-4 rounded-md flex justify-between items-center">
+              <div 
+                className="bg-white/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
+                onClick={() => navigate('/payments')}
+              >
                 <span className="font-medium">Fees</span>
                 <ArrowRight className="h-5 w-5" />
               </div>
               
-              <div className="bg-white/10 p-4 rounded-md flex justify-between items-center">
+              <div 
+                className="bg-white/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
+                onClick={() => navigate('/courses')}
+              >
                 <span className="font-medium">Courses</span>
                 <ArrowRight className="h-5 w-5" />
               </div>

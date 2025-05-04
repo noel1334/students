@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home,
   LayoutDashboard, 
@@ -45,6 +45,7 @@ const SidebarItem = ({ icon, label, to, active, onClick }: SidebarItemProps) => 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Close sidebar on small screens when route changes
   useEffect(() => {
@@ -70,7 +71,7 @@ const Sidebar = () => {
   }, [isOpen]);
 
   const menuItems = [
-    { label: 'Home', icon: <Home size={20} />, to: '/dashboard' },
+    { label: 'Home', icon: <Home size={20} />, to: '/' },
     { label: 'Dashboard', icon: <LayoutDashboard size={20} />, to: '/dashboard' },
     { label: 'Courses', icon: <BookOpen size={20} />, to: '/courses' },
     { label: 'Results', icon: <GraduationCap size={20} />, to: '/results' },
