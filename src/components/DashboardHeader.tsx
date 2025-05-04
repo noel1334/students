@@ -1,8 +1,17 @@
 
-import React from 'react';
-import { Menu } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, Settings, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const DashboardHeader = () => {
+  const navigate = useNavigate();
   const studentInfo = {
     name: "Victor NOEL",
     profileInitials: "VN"
@@ -20,13 +29,39 @@ const DashboardHeader = () => {
         </div>
         
         <div className="flex items-center ml-auto">
-          <div className="text-right mr-3">
-            <h2 className="font-medium text-gray-800">{studentInfo.name}</h2>
-            <p className="text-sm text-gray-500">Profile ▼</p>
-          </div>
-          <div className="bg-green-200 text-green-800 rounded-full w-10 h-10 flex items-center justify-center font-medium">
-            {studentInfo.profileInitials}
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="outline-none">
+              <div className="flex items-center">
+                <div className="text-right mr-3">
+                  <h2 className="font-medium text-gray-800">{studentInfo.name}</h2>
+                  <p className="text-sm text-gray-500 flex items-center">Profile <span className="ml-1">▼</span></p>
+                </div>
+                <div className="bg-green-200 text-green-800 rounded-full w-10 h-10 flex items-center justify-center font-medium cursor-pointer">
+                  {studentInfo.profileInitials}
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 bg-white">
+              <DropdownMenuItem 
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => navigate('/profile')}
+              >
+                <User size={16} />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center gap-2 cursor-pointer"
+                onClick={() => navigate('/settings')}
+              >
+                <Settings size={16} />
+                <span>Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="cursor-pointer">
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

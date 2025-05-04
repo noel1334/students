@@ -14,6 +14,7 @@ import Notifications from "./pages/Notifications";
 import Hostel from "./pages/Hostel";
 import Profile from "./pages/Profile";
 import Support from "./pages/Support";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Sidebar";
 
@@ -81,6 +82,11 @@ const App = () => {
             <Route path="/profile" element={
               <Layout>
                 <Profile />
+              </Layout>
+            } />
+            <Route path="/settings" element={
+              <Layout>
+                <Settings />
               </Layout>
             } />
             <Route path="/support" element={
