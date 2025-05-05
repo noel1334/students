@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -144,14 +143,13 @@ const Profile = () => {
                 setSelectedState={setSelectedState}
               />
 
-              {/* Admission Section */}
+              {/* Other sections remain unchanged */}
               <AdmissionSection
                 control={methods.control}
                 openSection={openSections.admission}
                 onToggleSection={() => toggleSection('admission')}
               />
 
-              {/* Medical Record Section */}
               <MedicalRecordSection
                 control={methods.control}
                 openSection={openSections.medicalRecord}
@@ -160,21 +158,18 @@ const Profile = () => {
                 setMedicalDocuments={setMedicalDocuments}
               />
 
-              {/* Next of Kin & Sponsor Section */}
               <NextOfKinSection
                 control={methods.control}
                 openSection={openSections.nextOfKin}
                 onToggleSection={() => toggleSection('nextOfKin')}
               />
 
-              {/* Parents Section */}
               <ParentsSection
                 control={methods.control}
                 openSection={openSections.parents}
                 onToggleSection={() => toggleSection('parents')}
               />
 
-              {/* Signature Upload Section */}
               <SignatureUploadSection
                 openSection={openSections.signatureUpload}
                 onToggleSection={() => toggleSection('signatureUpload')}
