@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Country, State, City } from 'country-state-city';
-import { Calendar, File, FileText, FileImage, FileMedical, Users, Signature, Upload } from 'lucide-react';
+import { Calendar, File, FileText, FileImage, FileCheck, Users, Signature, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -863,7 +862,7 @@ const Profile = () => {
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
                   <div className="flex items-center">
-                    <FileMedical className="h-5 w-5 mr-2 text-blue-800" />
+                    <FileCheck className="h-5 w-5 mr-2 text-blue-800" />
                     <h2 className="font-semibold text-blue-800">MEDICAL RECORD</h2>
                   </div>
                   <span>{openSections.medicalRecord ? "▲" : "▼"}</span>
@@ -1521,4 +1520,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
