@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Control } from 'react-hook-form';
+import { Control, useFormContext } from 'react-hook-form';
 import { Country, State, City } from 'country-state-city';
 
 interface BioDataSectionProps {
@@ -26,6 +25,9 @@ const BioDataSection = ({
   selectedState,
   setSelectedState
 }: BioDataSectionProps) => {
+  // Get form context to access setValue
+  const { setValue } = useFormContext();
+  
   // List of countries from the library
   const countries = Country.getAllCountries();
   
@@ -166,11 +168,9 @@ const BioDataSection = ({
                     setSelectedCountry(value);
                     // Reset state and lga when country changes
                     setSelectedState(null);
-                    // Access setValue method directly from control object
-                    if (typeof control.setValue === 'function') {
-                      control.setValue("state", "");
-                      control.setValue("lga", "");
-                    }
+                    // Use setValue from form context
+                    setValue("state", "");
+                    setValue("lga", "");
                   }}
                   defaultValue={field.value}
                 >
@@ -204,10 +204,8 @@ const BioDataSection = ({
                     field.onChange(value);
                     setSelectedState(value);
                     // Reset lga when state changes
-                    // Access setValue method directly from control object
-                    if (typeof control.setValue === 'function') {
-                      control.setValue("lga", "");
-                    }
+                    // Use setValue from form context
+                    setValue("lga", "");
                   }}
                   defaultValue={field.value}
                   disabled={!selectedCountry}

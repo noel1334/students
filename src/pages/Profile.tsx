@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
 import DashboardHeader from '@/components/DashboardHeader';
-import { Form } from '@/components/ui/form';
 import BioDataSection from '@/components/profile/BioDataSection';
 import AdmissionSection from '@/components/profile/AdmissionSection';
 import MedicalRecordSection from '@/components/profile/MedicalRecordSection';
@@ -40,7 +39,7 @@ const Profile = () => {
   };
 
   // Initialize the form
-  const form = useForm({
+  const methods = useForm({
     defaultValues: {
       firstName: "Victor",
       lastName: "NOEL",
@@ -131,12 +130,12 @@ const Profile = () => {
           />
 
           {/* Profile Form */}
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormProvider {...methods}>
+            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
               
               {/* Bio Data Section */}
               <BioDataSection
-                control={form.control}
+                control={methods.control}
                 openSection={openSections.bioData}
                 onToggleSection={() => toggleSection('bioData')}
                 selectedCountry={selectedCountry}
@@ -147,14 +146,14 @@ const Profile = () => {
 
               {/* Admission Section */}
               <AdmissionSection
-                control={form.control}
+                control={methods.control}
                 openSection={openSections.admission}
                 onToggleSection={() => toggleSection('admission')}
               />
 
               {/* Medical Record Section */}
               <MedicalRecordSection
-                control={form.control}
+                control={methods.control}
                 openSection={openSections.medicalRecord}
                 onToggleSection={() => toggleSection('medicalRecord')}
                 medicalDocuments={medicalDocuments}
@@ -163,14 +162,14 @@ const Profile = () => {
 
               {/* Next of Kin & Sponsor Section */}
               <NextOfKinSection
-                control={form.control}
+                control={methods.control}
                 openSection={openSections.nextOfKin}
                 onToggleSection={() => toggleSection('nextOfKin')}
               />
 
               {/* Parents Section */}
               <ParentsSection
-                control={form.control}
+                control={methods.control}
                 openSection={openSections.parents}
                 onToggleSection={() => toggleSection('parents')}
               />
@@ -207,7 +206,7 @@ const Profile = () => {
                 </div>
               </div>
             </form>
-          </Form>
+          </FormProvider>
         </div>
       </div>
     </>
