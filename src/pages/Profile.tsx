@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -9,6 +10,9 @@ import NextOfKinSection from '@/components/profile/NextOfKinSection';
 import ParentsSection from '@/components/profile/ParentsSection';
 import SignatureUploadSection from '@/components/profile/SignatureUploadSection';
 import ProfileHeader from '@/components/profile/ProfileHeader';
+import ReviewFormModal from '@/components/profile/ReviewFormModal';
+import { Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const Profile = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -24,6 +28,7 @@ const Profile = () => {
   });
   const [signature, setSignature] = useState<string | null>(null);
   const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
 
   // Student information - in a real app, this would come from an API or context
   const studentInfo = {
@@ -102,10 +107,22 @@ const Profile = () => {
     }
   });
 
+  // Open review modal with current form data
+  const handleReviewForm = () => {
+    setReviewModalOpen(true);
+  };
+
   // Handle form submission
   const onSubmit = (data: any) => {
+    handleReviewForm(); // Open the review modal instead of submitting right away
+  };
+
+  // Final submission after review
+  const handleFinalSubmit = () => {
+    const data = methods.getValues();
     console.log("Form submitted:", data);
     toast.success("Profile information updated successfully");
+    setReviewModalOpen(false);
     // Here you would typically send this data to your backend API
   };
 
@@ -178,30 +195,39 @@ const Profile = () => {
               />
 
               <div className="flex flex-col gap-4">
-                <button
+                <Button
                   type="submit"
                   className="w-full py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  Update
-                </button>
+                  <Eye className="mr-2" size={18} />
+                  Review and Update
+                </Button>
                 
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     type="button"
                     className="flex-1 py-3 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors"
                   >
                     Print Profile Records
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     className="flex-1 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
                   >
                     Print Medical Records
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>
           </FormProvider>
+
+          {/* Review Modal */}
+          <ReviewFormModal
+            formData={methods.getValues()}
+            open={reviewModalOpen}
+            onOpenChange={setReviewModalOpen}
+            onConfirm={handleFinalSubmit}
+          />
         </div>
       </div>
     </>
