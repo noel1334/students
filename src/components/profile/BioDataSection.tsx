@@ -166,8 +166,8 @@ const BioDataSection = ({
                     setSelectedCountry(value);
                     // Reset state and lga when country changes
                     setSelectedState(null);
-                    // Use setValue from react-hook-form control instead of accessing _formState directly
-                    if ('setValue' in control) {
+                    // Access setValue method directly from control object
+                    if (typeof control.setValue === 'function') {
                       control.setValue("state", "");
                       control.setValue("lga", "");
                     }
@@ -204,8 +204,8 @@ const BioDataSection = ({
                     field.onChange(value);
                     setSelectedState(value);
                     // Reset lga when state changes
-                    // Use setValue from react-hook-form control instead of accessing _formState directly
-                    if ('setValue' in control) {
+                    // Access setValue method directly from control object
+                    if (typeof control.setValue === 'function') {
                       control.setValue("lga", "");
                     }
                   }}
