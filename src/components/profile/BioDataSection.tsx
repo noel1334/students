@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -165,8 +166,11 @@ const BioDataSection = ({
                     setSelectedCountry(value);
                     // Reset state and lga when country changes
                     setSelectedState(null);
-                    control._formState.setValue("state", "");
-                    control._formState.setValue("lga", "");
+                    // Use setValue from react-hook-form control instead of accessing _formState directly
+                    if ('setValue' in control) {
+                      control.setValue("state", "");
+                      control.setValue("lga", "");
+                    }
                   }}
                   defaultValue={field.value}
                 >
@@ -200,7 +204,10 @@ const BioDataSection = ({
                     field.onChange(value);
                     setSelectedState(value);
                     // Reset lga when state changes
-                    control._formState.setValue("lga", "");
+                    // Use setValue from react-hook-form control instead of accessing _formState directly
+                    if ('setValue' in control) {
+                      control.setValue("lga", "");
+                    }
                   }}
                   defaultValue={field.value}
                   disabled={!selectedCountry}
