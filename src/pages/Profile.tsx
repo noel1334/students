@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Country, State, City } from 'country-state-city';
-import { Calendar } from 'lucide-react';
+import { Calendar, File, FileText, FileImage, FileMedical, Users, Signature, Upload } from 'lucide-react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,7 +14,11 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import DashboardHeader from '@/components/DashboardHeader';
+import { toast } from 'sonner';
 
 const Profile = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -27,6 +32,8 @@ const Profile = () => {
     parents: false,
     signatureUpload: false
   });
+  const [signature, setSignature] = useState<string | null>(null);
+  const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
 
   // List of countries from the library
   const countries = Country.getAllCountries();
@@ -81,13 +88,47 @@ const Profile = () => {
       religion: "Christian",
       nin: "53840194954",
       jambRegNumber: "89113902JB",
-      // Additional fields would be added for medical records, next of kin, etc.
+      // Admission details
+      admissionMode: "UTME",
+      yearOfEntry: "2018",
+      currentLevel: "600",
+      yearOfGraduation: "2024",
+      admissionNumber: "18/50770D/6",
+      // Medical Records
+      bloodGroup: "",
+      genotype: "",
+      allergies: "",
+      chronicConditions: "",
+      disabilities: "",
+      // Next of Kin
+      nextOfKinName: "",
+      nextOfKinRelation: "",
+      nextOfKinPhone: "",
+      nextOfKinAddress: "",
+      nextOfKinEmail: "",
+      // Sponsor
+      sponsorName: "",
+      sponsorRelation: "",
+      sponsorPhone: "",
+      sponsorAddress: "",
+      sponsorEmail: "",
+      // Parents
+      fatherName: "",
+      fatherOccupation: "",
+      fatherPhone: "",
+      fatherEmail: "",
+      motherName: "",
+      motherOccupation: "",
+      motherPhone: "",
+      motherEmail: "",
+      parentAddress: "",
     }
   });
 
   // Handle form submission
   const onSubmit = (data: any) => {
     console.log("Form submitted:", data);
+    toast.success("Profile information updated successfully");
     // Here you would typically send this data to your backend API
   };
 
@@ -100,6 +141,28 @@ const Profile = () => {
         setAvatar(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle signature upload
+  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSignature(reader.result as string);
+        toast.success("Signature uploaded successfully");
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle medical document upload
+  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setMedicalDocuments(prev => [...prev, ...newFiles]);
+      toast.success(`${newFiles.length} document(s) uploaded successfully`);
     }
   };
 
@@ -665,11 +728,130 @@ const Profile = () => {
                 className="w-full"
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
-                  <h2 className="font-semibold text-blue-800">ADMISSION</h2>
+                  <div className="flex items-center">
+                    <FileText className="h-5 w-5 mr-2 text-blue-800" />
+                    <h2 className="font-semibold text-blue-800">ADMISSION</h2>
+                  </div>
                   <span>{openSections.admission ? "▲" : "▼"}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 px-1">
-                  <p className="text-muted-foreground text-sm">Admission details will appear here</p>
+                  <div className="bg-white p-6 rounded-md border shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Mode of Admission */}
+                      <FormField
+                        control={form.control}
+                        name="admissionMode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mode of Admission</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select admission mode" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="UTME">UTME</SelectItem>
+                                <SelectItem value="Direct Entry">Direct Entry</SelectItem>
+                                <SelectItem value="Transfer">Transfer</SelectItem>
+                                <SelectItem value="Scholarship">Scholarship</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Year of Entry */}
+                      <FormField
+                        control={form.control}
+                        name="yearOfEntry"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Year of Entry</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Current Level */}
+                      <FormField
+                        control={form.control}
+                        name="currentLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Level</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="100">100 Level</SelectItem>
+                                <SelectItem value="200">200 Level</SelectItem>
+                                <SelectItem value="300">300 Level</SelectItem>
+                                <SelectItem value="400">400 Level</SelectItem>
+                                <SelectItem value="500">500 Level</SelectItem>
+                                <SelectItem value="600">600 Level</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Expected Year of Graduation */}
+                      <FormField
+                        control={form.control}
+                        name="yearOfGraduation"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Expected Year of Graduation</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Admission Number */}
+                      <FormField
+                        control={form.control}
+                        name="admissionNumber"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Admission Number</FormLabel>
+                            <FormControl>
+                              <Input {...field} readOnly className="bg-gray-100" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="text-sm font-medium mb-2">Admission Document</div>
+                      <div className="border border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
+                        <FileText className="h-10 w-10 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500 mb-2">Admission letter</p>
+                        <button type="button" className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm font-medium">
+                          View Admission Letter
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -680,11 +862,172 @@ const Profile = () => {
                 className="w-full"
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
-                  <h2 className="font-semibold text-blue-800">MEDICAL RECORD</h2>
+                  <div className="flex items-center">
+                    <FileMedical className="h-5 w-5 mr-2 text-blue-800" />
+                    <h2 className="font-semibold text-blue-800">MEDICAL RECORD</h2>
+                  </div>
                   <span>{openSections.medicalRecord ? "▲" : "▼"}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 px-1">
-                  <p className="text-muted-foreground text-sm">Medical records will appear here</p>
+                  <div className="bg-white p-6 rounded-md border shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Blood Group */}
+                      <FormField
+                        control={form.control}
+                        name="bloodGroup"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Blood Group</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select blood group" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="A+">A+</SelectItem>
+                                <SelectItem value="A-">A-</SelectItem>
+                                <SelectItem value="B+">B+</SelectItem>
+                                <SelectItem value="B-">B-</SelectItem>
+                                <SelectItem value="AB+">AB+</SelectItem>
+                                <SelectItem value="AB-">AB-</SelectItem>
+                                <SelectItem value="O+">O+</SelectItem>
+                                <SelectItem value="O-">O-</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Genotype */}
+                      <FormField
+                        control={form.control}
+                        name="genotype"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Genotype</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select genotype" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="AA">AA</SelectItem>
+                                <SelectItem value="AS">AS</SelectItem>
+                                <SelectItem value="SS">SS</SelectItem>
+                                <SelectItem value="AC">AC</SelectItem>
+                                <SelectItem value="SC">SC</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Allergies */}
+                      <FormField
+                        control={form.control}
+                        name="allergies"
+                        render={({ field }) => (
+                          <FormItem className="col-span-1 md:col-span-2">
+                            <FormLabel>Allergies (if any)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="List any allergies you have" 
+                                className="resize-none" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Chronic Conditions */}
+                      <FormField
+                        control={form.control}
+                        name="chronicConditions"
+                        render={({ field }) => (
+                          <FormItem className="col-span-1 md:col-span-2">
+                            <FormLabel>Chronic Conditions (if any)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="List any chronic conditions you have" 
+                                className="resize-none" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {/* Disabilities */}
+                      <FormField
+                        control={form.control}
+                        name="disabilities"
+                        render={({ field }) => (
+                          <FormItem className="col-span-1 md:col-span-2">
+                            <FormLabel>Disabilities (if any)</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="List any disabilities you have" 
+                                className="resize-none" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="text-sm font-medium mb-2">Medical Documents</div>
+                      <div className="border border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
+                        <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                        <p className="text-sm text-gray-500 mb-2">Upload medical reports or certificates</p>
+                        <label 
+                          htmlFor="document-upload" 
+                          className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm font-medium cursor-pointer"
+                        >
+                          Upload Document
+                        </label>
+                        <input
+                          id="document-upload"
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.png"
+                          className="hidden"
+                          onChange={handleDocumentChange}
+                          multiple
+                        />
+                      </div>
+
+                      {/* Display uploaded documents */}
+                      {medicalDocuments.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium">Uploaded Documents:</p>
+                          {medicalDocuments.map((doc, index) => (
+                            <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                              <div className="flex items-center">
+                                <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                                <span className="text-sm truncate max-w-[200px]">{doc.name}</span>
+                              </div>
+                              <span className="text-xs text-gray-500">{(doc.size / 1024).toFixed(2)} KB</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -695,11 +1038,208 @@ const Profile = () => {
                 className="w-full"
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
-                  <h2 className="font-semibold text-blue-800">NEXT OF KIN & SPONSOR</h2>
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-blue-800" />
+                    <h2 className="font-semibold text-blue-800">NEXT OF KIN & SPONSOR</h2>
+                  </div>
                   <span>{openSections.nextOfKin ? "▲" : "▼"}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 px-1">
-                  <p className="text-muted-foreground text-sm">Next of kin details will appear here</p>
+                  <div className="bg-white p-6 rounded-md border shadow-sm">
+                    <Tabs defaultValue="next-of-kin" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="next-of-kin">Next of Kin</TabsTrigger>
+                        <TabsTrigger value="sponsor">Sponsor</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="next-of-kin" className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Next of Kin Full Name */}
+                          <FormField
+                            control={form.control}
+                            name="nextOfKinName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Next of Kin Relationship */}
+                          <FormField
+                            control={form.control}
+                            name="nextOfKinRelation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Relationship</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select relationship" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Parent">Parent</SelectItem>
+                                    <SelectItem value="Sibling">Sibling</SelectItem>
+                                    <SelectItem value="Spouse">Spouse</SelectItem>
+                                    <SelectItem value="Guardian">Guardian</SelectItem>
+                                    <SelectItem value="Uncle/Aunt">Uncle/Aunt</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Next of Kin Phone */}
+                          <FormField
+                            control={form.control}
+                            name="nextOfKinPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="tel" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Next of Kin Email */}
+                          <FormField
+                            control={form.control}
+                            name="nextOfKinEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="email" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Next of Kin Address */}
+                          <FormField
+                            control={form.control}
+                            name="nextOfKinAddress"
+                            render={({ field }) => (
+                              <FormItem className="col-span-1 md:col-span-2">
+                                <FormLabel>Contact Address</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} className="resize-none" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="sponsor" className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Sponsor Full Name */}
+                          <FormField
+                            control={form.control}
+                            name="sponsorName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Sponsor Relationship */}
+                          <FormField
+                            control={form.control}
+                            name="sponsorRelation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Relationship</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select relationship" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="Parent">Parent</SelectItem>
+                                    <SelectItem value="Sibling">Sibling</SelectItem>
+                                    <SelectItem value="Guardian">Guardian</SelectItem>
+                                    <SelectItem value="Self">Self-sponsored</SelectItem>
+                                    <SelectItem value="Organization">Organization</SelectItem>
+                                    <SelectItem value="Government">Government</SelectItem>
+                                    <SelectItem value="Other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Sponsor Phone */}
+                          <FormField
+                            control={form.control}
+                            name="sponsorPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="tel" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Sponsor Email */}
+                          <FormField
+                            control={form.control}
+                            name="sponsorEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="email" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Sponsor Address */}
+                          <FormField
+                            control={form.control}
+                            name="sponsorAddress"
+                            render={({ field }) => (
+                              <FormItem className="col-span-1 md:col-span-2">
+                                <FormLabel>Contact Address</FormLabel>
+                                <FormControl>
+                                  <Textarea {...field} className="resize-none" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -710,11 +1250,164 @@ const Profile = () => {
                 className="w-full"
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
-                  <h2 className="font-semibold text-blue-800">PARENTS</h2>
+                  <div className="flex items-center">
+                    <Users className="h-5 w-5 mr-2 text-blue-800" />
+                    <h2 className="font-semibold text-blue-800">PARENTS</h2>
+                  </div>
                   <span>{openSections.parents ? "▲" : "▼"}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 px-1">
-                  <p className="text-muted-foreground text-sm">Parents details will appear here</p>
+                  <div className="bg-white p-6 rounded-md border shadow-sm">
+                    <Tabs defaultValue="father" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="father">Father's Information</TabsTrigger>
+                        <TabsTrigger value="mother">Mother's Information</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="father" className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Father's Name */}
+                          <FormField
+                            control={form.control}
+                            name="fatherName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Father's Occupation */}
+                          <FormField
+                            control={form.control}
+                            name="fatherOccupation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Occupation</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Father's Phone */}
+                          <FormField
+                            control={form.control}
+                            name="fatherPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="tel" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Father's Email */}
+                          <FormField
+                            control={form.control}
+                            name="fatherEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="email" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="mother" className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Mother's Name */}
+                          <FormField
+                            control={form.control}
+                            name="motherName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Mother's Occupation */}
+                          <FormField
+                            control={form.control}
+                            name="motherOccupation"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Occupation</FormLabel>
+                                <FormControl>
+                                  <Input {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Mother's Phone */}
+                          <FormField
+                            control={form.control}
+                            name="motherPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Phone Number</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="tel" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          {/* Mother's Email */}
+                          <FormField
+                            control={form.control}
+                            name="motherEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Email Address</FormLabel>
+                                <FormControl>
+                                  <Input {...field} type="email" />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    {/* Parents' Contact Address */}
+                    <div className="mt-6">
+                      <FormField
+                        control={form.control}
+                        name="parentAddress"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Parents' Contact Address</FormLabel>
+                            <FormControl>
+                              <Textarea {...field} className="resize-none" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -725,11 +1418,74 @@ const Profile = () => {
                 className="w-full"
               >
                 <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
-                  <h2 className="font-semibold text-blue-800">SIGNATURE UPLOAD</h2>
+                  <div className="flex items-center">
+                    <Signature className="h-5 w-5 mr-2 text-blue-800" />
+                    <h2 className="font-semibold text-blue-800">SIGNATURE UPLOAD</h2>
+                  </div>
                   <span>{openSections.signatureUpload ? "▲" : "▼"}</span>
                 </CollapsibleTrigger>
                 <CollapsibleContent className="pt-4 px-1">
-                  <p className="text-muted-foreground text-sm">Signature upload controls will appear here</p>
+                  <div className="bg-white p-6 rounded-md border shadow-sm">
+                    <div className="text-center">
+                      <div className="mb-6">
+                        <p className="text-sm text-gray-600 mb-4">
+                          Please upload a clear image of your signature on a white background. 
+                          This signature will be used for official documents and verifications.
+                        </p>
+
+                        <div className="w-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg p-6">
+                          {signature ? (
+                            <div className="flex flex-col items-center">
+                              <div className="mb-4 p-4 bg-white shadow rounded-md">
+                                <img 
+                                  src={signature} 
+                                  alt="Your signature" 
+                                  className="h-24 object-contain"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setSignature(null)}
+                                className="px-4 py-2 text-red-600 bg-red-50 text-sm font-medium rounded-md hover:bg-red-100"
+                              >
+                                Remove Signature
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center">
+                              <Signature className="h-16 w-16 text-gray-300 mb-4" />
+                              <p className="text-sm text-gray-500 mb-4">
+                                No signature uploaded yet
+                              </p>
+                              <label
+                                htmlFor="signature-upload"
+                                className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 cursor-pointer"
+                              >
+                                Upload Signature
+                              </label>
+                              <input
+                                id="signature-upload"
+                                type="file"
+                                accept="image/*"
+                                onChange={handleSignatureChange}
+                                className="hidden"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="text-sm text-gray-500">
+                        <p className="mb-2 font-medium">Guidelines for signature upload:</p>
+                        <ul className="list-disc text-left pl-6 space-y-1">
+                          <li>Sign on a white piece of paper with black or blue ink</li>
+                          <li>Ensure the signature is clear and legible</li>
+                          <li>Upload in JPG, PNG, or GIF format</li>
+                          <li>Maximum file size: 2MB</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
                 </CollapsibleContent>
               </Collapsible>
 
@@ -765,3 +1521,4 @@ const Profile = () => {
 };
 
 export default Profile;
+
