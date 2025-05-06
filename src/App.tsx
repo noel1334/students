@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -8,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from './context/AuthContext';
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
 import Results from "./pages/Results";
@@ -27,7 +27,7 @@ const queryClient = new QueryClient();
 // Layout component to conditionally render the sidebar
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const showSidebar = location.pathname !== '/' && location.pathname !== '/auth';
+  const showSidebar = location.pathname !== '/' && location.pathname !== '/auth' && location.pathname !== '/home';
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -56,6 +56,13 @@ const App = () => {
               <Route path="/auth" element={
                 <Layout>
                   <Auth />
+                </Layout>
+              } />
+              <Route path="/home" element={
+                <Layout>
+                  <PrivateRoute>
+                    <Home />
+                  </PrivateRoute>
                 </Layout>
               } />
               <Route path="/dashboard" element={

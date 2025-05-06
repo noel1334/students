@@ -7,7 +7,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // If still loading, show a loading indicator or nothing
+  // If still loading, show a loading indicator
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,13 @@ import { useAuth } from '@/context/AuthContext';
 const Landing = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+
+  React.useEffect(() => {
+    // Redirect authenticated users to home page
+    if (user) {
+      navigate('/home');
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-[#1a4aa6] text-white">
@@ -118,7 +124,7 @@ const Landing = () => {
 
         {user && (
           <div className="mt-8">
-            <h2 className="text-2xl font-semibold">Welcome back, Victor</h2>
+            <h2 className="text-2xl font-semibold">Welcome back, {user.user_metadata?.first_name || 'Student'}</h2>
             
             <div className="mt-4">
               <p className="text-white/80">0/2 registration steps completed</p>
