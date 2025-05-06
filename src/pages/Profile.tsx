@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -14,18 +13,14 @@ import ReviewFormModal from '@/components/profile/ReviewFormModal';
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
+// Define all possible section names
+type SectionName = 'bioData' | 'admission' | 'medicalRecord' | 'nextOfKin' | 'parents' | 'signatureUpload';
+
 const Profile = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
-  const [openSections, setOpenSections] = useState({
-    bioData: true,
-    admission: false,
-    medicalRecord: false,
-    nextOfKin: false,
-    parents: false,
-    signatureUpload: false
-  });
+  const [activeSection, setActiveSection] = useState<SectionName>('bioData');
   const [signature, setSignature] = useState<string | null>(null);
   const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
@@ -126,13 +121,13 @@ const Profile = () => {
     // Here you would typically send this data to your backend API
   };
 
-  // Toggle section visibility
-  const toggleSection = (section: keyof typeof openSections) => {
-    setOpenSections({
-      ...openSections,
-      [section]: !openSections[section]
-    });
+  // Set active section and collapse others
+  const handleSectionToggle = (section: SectionName) => {
+    setActiveSection(section === activeSection ? '' as SectionName : section);
   };
+
+  // Check if a section is active/open
+  const isSectionOpen = (section: SectionName) => section === activeSection;
 
   return (
     <>
@@ -152,44 +147,44 @@ const Profile = () => {
               {/* Bio Data Section */}
               <BioDataSection
                 control={methods.control}
-                openSection={openSections.bioData}
-                onToggleSection={() => toggleSection('bioData')}
+                openSection={isSectionOpen('bioData')}
+                onToggleSection={() => handleSectionToggle('bioData')}
                 selectedCountry={selectedCountry}
                 setSelectedCountry={setSelectedCountry}
                 selectedState={selectedState}
                 setSelectedState={setSelectedState}
               />
 
-              {/* Other sections remain unchanged */}
+              {/* Other sections remain unchanged but use the new toggle approach */}
               <AdmissionSection
                 control={methods.control}
-                openSection={openSections.admission}
-                onToggleSection={() => toggleSection('admission')}
+                openSection={isSectionOpen('admission')}
+                onToggleSection={() => handleSectionToggle('admission')}
               />
 
               <MedicalRecordSection
                 control={methods.control}
-                openSection={openSections.medicalRecord}
-                onToggleSection={() => toggleSection('medicalRecord')}
+                openSection={isSectionOpen('medicalRecord')}
+                onToggleSection={() => handleSectionToggle('medicalRecord')}
                 medicalDocuments={medicalDocuments}
                 setMedicalDocuments={setMedicalDocuments}
               />
 
               <NextOfKinSection
                 control={methods.control}
-                openSection={openSections.nextOfKin}
-                onToggleSection={() => toggleSection('nextOfKin')}
+                openSection={isSectionOpen('nextOfKin')}
+                onToggleSection={() => handleSectionToggle('nextOfKin')}
               />
 
               <ParentsSection
                 control={methods.control}
-                openSection={openSections.parents}
-                onToggleSection={() => toggleSection('parents')}
+                openSection={isSectionOpen('parents')}
+                onToggleSection={() => handleSectionToggle('parents')}
               />
 
               <SignatureUploadSection
-                openSection={openSections.signatureUpload}
-                onToggleSection={() => toggleSection('signatureUpload')}
+                openSection={isSectionOpen('signatureUpload')}
+                onToggleSection={() => handleSectionToggle('signatureUpload')}
                 signature={signature}
                 setSignature={setSignature}
               />

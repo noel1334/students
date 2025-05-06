@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface ReviewFormModalProps {
   formData: Record<string, any>;
@@ -69,23 +70,27 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm }: ReviewForm
         </DialogHeader>
         
         <ScrollArea className="h-[60vh] mt-4 pr-4">
-          <div className="space-y-6">
+          <Accordion type="single" collapsible className="space-y-4">
             {Object.entries(sections).map(([sectionName, fields]) => (
-              <div key={sectionName} className="space-y-3">
-                <h3 className="text-lg font-semibold text-blue-800 border-b pb-1">{sectionName}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {fields.map((field) => (
-                    <div key={field} className="flex flex-col">
-                      <span className="text-sm font-medium text-gray-500">{formatFieldName(field)}</span>
-                      <span className="text-base">
-                        {formData[field] ? String(formData[field]) : '-'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <AccordionItem key={sectionName} value={sectionName} className="border rounded-lg overflow-hidden">
+                <AccordionTrigger className="px-4 py-3 bg-blue-50 hover:bg-blue-100">
+                  <h3 className="text-lg font-semibold text-blue-800">{sectionName}</h3>
+                </AccordionTrigger>
+                <AccordionContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {fields.map((field) => (
+                      <div key={field} className="flex flex-col">
+                        <span className="text-sm font-medium text-gray-500">{formatFieldName(field)}</span>
+                        <span className="text-base">
+                          {formData[field] ? String(formData[field]) : '-'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         </ScrollArea>
         
         <DialogFooter className="mt-6">
