@@ -1,9 +1,12 @@
 
 import React from 'react';
-import { Eye } from 'lucide-react';
+import { Eye, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/context/AuthContext';
 
 const ProfileFormActions = () => {
+  const { signOut } = useAuth();
+
   return (
     <div className="flex flex-col gap-4">
       <Button
@@ -28,6 +31,15 @@ const ProfileFormActions = () => {
           Print Medical Records
         </Button>
       </div>
+
+      <Button
+        type="button"
+        className="w-full py-3 bg-red-500 text-white font-medium rounded-md hover:bg-red-600 transition-colors mt-4"
+        onClick={() => signOut()}
+      >
+        <LogOut className="mr-2" size={18} />
+        Sign Out
+      </Button>
     </div>
   );
 };
