@@ -3,31 +3,17 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Extract first name from user metadata if available
+  const firstName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Student';
 
   return (
     <div className="min-h-screen bg-[#1a4aa6] text-white">
-      {/* Header */}
-      <header className="p-4 flex justify-between items-center">
-        <div>
-          <h1 className="font-bold">My Home</h1>
-        </div>
-        <div className="flex space-x-2">
-          <Button 
-            variant="secondary" 
-            className="text-primary bg-[#f18c3d] hover:bg-[#e67e2e] text-white"
-            onClick={() => navigate('/support')}
-          >
-            Support
-          </Button>
-          <Button variant="outline" className="bg-transparent text-white border-white hover:bg-white/20">
-            Logout
-          </Button>
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="max-w-3xl mx-auto py-10 px-6">
         <div className="bg-white rounded-lg shadow-lg text-gray-800">
@@ -53,8 +39,8 @@ const Landing = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <h2 className="text-2xl font-bold">Victor NOEL</h2>
-            <p className="text-gray-600 mb-2">18/50770D/6</p>
+            <h2 className="text-2xl font-bold">{user?.user_metadata?.first_name || ''} {user?.user_metadata?.last_name || ''}</h2>
+            <p className="text-gray-600 mb-2">{user?.email}</p>
             <p className="text-gray-600 flex items-center gap-2">
               <span>Full Time</span>
               <span>•</span>
@@ -74,7 +60,7 @@ const Landing = () => {
 
         {/* Welcome Message */}
         <div className="mt-8">
-          <h2 className="text-2xl font-semibold">Welcome back, Victor</h2>
+          <h2 className="text-2xl font-semibold">Welcome back, {firstName}</h2>
           
           <div className="mt-4">
             <p className="text-white/80">0/2 registration steps completed</p>

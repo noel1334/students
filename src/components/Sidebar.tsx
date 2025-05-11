@@ -10,9 +10,12 @@ import {
   Hotel,
   User,
   Menu,
-  X
+  X,
+  LogIn
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 type SidebarItemProps = {
   icon: React.ReactNode;
@@ -46,6 +49,7 @@ const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   
   // Close sidebar on small screens when route changes
   useEffect(() => {
@@ -82,6 +86,11 @@ const Sidebar = () => {
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
   };
 
   return (
@@ -137,6 +146,16 @@ const Sidebar = () => {
               />
             ))}
           </ul>
+          
+          <div className="px-3 mt-6">
+            <Button 
+              variant="outline" 
+              className="w-full flex items-center justify-center gap-2"
+              onClick={handleLogout}
+            >
+              <LogIn size={20} /> Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     </>
