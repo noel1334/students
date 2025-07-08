@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const Login = () => {
+  console.log('Login component rendering...');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,8 +17,11 @@ const Login = () => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
+  console.log('Login component state:', { email, password, isLoading });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Login form submitted with:', { email, password });
     setIsLoading(true);
 
     try {
@@ -34,6 +39,8 @@ const Login = () => {
   const toggleShowPassword = () => {
     setShowPassword(!showPassword);
   };
+
+  console.log('About to render Login JSX...');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
