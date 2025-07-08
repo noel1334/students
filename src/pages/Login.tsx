@@ -42,13 +42,6 @@ const Login = () => {
           <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="mx-auto h-16 w-16" />
           <h2 className="mt-6 text-3xl font-bold text-[#1a4aa6]">Welcome Back</h2>
           <p className="mt-2 text-gray-600">Sign in to your account</p>
-          <div className="mt-4 p-3 bg-blue-50 rounded-md">
-            <p className="text-sm text-blue-800">
-              <strong>Demo Login:</strong><br />
-              Email: demo@example.com<br />
-              Password: password123
-            </p>
-          </div>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
