@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import api, { endpoints } from '@/config/api';
+import { AuthApiService, LoginRequest, RegisterRequest } from '@/types/AuthApiService';
 
 interface User {
   id: string;
@@ -19,54 +21,56 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users data for demo purposes
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'demo@example.com',
-    password: 'password123',
-    first_name: 'John',
-    last_name: 'Doe',
-    student_number: 'STU001'
-  }
-];
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // Initialize AuthApiService
+  const authService = new AuthApiService(api.defaults.baseURL || 'http://localhost:3001/api');
+
   useEffect(() => {
-    // Check for existing session in localStorage
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        localStorage.removeItem('currentUser');
+    // Check for existing session
+    const checkAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      const savedUser = localStorage.getItem('currentUser');
+
+      if (token && savedUser) {
+        try {
+          // Verify token is still valid by making a request to profile endpoint
+          const response = await api.get(endpoints.auth.profile);
+          const userData = response.data;
+          
+          setUser({
+            id: userData.id,
+            email: userData.email,
+            first_name: userData.first_name,
+            last_name: userData.last_name
+          });
+        } catch (error) {
+          // Token is invalid, clear storage
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('currentUser');
+          setUser(null);
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
-      // Check against mock users
-      const foundUser = MOCK_USERS.find(u => u.email === email && u.password === password);
-      
-      if (!foundUser) {
-        throw new Error('Invalid email or password');
-      }
+      const credentials: LoginRequest = { email, password };
+      const response = await authService.login(credentials);
 
-      const userSession = {
-        id: foundUser.id,
-        email: foundUser.email,
-        first_name: foundUser.first_name,
-        last_name: foundUser.last_name
-      };
+      // Store auth data
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
 
-      setUser(userSession);
-      localStorage.setItem('currentUser', JSON.stringify(userSession));
+      setUser(response.user);
 
       toast({
         title: "Login successful",
@@ -90,28 +94,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     studentNumber: string
   ) => {
     try {
-      // Check if user already exists
-      const existingUser = MOCK_USERS.find(u => u.email === email);
-      if (existingUser) {
-        throw new Error('User with this email already exists');
-      }
-
-      // In a real app, you would send this to a backend
-      const newUser = {
-        id: Date.now().toString(),
+      const userData: RegisterRequest = {
         email,
         password,
-        first_name: firstName,
-        last_name: lastName,
-        student_number: studentNumber
+        firstName,
+        lastName,
+        studentNumber
       };
 
-      // Add to mock users (this is just for demo)
-      MOCK_USERS.push(newUser);
+      const response = await authService.register(userData);
+
+      // Store auth data
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('currentUser', JSON.stringify(response.user));
+
+      setUser(response.user);
 
       toast({
         title: "Account created successfully",
-        description: "You can now login with your credentials",
+        description: "Welcome to the platform!",
         variant: "default",
       });
     } catch (error: any) {
@@ -126,17 +127,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      setUser(null);
+      await authService.logout();
+      
+      // Clear local storage
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('currentUser');
+      
+      setUser(null);
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
       });
     } catch (error: any) {
+      // Even if logout fails on server, clear local data
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('currentUser');
+      setUser(null);
+      
       toast({
-        title: "Logout failed",
-        description: error.message || "An error occurred during logout",
-        variant: "destructive",
+        title: "Logged out",
+        description: "You have been logged out",
       });
     }
   };
