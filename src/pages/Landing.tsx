@@ -9,8 +9,8 @@ const Landing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
-  // Extract first name from user metadata if available
-  const firstName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Student';
+  // Extract first name from user data if available
+  const firstName = user?.first_name || user?.email?.split('@')[0] || 'Student';
 
   return (
     <div className="min-h-screen bg-[#1a4aa6] text-white">
@@ -39,7 +39,7 @@ const Landing = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <h2 className="text-2xl font-bold">{user?.user_metadata?.first_name || ''} {user?.user_metadata?.last_name || ''}</h2>
+            <h2 className="text-2xl font-bold">{user?.first_name || ''} {user?.last_name || ''}</h2>
             <p className="text-gray-600 mb-2">{user?.email}</p>
             <p className="text-gray-600 flex items-center gap-2">
               <span>Full Time</span>
