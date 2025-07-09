@@ -1,16 +1,33 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Calendar } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import UserAvatar from '@/components/UserAvatar';
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, fetchUserProfile } = useAuth();
+
+  useEffect(() => {
+    // Fetch fresh user profile when component mounts
+    if (user) {
+      fetchUserProfile();
+    }
+  }, []);
   
   // Extract first name from user data if available
-  const firstName = user?.first_name || user?.email?.split('@')[0] || 'Student';
+  const firstName = user?.first_name || user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
+  const fullName = user?.first_name && user?.last_name 
+    ? `${user.first_name} ${user.last_name}` 
+    : user?.name || 'Student Name';
+
+  // Get current session and semester
+  const currentSession = user?.currentSession || '2024/2025 SESSION';
+  const currentSemester = user?.currentSemester || 'FIRST SEMESTER';
+
+  console.log('Landing page user data:', user);
 
   return (
     <div className="min-h-screen bg-[#1a4aa6] text-white">
@@ -19,34 +36,29 @@ const Landing = () => {
         <div className="bg-white rounded-lg shadow-lg text-gray-800">
           {/* Semester Info */}
           <div className="p-4 border-b flex items-center gap-2">
-            <span className="text-gray-600">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-                <line x1="16" x2="16" y1="2" y2="6" />
-                <line x1="8" x2="8" y1="2" y2="6" />
-                <line x1="3" x2="21" y1="10" y2="10" />
-              </svg>
+            <Calendar className="w-5 h-5 text-gray-600" />
+            <span className="text-sm font-medium uppercase">
+              {currentSemester}, {currentSession}
             </span>
-            <span className="text-sm font-medium uppercase">FIRST SEMESTER, 2024/2025 SESSION</span>
           </div>
 
           {/* Profile Section */}
           <div className="p-8 flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full overflow-hidden mb-4">
-              <img 
-                src="/lovable-uploads/be0fedbf-c714-447d-8168-3ad9fb83d57e.png" 
-                alt="Student Profile" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <h2 className="text-2xl font-bold">{user?.first_name || ''} {user?.last_name || ''}</h2>
+            <UserAvatar 
+              user={user || {}} 
+              size="xl" 
+              className="mb-4"
+            />
+            
+            <h2 className="text-2xl font-bold">{fullName}</h2>
             <p className="text-gray-600 mb-2">{user?.email}</p>
+            
             <p className="text-gray-600 flex items-center gap-2">
               <span>Full Time</span>
               <span>•</span>
-              <span>Science Education</span>
+              <span>{user?.department || 'Science Education'}</span>
               <span>•</span>
-              <span>600 Level Level</span>
+              <span>{user?.level || '600'} Level</span>
             </p>
 
             <Button 

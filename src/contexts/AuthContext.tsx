@@ -11,6 +11,12 @@ interface User {
   email?: string;
   first_name?: string;
   last_name?: string;
+  profileImage?: string;
+  department?: string;
+  program?: string;
+  level?: string;
+  currentSession?: string;
+  currentSemester?: string;
 }
 
 interface AuthContextType {
@@ -19,6 +25,7 @@ interface AuthContextType {
   signIn: (identifier: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string, studentNumber: string) => Promise<void>;
   signOut: () => Promise<void>;
+  fetchUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,6 +34,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  const fetchUserProfile = async () => {
+    try {
+      console.log('Fetching user profile...');
+      const response = await api.get('/student/me');
+      console.log('Profile response:', response.data);
+      
+      if (response.data.status === 'success' && response.data.data) {
+        const profileData = response.data.data;
+        setUser(prevUser => ({
+          ...prevUser,
+          ...profileData,
+          currentSession: profileData.currentSession || '2024/2025',
+          currentSemester: profileData.currentSemester || 'FIRST SEMESTER'
+        }));
+        
+        // Update localStorage with complete user data
+        localStorage.setItem('currentUser', JSON.stringify({
+          ...user,
+          ...profileData
+        }));
+      }
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+      // Don't show error toast for profile fetch failure
+    }
+  };
 
   useEffect(() => {
     // Check for existing session
@@ -39,9 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Set the authorization header
           api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          // For now, trust the saved user data - you could verify with a profile endpoint later
+          // Parse saved user data
           const userData = JSON.parse(savedUser);
           setUser(userData);
+          
+          // Fetch updated profile data
+          await fetchUserProfile();
         } catch (error) {
           // Token is invalid, clear storage
           localStorage.removeItem('authToken');
@@ -79,6 +116,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         setUser(student);
+
+        // Fetch complete profile data
+        await fetchUserProfile();
 
         toast({
           title: "Login successful",
@@ -181,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    fetchUserProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
