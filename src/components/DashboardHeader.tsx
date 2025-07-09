@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Menu, Settings, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,9 +13,22 @@ import {
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
   const studentInfo = {
-    name: "Victor NOEL",
-    profileInitials: "VN"
+    name: user?.first_name && user?.last_name 
+      ? `${user.first_name} ${user.last_name}` 
+      : user?.name || "Student Name",
+    profileInitials: user?.first_name && user?.last_name 
+      ? `${user.first_name[0]}${user.last_name[0]}` 
+      : user?.name 
+        ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2) 
+        : "ST",
+    level: user?.level || "600",
+    courseOfStudy: user?.department || "Science Education",
+    studyMode: user?.studyMode || "Full Time",
+    currentSession: user?.currentSession || "2024/2025",
+    currentSemester: user?.currentSemester || "FIRST SEMESTER"
   };
 
   return (
@@ -24,8 +38,20 @@ const DashboardHeader = () => {
           <Menu className="text-gray-600" size={24} />
         </div>
         
-        <div className="hidden md:block">
-          {/* Empty space where logo would be on desktop */}
+        {/* Academic Info - visible on larger screens */}
+        <div className="hidden md:flex items-center space-x-6">
+          <div className="text-sm">
+            <span className="text-gray-500">Session:</span>
+            <span className="ml-1 font-medium text-gray-800">{studentInfo.currentSession}</span>
+          </div>
+          <div className="text-sm">
+            <span className="text-gray-500">Semester:</span>
+            <span className="ml-1 font-medium text-gray-800">{studentInfo.currentSemester}</span>
+          </div>
+          <div className="text-sm">
+            <span className="text-gray-500">Level:</span>
+            <span className="ml-1 font-medium text-gray-800">{studentInfo.level} Level</span>
+          </div>
         </div>
         
         <div className="flex items-center ml-auto">
@@ -34,7 +60,13 @@ const DashboardHeader = () => {
               <div className="flex items-center">
                 <div className="text-right mr-3">
                   <h2 className="font-medium text-gray-800">{studentInfo.name}</h2>
-                  <p className="text-sm text-gray-500 flex items-center">Profile <span className="ml-1">▼</span></p>
+                  <div className="text-xs text-gray-500">
+                    <div>{studentInfo.courseOfStudy}</div>
+                    <div className="flex items-center">
+                      <span>{studentInfo.studyMode}</span>
+                      <span className="ml-1">▼</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-green-200 text-green-800 rounded-full w-10 h-10 flex items-center justify-center font-medium cursor-pointer">
                   {studentInfo.profileInitials}

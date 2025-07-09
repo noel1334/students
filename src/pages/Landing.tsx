@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Calendar } from 'lucide-react';
+import { ArrowRight, Calendar, BookOpen, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import UserAvatar from '@/components/UserAvatar';
 
@@ -26,6 +26,9 @@ const Landing = () => {
   // Get current session and semester
   const currentSession = user?.currentSession || '2024/2025 SESSION';
   const currentSemester = user?.currentSemester || 'FIRST SEMESTER';
+  const courseOfStudy = user?.department || 'Science Education';
+  const studyMode = user?.studyMode || 'Full Time';
+  const level = user?.level || '600';
 
   console.log('Landing page user data:', user);
 
@@ -35,11 +38,26 @@ const Landing = () => {
       <div className="max-w-3xl mx-auto py-10 px-6">
         <div className="bg-white rounded-lg shadow-lg text-gray-800">
           {/* Semester Info */}
-          <div className="p-4 border-b flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-gray-600" />
-            <span className="text-sm font-medium uppercase">
-              {currentSemester}, {currentSession}
-            </span>
+          <div className="p-4 border-b">
+            <div className="flex items-center gap-2 mb-2">
+              <Calendar className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium uppercase">
+                {currentSemester}, {currentSession}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-1">
+                <BookOpen className="w-4 h-4" />
+                <span>{courseOfStudy}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{studyMode}</span>
+              </div>
+              <div>
+                <span className="font-medium">{level} Level</span>
+              </div>
+            </div>
           </div>
 
           {/* Profile Section */}
@@ -53,13 +71,12 @@ const Landing = () => {
             <h2 className="text-2xl font-bold">{fullName}</h2>
             <p className="text-gray-600 mb-2">{user?.email}</p>
             
-            <p className="text-gray-600 flex items-center gap-2">
-              <span>Full Time</span>
-              <span>•</span>
-              <span>{user?.department || 'Science Education'}</span>
-              <span>•</span>
-              <span>{user?.level || '600'} Level</span>
-            </p>
+            <div className="text-center">
+              <p className="text-gray-600 mb-1">{courseOfStudy}</p>
+              <p className="text-gray-500 text-sm">
+                {studyMode} • {level} Level
+              </p>
+            </div>
 
             <Button 
               className="w-full mt-6 bg-[#1a4aa6] hover:bg-[#0f3c8c] text-white"
