@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Base URL for your backend API - use a fallback for browser environment
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api/v1';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -70,6 +70,7 @@ export default api;
 export const endpoints = {
   auth: {
     login: '/auth/login',
+    studentLogin: '/auth/student/login',
     register: '/auth/register',
     logout: '/auth/logout',
     refresh: '/auth/refresh',

@@ -2,11 +2,13 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import api, { endpoints } from '@/config/api';
-import { AuthApiService, LoginRequest, RegisterRequest } from '@/types/AuthApiService';
 
 interface User {
   id: string;
-  email: string;
+  regNo?: string;
+  jambRegNo?: string;
+  name?: string;
+  email?: string;
   first_name?: string;
   last_name?: string;
 }
@@ -14,7 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (identifier: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string, studentNumber: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -26,9 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  // Initialize AuthApiService
-  const authService = new AuthApiService(api.defaults.baseURL || 'http://localhost:3001/api');
-
   useEffect(() => {
     // Check for existing session
     const checkAuth = async () => {
@@ -37,21 +36,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (token && savedUser) {
         try {
-          // Verify token is still valid by making a request to profile endpoint
-          const response = await api.get(endpoints.auth.profile);
-          const userData = response.data;
+          // Set the authorization header
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           
-          setUser({
-            id: userData.id,
-            email: userData.email,
-            first_name: userData.first_name,
-            last_name: userData.last_name
-          });
+          // For now, trust the saved user data - you could verify with a profile endpoint later
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
         } catch (error) {
           // Token is invalid, clear storage
           localStorage.removeItem('authToken');
           localStorage.removeItem('refreshToken');
           localStorage.removeItem('currentUser');
+          delete api.defaults.headers.common['Authorization'];
           setUser(null);
         }
       }
@@ -61,25 +57,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
     try {
-      const credentials: LoginRequest = { email, password };
-      const response = await authService.login(credentials);
-
-      // Store auth data
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
-
-      setUser(response.user);
-
-      toast({
-        title: "Login successful",
-        description: "Welcome back!",
+      console.log('Attempting login with:', { identifier });
+      
+      const response = await api.post('/auth/student/login', {
+        identifier,
+        password,
       });
+
+      console.log('Login response:', response.data);
+
+      if (response.data.status === 'success' && response.data.data) {
+        const { token, student } = response.data.data;
+
+        // Store auth data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(student));
+
+        // Set authorization header for future requests
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        setUser(student);
+
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+      } else {
+        throw new Error('Invalid response format');
+      }
     } catch (error: any) {
+      console.error('Login error:', error);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          "An error occurred during login";
+      
       toast({
         title: "Login failed",
-        description: error.message || "An error occurred during login",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -94,31 +111,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     studentNumber: string
   ) => {
     try {
-      const userData: RegisterRequest = {
+      const response = await api.post('/auth/register', {
         email,
         password,
         firstName,
         lastName,
         studentNumber
-      };
-
-      const response = await authService.register(userData);
-
-      // Store auth data
-      localStorage.setItem('authToken', response.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.user));
-
-      setUser(response.user);
-
-      toast({
-        title: "Account created successfully",
-        description: "Welcome to the platform!",
-        variant: "default",
       });
+
+      if (response.data.status === 'success' && response.data.data) {
+        const { token, user: userData } = response.data.data;
+
+        // Store auth data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+
+        // Set authorization header for future requests
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+        setUser(userData);
+
+        toast({
+          title: "Account created successfully",
+          description: "Welcome to the platform!",
+          variant: "default",
+        });
+      }
     } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 
+                          error.message || 
+                          "An error occurred during sign up";
+      
       toast({
         title: "Sign up failed",
-        description: error.message || "An error occurred during sign up",
+        description: errorMessage,
         variant: "destructive",
       });
       throw error;
@@ -127,29 +153,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
-      await authService.logout();
-      
+      await api.post('/auth/logout');
+    } catch (error) {
+      // Even if logout fails on server, clear local data
+      console.error('Logout error:', error);
+    } finally {
       // Clear local storage
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('currentUser');
+      
+      // Remove authorization header
+      delete api.defaults.headers.common['Authorization'];
       
       setUser(null);
       
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
-      });
-    } catch (error: any) {
-      // Even if logout fails on server, clear local data
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('currentUser');
-      setUser(null);
-      
-      toast({
-        title: "Logged out",
-        description: "You have been logged out",
       });
     }
   };

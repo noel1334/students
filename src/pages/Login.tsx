@@ -10,22 +10,22 @@ import { Eye, EyeOff, LogIn } from 'lucide-react';
 const Login = () => {
   console.log('Login component rendering...');
   
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { signIn } = useAuth();
 
-  console.log('Login component state:', { email, password, isLoading });
+  console.log('Login component state:', { identifier, password, isLoading });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login form submitted with:', { email, password });
+    console.log('Login form submitted with:', { identifier, password });
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
+      await signIn(identifier, password);
       // Redirect to home page after successful login
       navigate('/');
     } catch (error) {
@@ -54,13 +54,13 @@ const Login = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Registration Number / JAMB Number</Label>
               <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                id="identifier"
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter your RegNo or JAMB Number"
                 required
                 className="mt-1"
               />
