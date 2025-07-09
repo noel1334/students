@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import api, { endpoints } from '@/config/api';
@@ -17,6 +16,7 @@ interface User {
   level?: string;
   currentSession?: string;
   currentSemester?: string;
+  studyMode?: string;
 }
 
 interface AuthContextType {
