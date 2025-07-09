@@ -1,22 +1,38 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+// src/contexts/AuthContext.tsx
+
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import api, { endpoints } from '@/config/api';
+// IMPORTANT: Make sure StudentProfileData interface correctly represents what getStudentProfile returns.
+// If getStudentProfile returns { student: actualStudentObject }, then StudentProfileData should be { student: ActualStudentDetailsInterface }
+// For now, let's assume StudentProfileData is the 'actualStudentObject' directly,
+// and we'll adjust the API service call to destructure it.
+import { getStudentProfile, StudentProfileData as BackendStudentData } from '@/services/studentServicesApi';
+
 
 interface User {
   id: string;
   regNo?: string;
   jambRegNo?: string;
-  name?: string;
+  name?: string; // Student's full name (e.g., "Grace Eneche")
   email?: string;
-  first_name?: string;
-  last_name?: string;
-  profileImage?: string;
-  department?: string;
-  program?: string;
-  level?: string;
-  currentSession?: string;
-  currentSemester?: string;
-  studyMode?: string;
+  
+  profileImage?: string | null; // Final resolved image URL, or null
+  avatarLetter?: string; // First letter of student name for fallback
+  
+  departmentName?: string;
+  programName?: string;
+  studyMode?: string; // e.g., "FULL_TIME", "PART_TIME"
+  currentLevelName?: string; // e.g., "100 Level", "200 Level"
+  currentLevelValue?: number; // e.g., 100, 200
+  currentSeasonName?: string; // e.g., "2024/2025 Academic Session"
+  currentSemesterName?: string; // e.g., "First Semester"
+  currentSemesterType?: string; // e.g., "FIRST"
+
+  isActive?: boolean;
+  isGraduated?: boolean;
+  yearOfAdmission?: number;
+  entryMode?: string;
 }
 
 interface AuthContextType {
@@ -24,7 +40,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (identifier: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, firstName: string, lastName: string, studentNumber: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  signOut: (showToast?: boolean) => Promise<void>;
   fetchUserProfile: () => Promise<void>;
 }
 
@@ -35,89 +51,121 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchUserProfile = async () => {
+  const signOut = useCallback(async (showToast: boolean = true) => {
+    try {
+      await api.post(endpoints.auth.logout);
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+    } finally {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('currentUser');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      setLoading(false);
+      if (showToast) {
+        toast({
+          title: "Logged out",
+          description: "You have been successfully logged out",
+        });
+      }
+    }
+  }, [toast]);
+
+
+  const fetchUserProfile = useCallback(async () => {
+    setLoading(true);
     try {
       console.log('Fetching user profile...');
-      const response = await api.get('/student/me');
-      console.log('Profile response:', response.data);
+      // This response.data is { student: {...} }
+      const response = await getStudentProfile(); 
+      console.log('Profile response data:', response.data);
       
-      if (response.data.status === 'success' && response.data.data) {
-        const profileData = response.data.data;
-        setUser(prevUser => ({
-          ...prevUser,
-          ...profileData,
-          currentSession: profileData.currentSession || '2024/2025',
-          currentSemester: profileData.currentSemester || 'FIRST SEMESTER'
-        }));
-        
-        // Update localStorage with complete user data
-        localStorage.setItem('currentUser', JSON.stringify({
-          ...user,
-          ...profileData
-        }));
+      if (response.status === 'success' && response.data && response.data.student) { // <-- Access response.data.student
+        const profileData = response.data.student; // <-- This is the actual student object now!
+
+        const transformedProfile: User = {
+          id: profileData.id,
+          regNo: profileData.regNo,
+          jambRegNo: profileData.jambRegNo,
+          name: profileData.name,
+          email: profileData.email,
+          profileImage: profileData.profileImg,
+          avatarLetter: profileData.avatarLetter,
+          
+          // Now these properties are correctly accessed directly from profileData
+          departmentName: profileData.department?.name,
+          programName: profileData.program?.name,
+          studyMode: profileData.program?.modeOfStudy,
+          currentLevelName: profileData.currentLevel?.name,
+          currentLevelValue: profileData.currentLevel?.value,
+          currentSeasonName: profileData.currentSeason?.name,
+          currentSemesterName: profileData.currentSemester?.name,
+          currentSemesterType: profileData.currentSemester?.type,
+
+          isActive: profileData.isActive,
+          isGraduated: profileData.isGraduated,
+          yearOfAdmission: profileData.yearOfAdmission,
+          entryMode: profileData.entryMode,
+        };
+
+        setUser(transformedProfile);
+        localStorage.setItem('currentUser', JSON.stringify(transformedProfile));
+      } else {
+        console.warn('API returned success but no valid student profile data. Clearing user session.', response);
+        signOut(false);
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      // Don't show error toast for profile fetch failure
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        signOut(false);
+      } else {
+        console.error('Non-auth related error during profile fetch. Signing out.');
+        signOut(false);
+      }
+    } finally {
+      setLoading(false); 
     }
-  };
+  }, [signOut]);
+
 
   useEffect(() => {
-    // Check for existing session
-    const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      const savedUser = localStorage.getItem('currentUser');
+    const token = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('currentUser');
 
-      if (token && savedUser) {
-        try {
-          // Set the authorization header
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
-          // Parse saved user data
-          const userData = JSON.parse(savedUser);
-          setUser(userData);
-          
-          // Fetch updated profile data
-          await fetchUserProfile();
-        } catch (error) {
-          // Token is invalid, clear storage
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('currentUser');
-          delete api.defaults.headers.common['Authorization'];
-          setUser(null);
-        }
+    if (token && savedUser) {
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        setUser(JSON.parse(savedUser));
+        fetchUserProfile(); 
+      } catch (e) {
+        console.error("Failed to parse saved user from localStorage or initial setup:", e);
+        signOut(false);
       }
+    } else {
+      setUser(null);
       setLoading(false);
-    };
+    }
+  }, [fetchUserProfile, signOut]);
 
-    checkAuth();
-  }, []);
 
   const signIn = async (identifier: string, password: string) => {
+    setLoading(true);
     try {
       console.log('Attempting login with:', { identifier });
-      
-      const response = await api.post('/auth/student/login', {
+      const response = await api.post(endpoints.auth.studentLogin, {
         identifier,
         password,
       });
 
       console.log('Login response:', response.data);
 
-      if (response.data.status === 'success' && response.data.data) {
-        const { token, student } = response.data.data;
+      if (response.status === 200 && response.data.status === 'success' && response.data.data) {
+        const { token } = response.data.data;
 
-        // Store auth data
         localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUser', JSON.stringify(student));
-
-        // Set authorization header for future requests
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-        setUser(student);
-
-        // Fetch complete profile data
+        
         await fetchUserProfile();
 
         toast({
@@ -125,20 +173,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           description: "Welcome back!",
         });
       } else {
-        throw new Error('Invalid response format');
+        throw new Error('Invalid login response format or credentials.');
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      
       const errorMessage = error.response?.data?.message || 
                           error.message || 
                           "An error occurred during login";
-      
       toast({
         title: "Login failed",
         description: errorMessage,
         variant: "destructive",
       });
+      setLoading(false); 
       throw error;
     }
   };
@@ -150,8 +197,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastName: string, 
     studentNumber: string
   ) => {
+    setLoading(true);
     try {
-      const response = await api.post('/auth/register', {
+      const response = await api.post(endpoints.auth.register, {
         email,
         password,
         firstName,
@@ -159,61 +207,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         studentNumber
       });
 
-      if (response.data.status === 'success' && response.data.data) {
-        const { token, user: userData } = response.data.data;
+      if (response.status === 200 && response.data.status === 'success' && response.data.data) {
+        const { token } = response.data.data;
 
-        // Store auth data
         localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUser', JSON.stringify(userData));
-
-        // Set authorization header for future requests
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        setUser(userData);
+        await fetchUserProfile();
 
         toast({
           title: "Account created successfully",
           description: "Welcome to the platform!",
           variant: "default",
         });
+      } else {
+        throw new Error('Invalid signup response format.');
       }
     } catch (error: any) {
+      console.error('Sign up error:', error);
       const errorMessage = error.response?.data?.message || 
                           error.message || 
                           "An error occurred during sign up";
-      
       toast({
         title: "Sign up failed",
         description: errorMessage,
         variant: "destructive",
       });
+      setLoading(false);
       throw error;
     }
   };
 
-  const signOut = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (error) {
-      // Even if logout fails on server, clear local data
-      console.error('Logout error:', error);
-    } finally {
-      // Clear local storage
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('currentUser');
-      
-      // Remove authorization header
-      delete api.defaults.headers.common['Authorization'];
-      
-      setUser(null);
-      
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
-    }
-  };
 
   const value = {
     user,

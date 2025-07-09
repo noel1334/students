@@ -1,37 +1,48 @@
+// src/components/Landing.tsx
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Calendar, BookOpen, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import UserAvatar from '@/components/UserAvatar';
+import UserAvatar from '@/components/UserAvatar'; // Ensure this component exists
 
 const Landing = () => {
   const navigate = useNavigate();
-  const { user, fetchUserProfile } = useAuth();
+  const { user, loading } = useAuth(); // Only need 'user' and 'loading' states
 
+  // This useEffect primarily handles redirection if not authenticated
+  // It does NOT call fetchUserProfile, avoiding the loop.
   useEffect(() => {
-    // Fetch fresh user profile when component mounts
-    if (user) {
-      fetchUserProfile();
+    // If not currently loading auth status AND user is null, redirect to login
+    if (!loading && !user) {
+      navigate('/login'); // Redirect to your login page
     }
-  }, []);
-  
-  // Extract first name from user data if available
-  const firstName = user?.first_name || user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
-  const fullName = user?.first_name && user?.last_name 
-    ? `${user.first_name} ${user.last_name}` 
-    : user?.name || 'Student Name';
+  }, [loading, user, navigate]); // Dependencies: loading status, user object, navigate function
 
-  // Get current session and semester
-  const currentSession = user?.currentSession || '2024/2025 SESSION';
-  const currentSemester = user?.currentSemester || 'FIRST SEMESTER';
-  const courseOfStudy = user?.department || 'Science Education';
-  const studyMode = user?.studyMode || 'Full Time';
-  const level = user?.level || '600';
+  // Data extraction and fallbacks
+  const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Student';
+  const fullName = user?.name || 'Student Name';
+  const studentEmail = user?.email || 'N/A Email';
 
-  console.log('Landing page user data:', user);
+  // Use optional chaining for nested data and provide fallbacks
+  const currentSession = user?.currentSeasonName || 'N/A SESSION';
+  const currentSemester = user?.currentSemesterName || 'N/A SEMESTER';
+  const departmentName = user?.departmentName || 'N/A Department';
+  const programName = user?.programName || 'N/A Program';
+  const studyMode = user?.studyMode?.replace(/_/g, ' ') || 'N/A Mode'; // Format enum to readable string
+  const level = user?.currentLevelName || 'N/A Level';
 
+  // Show a loading indicator or null while user data is being fetched
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen bg-[#1a4aa6] text-white flex items-center justify-center">
+        <p>Loading user data...</p> {/* Replace with a proper spinner/skeleton loader */}
+      </div>
+    );
+  }
+
+  // Once user data is loaded, render the content
   return (
     <div className="min-h-screen bg-[#1a4aa6] text-white">
       {/* Main Content */}
@@ -48,14 +59,14 @@ const Landing = () => {
             <div className="flex items-center gap-4 text-sm text-gray-600">
               <div className="flex items-center gap-1">
                 <BookOpen className="w-4 h-4" />
-                <span>{courseOfStudy}</span>
+                <span>{programName}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
                 <span>{studyMode}</span>
               </div>
               <div>
-                <span className="font-medium">{level} Level</span>
+                <span className="font-medium">{level}</span>
               </div>
             </div>
           </div>
@@ -63,18 +74,23 @@ const Landing = () => {
           {/* Profile Section */}
           <div className="p-8 flex flex-col items-center">
             <UserAvatar 
-              user={user || {}} 
+              user={{ 
+                profileImage: user.profileImage, 
+                avatarLetter: user.avatarLetter, 
+                name: user.name // Pass name as fallback if UserAvatar needs it
+              }} 
               size="xl" 
               className="mb-4"
             />
             
             <h2 className="text-2xl font-bold">{fullName}</h2>
-            <p className="text-gray-600 mb-2">{user?.email}</p>
+            <p className="text-gray-600 mb-2">{studentEmail}</p>
             
             <div className="text-center">
-              <p className="text-gray-600 mb-1">{courseOfStudy}</p>
+              <p className="text-gray-600 mb-1">{departmentName}</p>
+              <p className="text-gray-600 mb-1">{programName}</p>
               <p className="text-gray-500 text-sm">
-                {studyMode} • {level} Level
+                {studyMode} • {level}
               </p>
             </div>
 
