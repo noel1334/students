@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseCard from '@/components/CourseCard';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Select,
   SelectContent,
@@ -23,11 +24,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getMyRegistrableCourses, registerForCourses, getMyRegistrations, Course, CourseRegistration } from '@/services/courseApi';
+import { 
+  getMyRegistrableCourses, 
+  registerForCourses, 
+  getMyRegistrations, 
+  getAllSeasons,
+  getAllSemesters,
+  getAllLevels,
+  Course, 
+  CourseRegistration,
+  Season,
+  Semester,
+  Level
+} from '@/services/courseApi';
 
 const Courses = () => {
-  const [session, setSession] = useState('2024/2025');
-  const [semester, setSemester] = useState('First Semester');
+  const { user } = useAuth();
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
+  const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
+  const [selectedLevelId, setSelectedLevelId] = useState<string>('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -35,10 +50,39 @@ const Courses = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch registrable courses
+  // Initialize with current user's data
+  useEffect(() => {
+    if (user) {
+      // Set default values from user's current data
+      setSelectedSeasonId(user.currentSeasonId || '');
+      setSelectedSemesterId(user.currentSemesterId || '');
+      setSelectedLevelId(user.currentLevelId || '');
+    }
+  }, [user]);
+
+  // Fetch seasons
+  const { data: seasonsData } = useQuery({
+    queryKey: ['seasons'],
+    queryFn: getAllSeasons,
+  });
+
+  // Fetch semesters
+  const { data: semestersData } = useQuery({
+    queryKey: ['semesters'],
+    queryFn: getAllSemesters,
+  });
+
+  // Fetch levels
+  const { data: levelsData } = useQuery({
+    queryKey: ['levels'],
+    queryFn: getAllLevels,
+  });
+
+  // Fetch registrable courses (only when we have the required IDs)
   const { data: registrableCoursesData, isLoading: isLoadingCourses, error: coursesError } = useQuery({
-    queryKey: ['registrable-courses'],
-    queryFn: getMyRegistrableCourses,
+    queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
+    queryFn: () => getMyRegistrableCourses(selectedSeasonId, selectedSemesterId, selectedLevelId),
+    enabled: !!selectedSeasonId && !!selectedSemesterId,
   });
 
   // Fetch current registrations
@@ -68,8 +112,16 @@ const Courses = () => {
     },
   });
 
+  const seasons = seasonsData?.data?.seasons || [];
+  const semesters = semestersData?.data?.semesters || [];
+  const levels = levelsData?.data?.levels || [];
   const courses = registrableCoursesData?.data?.courses || [];
   const registrations = registrationsData?.data?.registrations || [];
+
+  // Get current selections for display
+  const currentSeason = seasons.find(s => s.id === selectedSeasonId);
+  const currentSemester = semesters.find(s => s.id === selectedSemesterId);
+  const currentLevel = levels.find(l => l.id === selectedLevelId);
 
   // Check if user has existing registrations
   useEffect(() => {
@@ -194,9 +246,9 @@ const Courses = () => {
             <h1 className="text-xl font-bold mb-1">Courses</h1>
             {!isRegistered && (
               <div className="text-sm text-gray-500">
-                <p>2024/25</p>
-                <p className="font-medium text-gray-800">600 Level</p>
-                <p>{semester}</p>
+                <p>{currentSeason?.name || 'Select Season'}</p>
+                <p className="font-medium text-gray-800">{currentLevel?.name || 'Select Level'}</p>
+                <p>{currentSemester?.name || 'Select Semester'}</p>
               </div>
             )}
           </div>
@@ -207,25 +259,44 @@ const Courses = () => {
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
                     <div className="mb-2">
-                      <Select value={session} onValueChange={setSession}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select session" />
+                      <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select season" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="2023/2024">2023/2024</SelectItem>
-                          <SelectItem value="2024/2025">2024/2025</SelectItem>
-                          <SelectItem value="2025/2026">2025/2026</SelectItem>
+                          {seasons.map(season => (
+                            <SelectItem key={season.id} value={season.id}>
+                              {season.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="mb-2">
+                      <Select value={selectedLevelId} onValueChange={setSelectedLevelId}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {levels.map(level => (
+                            <SelectItem key={level.id} value={level.id}>
+                              {level.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Select value={semester} onValueChange={setSemester}>
-                        <SelectTrigger className="w-[180px]">
+                      <Select value={selectedSemesterId} onValueChange={setSelectedSemesterId}>
+                        <SelectTrigger className="w-[200px]">
                           <SelectValue placeholder="Select semester" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="First Semester">First Semester</SelectItem>
-                          <SelectItem value="Second Semester">Second Semester</SelectItem>
+                          {semesters.map(semester => (
+                            <SelectItem key={semester.id} value={semester.id}>
+                              {semester.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -268,48 +339,72 @@ const Courses = () => {
             <>
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-                  <div>
-                    <div className="mb-2">
-                      <Select value={session} onValueChange={setSession}>
-                        <SelectTrigger className="w-[180px]">
-                          <SelectValue placeholder="Select session" />
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Season</label>
+                      <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select season" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="2023/2024">2023/2024</SelectItem>
-                          <SelectItem value="2024/2025">2024/2025</SelectItem>
-                          <SelectItem value="2025/2026">2025/2026</SelectItem>
+                          {seasons.map(season => (
+                            <SelectItem key={season.id} value={season.id}>
+                              {season.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Select value={semester} onValueChange={setSemester}>
-                        <SelectTrigger className="w-[180px]">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                      <Select value={selectedLevelId} onValueChange={setSelectedLevelId}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Select level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {levels.map(level => (
+                            <SelectItem key={level.id} value={level.id}>
+                              {level.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
+                      <Select value={selectedSemesterId} onValueChange={setSelectedSemesterId}>
+                        <SelectTrigger className="w-[200px]">
                           <SelectValue placeholder="Select semester" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="First Semester">First Semester</SelectItem>
-                          <SelectItem value="Second Semester">Second Semester</SelectItem>
+                          {semesters.map(semester => (
+                            <SelectItem key={semester.id} value={semester.id}>
+                              {semester.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                 </div>
                 
-                <div className="space-y-4">
-                  {displayCourses.map(course => (
-                    <CourseCard 
-                      key={course.code}
-                      code={course.code}
-                      title={course.title}
-                      units={course.units}
-                      isSelected={selectedCourses.includes(course.code)}
-                      onSelect={() => handleCourseSelect(course.code)}
-                      isElective={course.isElective}
-                      isCarryOver={course.isCarryOver}
-                      isRegistered={false}
-                    />
-                  ))}
-                </div>
+                {selectedSeasonId && selectedSemesterId && (
+                  <div className="space-y-4">
+                    {displayCourses.map(course => (
+                      <CourseCard 
+                        key={course.code}
+                        code={course.code}
+                        title={course.title}
+                        units={course.units}
+                        isSelected={selectedCourses.includes(course.code)}
+                        onSelect={() => handleCourseSelect(course.code)}
+                        isElective={course.isElective}
+                        isCarryOver={course.isCarryOver}
+                        isRegistered={false}
+                      />
+                    ))}
+                  </div>
+                )}
                 
                 {selectedCourses.length > 0 && (
                   <div className="mt-6 flex justify-center">
@@ -335,7 +430,7 @@ const Courses = () => {
               <DialogHeader>
                 <DialogTitle>Confirm Course Registration</DialogTitle>
                 <DialogDescription>
-                  You are about to register {selectedCourses.length} courses for {session} {semester}.
+                  You are about to register {selectedCourses.length} courses for {currentSeason?.name} {currentSemester?.name}.
                   This action cannot be undone.
                 </DialogDescription>
               </DialogHeader>
