@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Menu, Settings, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import UserAvatar from '@/components/UserAvatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,9 +66,14 @@ const DashboardHeader = () => {
                     </div>
                   </div>
                 </div>
-                <div className="bg-green-200 text-green-800 rounded-full w-10 h-10 flex items-center justify-center font-medium cursor-pointer">
-                  {studentInfo.profileInitials}
-                </div>
+                <UserAvatar 
+                  user={{ 
+                    profileImage: user?.profileImage, 
+                    name: user?.name
+                  }} 
+                  size="md" 
+                  className="cursor-pointer"
+                />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-white">
