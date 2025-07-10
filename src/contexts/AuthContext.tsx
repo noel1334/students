@@ -1,3 +1,4 @@
+
 // src/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -102,11 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           studyMode: profileData.program?.modeOfStudy,
           currentLevelName: profileData.currentLevel?.name,
           currentLevelValue: profileData.currentLevel?.value,
-          currentLevelId: profileData.currentLevel?.id,
+          currentLevelId: profileData.currentLevel?.id?.toString(), // Convert to string
           currentSeasonName: profileData.currentSeason?.name,
-          currentSeasonId: profileData.currentSeason?.id,
+          currentSeasonId: profileData.currentSeason?.id?.toString(), // Convert to string
           currentSemesterName: profileData.currentSemester?.name,
-          currentSemesterId: profileData.currentSemester?.id,
+          currentSemesterId: profileData.currentSemester?.id?.toString(), // Convert to string
           currentSemesterType: profileData.currentSemester?.type,
 
           isActive: profileData.isActive,
