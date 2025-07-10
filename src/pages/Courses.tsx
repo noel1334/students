@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseCard from '@/components/CourseCard';
+import { useToast } from '@/hooks/use-toast';
 import {
   Select,
   SelectContent,
@@ -20,6 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getMyRegistrableCourses, registerForCourses, getMyRegistrations, Course, CourseRegistration } from '@/services/courseApi';
 
 const Courses = () => {
   const [session, setSession] = useState('2024/2025');
@@ -28,17 +32,51 @@ const Courses = () => {
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  // Sample courses data
-  const courses = [
-    { code: 'SIWES', title: 'Students\' Industrial Work Experience Scheme', units: 8, isElective: false, isCarryOver: false },
-    { code: 'CS511', title: 'Design and Analysis of Algorithm', units: 3, isElective: false, isCarryOver: false },
-    { code: 'CS512', title: 'Compiler Construction', units: 3, isElective: false, isCarryOver: false },
-    { code: 'CS513', title: 'Fundamentals of Software Engineering', units: 3, isElective: false, isCarryOver: false },
-    { code: 'CS515', title: 'Advanced Computer Programming', units: 3, isElective: false, isCarryOver: false },
-    { code: 'EDU571', title: 'Educational administration and planning', units: 3, isElective: true, isCarryOver: false },
-    { code: 'EDU581', title: 'Measurement and evaluation', units: 3, isElective: true, isCarryOver: false },
-  ];
+  // Fetch registrable courses
+  const { data: registrableCoursesData, isLoading: isLoadingCourses, error: coursesError } = useQuery({
+    queryKey: ['registrable-courses'],
+    queryFn: getMyRegistrableCourses,
+  });
+
+  // Fetch current registrations
+  const { data: registrationsData, isLoading: isLoadingRegistrations } = useQuery({
+    queryKey: ['my-registrations'],
+    queryFn: getMyRegistrations,
+  });
+
+  // Course registration mutation
+  const registerMutation = useMutation({
+    mutationFn: registerForCourses,
+    onSuccess: (data) => {
+      toast({
+        title: "Registration Successful",
+        description: `Successfully registered for ${selectedCourses.length} courses.`,
+      });
+      setIsRegistered(true);
+      setShowRegistrationConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Registration Failed",
+        description: error?.response?.data?.message || "Failed to register for courses. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const courses = registrableCoursesData?.data?.courses || [];
+  const registrations = registrationsData?.data?.registrations || [];
+
+  // Check if user has existing registrations
+  useEffect(() => {
+    if (registrations.length > 0) {
+      setIsRegistered(true);
+    }
+  }, [registrations]);
 
   const handleCourseSelect = (courseCode: string) => {
     setSelectedCourses(prev => {
@@ -76,8 +114,11 @@ const Courses = () => {
   };
 
   const handleConfirmRegistration = () => {
-    setIsRegistered(true);
-    setShowRegistrationConfirm(false);
+    const selectedCourseIds = courses
+      .filter(course => selectedCourses.includes(course.code))
+      .map(course => course.id);
+    
+    registerMutation.mutate(selectedCourseIds);
   };
 
   const handleCancelRegistration = () => {
@@ -87,14 +128,62 @@ const Courses = () => {
   const handleEditRegistration = () => {
     setIsEditing(true);
     setIsRegistered(false);
-    // Pre-populate selected courses with all courses when editing
-    setSelectedCourses(courses.map(course => course.code));
+    // Pre-populate selected courses with registered courses
+    const registeredCourses = registrations.map(reg => reg.course.code);
+    setSelectedCourses(registeredCourses);
   };
 
   const handleUpdateRegistration = () => {
-    setIsRegistered(true);
-    setIsEditing(false);
+    const selectedCourseIds = courses
+      .filter(course => selectedCourses.includes(course.code))
+      .map(course => course.id);
+    
+    registerMutation.mutate(selectedCourseIds);
   };
+
+  if (isLoadingCourses || isLoadingRegistrations) {
+    return (
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading courses...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (coursesError) {
+    return (
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <p className="text-red-600">Failed to load courses. Please try again.</p>
+                <Button 
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['registrable-courses'] })}
+                  className="mt-2"
+                >
+                  Retry
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Use registered courses if user has registrations, otherwise use registrable courses
+  const displayCourses = isRegistered ? registrations.map(reg => reg.course) : courses;
 
   return (
     <>
@@ -159,7 +248,7 @@ const Courses = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  {courses.map(course => (
+                  {displayCourses.map(course => (
                     <CourseCard 
                       key={course.code}
                       code={course.code}
@@ -207,7 +296,7 @@ const Courses = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  {courses.map(course => (
+                  {displayCourses.map(course => (
                     <CourseCard 
                       key={course.code}
                       code={course.code}
@@ -227,8 +316,12 @@ const Courses = () => {
                     <Button 
                       className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
                       onClick={isEditing ? handleUpdateRegistration : handleRegister}
+                      disabled={registerMutation.isPending}
                     >
-                      {isEditing ? 'Update Course Registration' : 'Register Selected Courses'}
+                      {registerMutation.isPending 
+                        ? 'Processing...' 
+                        : (isEditing ? 'Update Course Registration' : 'Register Selected Courses')
+                      }
                     </Button>
                   </div>
                 )}
@@ -267,8 +360,9 @@ const Courses = () => {
                 <Button 
                   className="bg-blue-700 hover:bg-blue-800"
                   onClick={handleConfirmRegistration}
+                  disabled={registerMutation.isPending}
                 >
-                  Submit Course Registration
+                  {registerMutation.isPending ? 'Registering...' : 'Submit Course Registration'}
                 </Button>
               </DialogFooter>
             </DialogContent>
