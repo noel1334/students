@@ -15,20 +15,17 @@ const DashboardHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   
+  // Use real user data with fallbacks
   const studentInfo = {
-    name: user?.first_name && user?.last_name 
-      ? `${user.first_name} ${user.last_name}` 
-      : user?.name || "Student Name",
-    profileInitials: user?.first_name && user?.last_name 
-      ? `${user.first_name[0]}${user.last_name[0]}` 
-      : user?.name 
-        ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2) 
-        : "ST",
-    level: user?.level || "600",
-    courseOfStudy: user?.department || "Science Education",
-    studyMode: user?.studyMode || "Full Time",
-    currentSession: user?.currentSession || "2024/2025",
-    currentSemester: user?.currentSemester || "FIRST SEMESTER"
+    name: user?.name || "Student Name",
+    profileInitials: user?.name 
+      ? user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+      : "ST",
+    level: user?.currentLevelName || "N/A Level",
+    courseOfStudy: user?.departmentName || "N/A Department",
+    studyMode: user?.studyMode?.replace(/_/g, ' ') || "N/A Mode",
+    currentSession: user?.currentSeasonName || "N/A Session",
+    currentSemester: user?.currentSemesterName || "N/A Semester"
   };
 
   return (
@@ -50,7 +47,7 @@ const DashboardHeader = () => {
           </div>
           <div className="text-sm">
             <span className="text-gray-500">Level:</span>
-            <span className="ml-1 font-medium text-gray-800">{studentInfo.level} Level</span>
+            <span className="ml-1 font-medium text-gray-800">{studentInfo.level}</span>
           </div>
         </div>
         

@@ -3,15 +3,19 @@ import React from 'react';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BookOpen, CreditCard, GraduationCap } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
+  const { user } = useAuth();
+
+  // Extract real data from user with fallbacks
   const studentInfo = {
-    name: "Victor",
-    level: "600 Level",
-    semester: "First Semester",
-    cgpa: "3.77",
-    registeredCourses: 0,
-    year: "2024/25"
+    name: user?.name?.split(' ')[0] || user?.email?.split('@')[0] || "Student",
+    level: user?.currentLevelName || "N/A Level",
+    semester: user?.currentSemesterName || "N/A Semester",
+    cgpa: "3.77", // This would come from API when available
+    registeredCourses: 0, // This would come from API when available
+    year: user?.currentSeasonName || "N/A Session"
   };
 
   return (
@@ -23,7 +27,7 @@ const Dashboard = () => {
           <div className="md:hidden flex items-center justify-between mb-3">
             <div>
               <p className="text-gray-600">{studentInfo.year}</p>
-              <h2 className="text-xl font-bold">{studentInfo.level} LEVEL</h2>
+              <h2 className="text-xl font-bold">{studentInfo.level}</h2>
               <p className="text-gray-600">{studentInfo.semester}</p>
             </div>
           </div>
