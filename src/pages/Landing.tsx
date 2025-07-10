@@ -1,3 +1,4 @@
+
 // src/components/Landing.tsx
 
 import React, { useEffect } from 'react';
@@ -76,8 +77,7 @@ const Landing = () => {
             <UserAvatar 
               user={{ 
                 profileImage: user.profileImage, 
-                avatarLetter: user.avatarLetter, 
-                name: user.name // Pass name as fallback if UserAvatar needs it
+                name: user.name // Pass name for initials generation
               }} 
               size="xl" 
               className="mb-4"
