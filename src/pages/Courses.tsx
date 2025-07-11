@@ -15,7 +15,19 @@ import { getAllCourses, Course } from '@/services/courseApiService';
 import { getAllSeasons, getAllSemesters, Season, Semester } from '@/services/academicPeriodsApiService';
 
 const Courses = () => {
-  const { user, loading: authLoading } = useAuth();
+  // Use auth hook with error handling
+  let user = null;
+  let authLoading = true;
+  
+  try {
+    const authContext = useAuth();
+    user = authContext.user;
+    authLoading = authContext.loading;
+  } catch (error) {
+    console.error('Auth context not available:', error);
+    authLoading = false;
+  }
+
   const { toast } = useToast();
   
   // State for courses and filters
