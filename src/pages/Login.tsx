@@ -15,17 +15,32 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  
+  // Use auth hook with error boundary
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    console.error('Auth context not available:', error);
+    // If auth context is not available, we'll handle it gracefully
+    authContext = null;
+  }
 
   console.log('Login component state:', { identifier, password, isLoading });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login form submitted with:', { identifier, password });
+    
+    if (!authContext) {
+      console.error('Auth context not available');
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      await signIn(identifier, password);
+      await authContext.signIn(identifier, password);
       // Redirect to home page after successful login
       navigate('/');
     } catch (error) {
@@ -91,7 +106,7 @@ const Login = () => {
           <Button
             type="submit"
             className="w-full py-3 bg-[#1a4aa6] hover:bg-[#0f3c8c] text-white"
-            disabled={isLoading}
+            disabled={isLoading || !authContext}
           >
             <LogIn className="mr-2 h-4 w-4" />
             {isLoading ? "Signing in..." : "Sign In"}
