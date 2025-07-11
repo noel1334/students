@@ -1,3 +1,4 @@
+
 // src/services/courseApiService.ts
 
 import api from '@/config/api'; // Assuming '@/config/api' points to your axios instance
@@ -49,18 +50,99 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
+// Interface for Level
+export interface Level {
+  id: number;
+  name: string;
+  value: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Interface for course registration
+export interface CourseRegistration {
+  id: number;
+  studentId: number;
+  courseId: number;
+  seasonId: number;
+  semesterId: number;
+  levelId: number;
+  programCourseId?: number;
+  registeredAt: string;
+  course: {
+    id: number;
+    code: string;
+    title: string;
+    creditUnit: number;
+  };
+}
+
 /**
  * Fetches courses a student is eligible to register for in a specific season and semester.
  * This function uses the comprehensive backend logic (including passed courses, carryovers, prerequisites).
  * @param seasonId The ID of the academic season.
  * @param semesterId The ID of the semester within that season.
+ * @param levelId Optional level ID for filtering courses by level.
  * @returns A promise that resolves to an ApiResponse containing RegistrableCoursesResponseData.
  */
 export const getRegistrableCourses = async (
   seasonId: number,
-  semesterId: number
+  semesterId: number,
+  levelId?: number
 ): Promise<ApiResponse<RegistrableCoursesResponseData>> => {
+  const params: any = {
+    seasonId,
+    semesterId,
+  };
+  
+  if (levelId) {
+    params.levelId = levelId;
+  }
+  
   const response = await api.get('/students/me/registrable-courses', {
+    params,
+  });
+  return response.data;
+};
+
+/**
+ * Fetches all levels from the backend.
+ * @returns A promise that resolves to an ApiResponse containing an array of Level objects.
+ */
+export const getAllLevels = async (): Promise<ApiResponse<{ items: Level[] }>> => {
+  const response = await api.get('/levels');
+  return response.data;
+};
+
+/**
+ * Register student for selected courses.
+ * @param registrations Array of course registration data
+ * @returns A promise that resolves to an ApiResponse.
+ */
+export const registerForCourses = async (registrations: {
+  courseId: number;
+  seasonId: number;
+  semesterId: number;
+  levelId: number;
+  programCourseId?: number;
+}[]): Promise<ApiResponse<any>> => {
+  const response = await api.post('/student-course-registrations', {
+    registrations,
+  });
+  return response.data;
+};
+
+/**
+ * Get student's current course registrations.
+ * @param seasonId The ID of the academic season.
+ * @param semesterId The ID of the semester within that season.
+ * @returns A promise that resolves to an ApiResponse containing registrations.
+ */
+export const getMyRegistrations = async (
+  seasonId: number,
+  semesterId: number
+): Promise<ApiResponse<{ items: CourseRegistration[] }>> => {
+  const response = await api.get('/student-course-registrations', {
     params: {
       seasonId,
       semesterId,
@@ -68,19 +150,3 @@ export const getRegistrableCourses = async (
   });
   return response.data;
 };
-
-// You can add other course-related API calls here if needed, e.g., for `getMyProgramCurriculumCourses`
-// export const getProgramCurriculumCourses = async (
-//   seasonId: number,
-//   semesterId: number,
-//   levelId?: number
-// ): Promise<ApiResponse<ProgramCurriculumResponseData>> => {
-//   const response = await api.get('/students/me/program-curriculum-courses', {
-//     params: {
-//       seasonId,
-//       semesterId,
-//       levelId,
-//     },
-//   });
-//   return response.data;
-// };
