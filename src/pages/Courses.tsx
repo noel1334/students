@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -229,7 +228,7 @@ const Courses = () => {
                     }}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder={user?.currentSeasonName || "Select season"} />
+                      <SelectValue placeholder="Select season" />
                     </SelectTrigger>
                     <SelectContent>
                       {seasons.map(season => (
@@ -249,7 +248,7 @@ const Courses = () => {
                     disabled={!selectedSeasonId || semestersLoading}
                   >
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder={user?.currentSemesterName || "Select semester"} />
+                      <SelectValue placeholder="Select semester" />
                     </SelectTrigger>
                     <SelectContent>
                       {semesters.map(semester => (
@@ -268,7 +267,7 @@ const Courses = () => {
                     onValueChange={(value) => setSelectedLevelId(parseInt(value))}
                   >
                     <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder={user?.currentLevelName || "Select level"} />
+                      <SelectValue placeholder="Select level" />
                     </SelectTrigger>
                     <SelectContent>
                       {levels.map(level => (
