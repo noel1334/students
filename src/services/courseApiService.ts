@@ -22,6 +22,33 @@ export interface RegistrableCourse {
   programCourseId?: number | null; // ID of the ProgramCourse mapping, if applicable
 }
 
+// Interface for a general course (used in the Courses page)
+export interface Course {
+  id: number;
+  code: string;
+  title: string;
+  description?: string;
+  creditUnits: number;
+  type: 'CORE' | 'ELECTIVE' | 'GENERAL';
+  maxStudents?: number;
+  isActive: boolean;
+  prerequisites?: string[];
+  level?: {
+    id: number;
+    name: string;
+    value: number;
+  };
+  semester?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  season?: {
+    id: number;
+    name: string;
+  };
+}
+
 // Interface for the data section of the API response for registrable courses
 export interface RegistrableCoursesResponseData {
   student: {
@@ -100,6 +127,31 @@ export const getRegistrableCourses = async (
   }
   
   const response = await api.get('/students/me/registrable-courses', {
+    params,
+  });
+  return response.data;
+};
+
+/**
+ * Fetches all courses based on filters.
+ * @param filters Object containing seasonId, semesterId, and optional levelId
+ * @returns A promise that resolves to an ApiResponse containing an array of Course objects.
+ */
+export const getAllCourses = async (filters: {
+  seasonId: number;
+  semesterId: number;
+  levelId?: number;
+}): Promise<ApiResponse<{ items: Course[] }>> => {
+  const params: any = {
+    seasonId: filters.seasonId,
+    semesterId: filters.semesterId,
+  };
+  
+  if (filters.levelId) {
+    params.levelId = filters.levelId;
+  }
+  
+  const response = await api.get('/courses', {
     params,
   });
   return response.data;
