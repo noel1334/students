@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -36,7 +37,7 @@ const Courses = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for selected filters - initialize with user's current values if available
+  // Initialize with user's current values from landing page data
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
     user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
   );
@@ -66,25 +67,25 @@ const Courses = () => {
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
   // Fetch seasons
-  const { data: seasonsData } = useQuery({
+  const { data: seasonsData, isLoading: seasonsLoading } = useQuery({
     queryKey: ['seasons'],
     queryFn: getAllSeasons,
   });
 
   // Fetch semesters based on selected season
-  const { data: semestersData } = useQuery({
+  const { data: semestersData, isLoading: semestersLoading } = useQuery({
     queryKey: ['semesters', selectedSeasonId],
-    queryFn: () => selectedSeasonId ? getAllSemesters(selectedSeasonId) : getAllSemesters(),
+    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
     enabled: !!selectedSeasonId,
   });
 
   // Fetch levels
-  const { data: levelsData } = useQuery({
+  const { data: levelsData, isLoading: levelsLoading } = useQuery({
     queryKey: ['levels'],
     queryFn: getAllLevels,
   });
 
-  // Fetch registrable courses
+  // Fetch registrable courses - only when all required filters are selected
   const { 
     data: coursesData, 
     isLoading: coursesLoading, 
@@ -92,7 +93,7 @@ const Courses = () => {
   } = useQuery({
     queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
     queryFn: () => getRegistrableCourses(selectedSeasonId!, selectedSemesterId!, selectedLevelId!),
-    enabled: !!selectedSeasonId && !!selectedSemesterId,
+    enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
   });
 
   // Fetch current registrations
@@ -113,6 +114,7 @@ const Courses = () => {
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
       setShowRegistrationConfirm(false);
       setSelectedCourses([]);
+      setIsEditing(false);
     },
     onError: (error: any) => {
       toast({
@@ -123,9 +125,20 @@ const Courses = () => {
     },
   });
 
+  // Get data arrays with fallbacks
+  const seasons = seasonsData?.data?.items || [];
+  const semesters = semestersData?.data?.items || [];
+  const levels = levelsData?.data?.items || [];
+  const courses = coursesData?.data?.availableCourses || [];
+
   // Get current registration status
   const isRegistered = registrationsData?.data?.items && registrationsData.data.items.length > 0;
   const registeredCourseIds = registrationsData?.data?.items?.map(reg => reg.courseId) || [];
+
+  // Get selected items for display
+  const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+  const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
+  const selectedLevel = levels.find(l => l.id === selectedLevelId);
 
   const handleCourseSelect = (courseId: number) => {
     setSelectedCourses(prev => {
@@ -152,7 +165,7 @@ const Courses = () => {
     }
 
     const registrations = selectedCourses.map(courseId => {
-      const course = coursesData?.data?.availableCourses.find(c => c.id === courseId);
+      const course = courses.find(c => c.id === courseId);
       return {
         courseId,
         seasonId: selectedSeasonId,
@@ -170,16 +183,12 @@ const Courses = () => {
     setSelectedCourses(registeredCourseIds);
   };
 
-  const seasons = seasonsData?.data?.items || [];
-  const semesters = semestersData?.data?.items || [];
-  const levels = levelsData?.data?.items || [];
-  const courses = coursesData?.data?.availableCourses || [];
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setSelectedCourses([]);
+  };
 
-  const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-  const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
-  const selectedLevel = levels.find(l => l.id === selectedLevelId);
-
-  if (coursesLoading) {
+  if (coursesLoading || seasonsLoading || levelsLoading) {
     return (
       <>
         <DashboardHeader />
@@ -200,9 +209,9 @@ const Courses = () => {
           <div className="mb-6">
             <h1 className="text-xl font-bold mb-1">Courses</h1>
             <div className="text-sm text-gray-500">
-              <p>{selectedSeason?.name || 'Select Season'}</p>
-              <p className="font-medium text-gray-800">{selectedLevel?.name || 'Select Level'}</p>
-              <p>{selectedSemester?.name || 'Select Semester'}</p>
+              <p>{selectedSeason?.name || user?.currentSeasonName || 'No Season Selected'}</p>
+              <p className="font-medium text-gray-800">{selectedLevel?.name || user?.currentLevelName || 'No Level Selected'}</p>
+              <p>{selectedSemester?.name || user?.currentSemesterName || 'No Semester Selected'}</p>
             </div>
           </div>
 
@@ -220,7 +229,7 @@ const Courses = () => {
                     }}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select season" />
+                      <SelectValue placeholder={user?.currentSeasonName || "Select season"} />
                     </SelectTrigger>
                     <SelectContent>
                       {seasons.map(season => (
@@ -237,10 +246,10 @@ const Courses = () => {
                   <Select 
                     value={selectedSemesterId?.toString() || ''} 
                     onValueChange={(value) => setSelectedSemesterId(parseInt(value))}
-                    disabled={!selectedSeasonId}
+                    disabled={!selectedSeasonId || semestersLoading}
                   >
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select semester" />
+                      <SelectValue placeholder={user?.currentSemesterName || "Select semester"} />
                     </SelectTrigger>
                     <SelectContent>
                       {semesters.map(semester => (
@@ -259,7 +268,7 @@ const Courses = () => {
                     onValueChange={(value) => setSelectedLevelId(parseInt(value))}
                   >
                     <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Select level" />
+                      <SelectValue placeholder={user?.currentLevelName || "Select level"} />
                     </SelectTrigger>
                     <SelectContent>
                       {levels.map(level => (
@@ -288,6 +297,17 @@ const Courses = () => {
                   </Button>
                 </div>
               )}
+
+              {isEditing && (
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Course List */}
@@ -297,7 +317,11 @@ const Courses = () => {
               </div>
             )}
 
-            {courses.length > 0 ? (
+            {!selectedSeasonId || !selectedSemesterId || !selectedLevelId ? (
+              <div className="text-center py-8 text-gray-500">
+                Please select season, semester, and level to view available courses.
+              </div>
+            ) : courses.length > 0 ? (
               <div className="space-y-4">
                 {courses.map(course => (
                   <CourseCard 
@@ -314,11 +338,9 @@ const Courses = () => {
                 ))}
               </div>
             ) : (
-              selectedSeasonId && selectedSemesterId && (
-                <div className="text-center py-8 text-gray-500">
-                  No courses available for the selected period.
-                </div>
-              )
+              <div className="text-center py-8 text-gray-500">
+                No courses available for the selected period.
+              </div>
             )}
             
             {/* Registration Button */}
