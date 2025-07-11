@@ -1,539 +1,412 @@
+
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Printer, Check, Edit } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Search, Filter, BookOpen, Clock, Users, Calendar, GraduationCap, ChevronRight } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import CourseCard from '@/components/CourseCard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from '@/hooks/use-toast';
-import { getAllCourses, Course } from '@/services/courseApiService';
-import { getAllSeasons, getAllSemesters, Season, Semester } from '@/services/academicPeriodsApiService';
+import { useAuth } from '@/contexts/AuthContext';
+import { 
+  getRegistrableCourses, 
+  getAllLevels, 
+  registerForCourses, 
+  getMyRegistrations,
+  type RegistrableCourse 
+} from '@/services/courseApiService';
+import { getAllSeasons, getAllSemesters, type Season, type Semester } from '@/services/academicPeriodsApiService';
 
 const Courses = () => {
-  // Use auth hook with error handling
-  let user = null;
-  let authLoading = true;
-  
-  try {
-    const authContext = useAuth();
-    user = authContext.user;
-    authLoading = authContext.loading;
-  } catch (error) {
-    console.error('Auth context not available:', error);
-    authLoading = false;
-  }
-
+  const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   
-  // State for courses and filters
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [filteredCourses, setFilteredCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  // Initialize with user's current values from landing page data
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
+    user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
+  );
+  const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
+    user?.currentSemesterId ? parseInt(user.currentSemesterId) : null
+  );
+  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(
+    user?.currentLevelId ? parseInt(user.currentLevelId) : null
+  );
   
-  // Filter states
-  const [selectedSeason, setSelectedSeason] = useState<string>('');
-  const [selectedSemester, setSelectedSemester] = useState<string>('');
-  const [selectedLevel, setSelectedLevel] = useState<string>('');
-  const [selectedCourseType, setSelectedCourseType] = useState<string>('');
-  
-  // Data for select options
-  const [seasons, setSeasons] = useState<Season[]>([]);
-  const [semesters, setSemesters] = useState<Semester[]>([]);
-  const [levels, setLevels] = useState<{ id: string; name: string; value: number }[]>([]);
-  const [courseTypes] = useState([
-    { id: 'CORE', name: 'Core' },
-    { id: 'ELECTIVE', name: 'Elective' },
-    { id: 'GENERAL', name: 'General Studies' }
-  ]);
+  // UI state
+  const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
+  const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Selected course for details
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-
-  // Set default values from user context
+  // Update state when user data becomes available
   useEffect(() => {
-    if (user && !authLoading) {
-      console.log('Setting default values from user:', user);
-      
-      if (user.currentSeasonId) {
-        setSelectedSeason(user.currentSeasonId);
-      }
-      if (user.currentSemesterId) {
-        setSelectedSemester(user.currentSemesterId);
-      }
-      if (user.currentLevelId) {
-        setSelectedLevel(user.currentLevelId);
-      }
+    if (user && !selectedSeasonId && user.currentSeasonId) {
+      setSelectedSeasonId(parseInt(user.currentSeasonId));
     }
-  }, [user, authLoading]);
+    if (user && !selectedSemesterId && user.currentSemesterId) {
+      setSelectedSemesterId(parseInt(user.currentSemesterId));
+    }
+    if (user && !selectedLevelId && user.currentLevelId) {
+      setSelectedLevelId(parseInt(user.currentLevelId));
+    }
+  }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
   // Fetch seasons
-  useEffect(() => {
-    const fetchSeasons = async () => {
-      try {
-        console.log('Fetching seasons...');
-        const response = await getAllSeasons();
-        console.log('Seasons response:', response);
-        
-        if (response.status === 'success' && response.data?.items) {
-          setSeasons(response.data.items);
-        } else {
-          console.warn('No seasons data found in response');
-        }
-      } catch (error) {
-        console.error('Error fetching seasons:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load academic seasons",
-          variant: "destructive",
-        });
+  const { data: seasonsData, isLoading: seasonsLoading } = useQuery({
+    queryKey: ['seasons'],
+    queryFn: getAllSeasons,
+  });
+
+  // Fetch semesters based on selected season
+  const { data: semestersData, isLoading: semestersLoading } = useQuery({
+    queryKey: ['semesters', selectedSeasonId],
+    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
+    enabled: !!selectedSeasonId,
+  });
+
+  // Fetch levels
+  const { data: levelsData, isLoading: levelsLoading } = useQuery({
+    queryKey: ['levels'],
+    queryFn: getAllLevels,
+  });
+
+  // Fetch registrable courses - only when all required filters are selected
+  const { 
+    data: coursesData, 
+    isLoading: coursesLoading, 
+    error: coursesError 
+  } = useQuery({
+    queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
+    queryFn: () => getRegistrableCourses(selectedSeasonId!, selectedSemesterId!, selectedLevelId!),
+    enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
+  });
+
+  // Fetch current registrations
+  const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
+    queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
+    queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
+    enabled: !!selectedSeasonId && !!selectedSemesterId,
+  });
+
+  // Registration mutation
+  const registerMutation = useMutation({
+    mutationFn: registerForCourses,
+    onSuccess: () => {
+      toast({
+        title: "Registration successful",
+        description: "Your courses have been registered successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      setShowRegistrationConfirm(false);
+      setSelectedCourses([]);
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Registration failed",
+        description: error.response?.data?.message || "Failed to register courses",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Get data arrays with fallbacks
+  const seasons = seasonsData?.data?.items || [];
+  const semesters = semestersData?.data?.items || [];
+  const levels = levelsData?.data?.items || [];
+  const courses = coursesData?.data?.availableCourses || [];
+
+  // Get current registration status
+  const isRegistered = registrationsData?.data?.items && registrationsData.data.items.length > 0;
+  const registeredCourseIds = registrationsData?.data?.items?.map(reg => reg.courseId) || [];
+
+  // Get selected items for display
+  const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
+  const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
+  const selectedLevel = levels.find(l => l.id === selectedLevelId);
+
+  const handleCourseSelect = (courseId: number) => {
+    setSelectedCourses(prev => {
+      if (prev.includes(courseId)) {
+        return prev.filter(id => id !== courseId);
+      } else {
+        return [...prev, courseId];
       }
-    };
-
-    fetchSeasons();
-  }, [toast]);
-
-  // Fetch semesters when season changes
-  useEffect(() => {
-    const fetchSemesters = async () => {
-      if (!selectedSeason) {
-        setSemesters([]);
-        return;
-      }
-
-      try {
-        console.log('Fetching semesters for season:', selectedSeason);
-        const response = await getAllSemesters(parseInt(selectedSeason));
-        console.log('Semesters response:', response);
-        
-        if (response.status === 'success' && response.data?.items) {
-          setSemesters(response.data.items);
-        } else {
-          console.warn('No semesters data found in response');
-          setSemesters([]);
-        }
-      } catch (error) {
-        console.error('Error fetching semesters:', error);
-        setSemesters([]);
-        toast({
-          title: "Error",
-          description: "Failed to load semesters",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchSemesters();
-  }, [selectedSeason, toast]);
-
-  // Generate levels (100, 200, 300, 400, 500)
-  useEffect(() => {
-    const generatedLevels = [
-      { id: '100', name: '100 Level', value: 100 },
-      { id: '200', name: '200 Level', value: 200 },
-      { id: '300', name: '300 Level', value: 300 },
-      { id: '400', name: '400 Level', value: 400 },
-      { id: '500', name: '500 Level', value: 500 },
-    ];
-    setLevels(generatedLevels);
-  }, []);
-
-  // Fetch courses
-  useEffect(() => {
-    const fetchCourses = async () => {
-      if (!selectedSeason || !selectedSemester || !selectedLevel) {
-        console.log('Missing required filters for course fetch:', {
-          selectedSeason,
-          selectedSemester,
-          selectedLevel
-        });
-        return;
-      }
-
-      setLoading(true);
-      try {
-        console.log('Fetching courses with filters:', {
-          seasonId: parseInt(selectedSeason),
-          semesterId: parseInt(selectedSemester),
-          levelId: parseInt(selectedLevel)
-        });
-
-        const response = await getAllCourses({
-          seasonId: parseInt(selectedSeason),
-          semesterId: parseInt(selectedSemester),
-          levelId: parseInt(selectedLevel)
-        });
-
-        console.log('Courses response:', response);
-
-        if (response.status === 'success' && response.data?.items) {
-          setCourses(response.data.items);
-          setFilteredCourses(response.data.items);
-        } else {
-          console.warn('No courses data found in response');
-          setCourses([]);
-          setFilteredCourses([]);
-        }
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load courses",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, [selectedSeason, selectedSemester, selectedLevel, toast]);
-
-  // Filter courses based on search and course type
-  useEffect(() => {
-    let filtered = [...courses];
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(course =>
-        course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // Filter by course type
-    if (selectedCourseType) {
-      filtered = filtered.filter(course => course.type === selectedCourseType);
-    }
-
-    setFilteredCourses(filtered);
-  }, [courses, searchTerm, selectedCourseType]);
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setSelectedCourseType('');
-    // Keep the season, semester, and level as they are required
+    });
   };
 
-  const getCourseTypeColor = (type: string) => {
-    switch (type) {
-      case 'CORE':
-        return 'bg-blue-100 text-blue-800';
-      case 'ELECTIVE':
-        return 'bg-green-100 text-green-800';
-      case 'GENERAL':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+  const handleRegister = () => {
+    setShowRegistrationConfirm(true);
   };
 
-  if (authLoading) {
+  const handleConfirmRegistration = () => {
+    if (!selectedSeasonId || !selectedSemesterId || !selectedLevelId) {
+      toast({
+        title: "Missing information",
+        description: "Please select season, semester, and level",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const registrations = selectedCourses.map(courseId => {
+      const course = courses.find(c => c.id === courseId);
+      return {
+        courseId,
+        seasonId: selectedSeasonId,
+        semesterId: selectedSemesterId,
+        levelId: selectedLevelId,
+        programCourseId: course?.programCourseId || undefined,
+      };
+    });
+
+    registerMutation.mutate(registrations);
+  };
+
+  const handleEditRegistration = () => {
+    setIsEditing(true);
+    setSelectedCourses(registeredCourseIds);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setSelectedCourses([]);
+  };
+
+  if (coursesLoading || seasonsLoading || levelsLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a4aa6] mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-8">Loading courses...</div>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Courses</h1>
-          <p className="text-gray-600 mt-1">Browse and explore your academic courses</p>
-        </div>
-        <div className="flex items-center space-x-2">
-          <BookOpen className="h-6 w-6 text-[#1a4aa6]" />
-          <span className="text-sm text-gray-500">
-            {filteredCourses.length} course{filteredCourses.length !== 1 ? 's' : ''} found
-          </span>
+    <>
+      <DashboardHeader />
+      <div className="flex-1 p-4 md:p-6 overflow-auto">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-xl font-bold mb-1">Courses</h1>
+            <div className="text-sm text-gray-500">
+              <p>{selectedSeason?.name || user?.currentSeasonName || 'No Season Selected'}</p>
+              <p className="font-medium text-gray-800">{selectedLevel?.name || user?.currentLevelName || 'No Level Selected'}</p>
+              <p>{selectedSemester?.name || user?.currentSemesterName || 'No Semester Selected'}</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Season</label>
+                  <Select 
+                    value={selectedSeasonId?.toString() || ''} 
+                    onValueChange={(value) => {
+                      setSelectedSeasonId(parseInt(value));
+                      setSelectedSemesterId(null);
+                    }}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder={user?.currentSeasonName || "Select season"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {seasons.map(season => (
+                        <SelectItem key={season.id} value={season.id.toString()}>
+                          {season.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Semester</label>
+                  <Select 
+                    value={selectedSemesterId?.toString() || ''} 
+                    onValueChange={(value) => setSelectedSemesterId(parseInt(value))}
+                    disabled={!selectedSeasonId || semestersLoading}
+                  >
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={user?.currentSemesterName || "Select semester"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {semesters.map(semester => (
+                        <SelectItem key={semester.id} value={semester.id.toString()}>
+                          {semester.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Level</label>
+                  <Select 
+                    value={selectedLevelId?.toString() || ''} 
+                    onValueChange={(value) => setSelectedLevelId(parseInt(value))}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder={user?.currentLevelName || "Select level"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {levels.map(level => (
+                        <SelectItem key={level.id} value={level.id.toString()}>
+                          {level.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              {isRegistered && !isEditing && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button className="bg-blue-700 hover:bg-blue-800">
+                    <Printer className="mr-2 h-4 w-4" /> Download Course Form
+                  </Button>
+                  <Button variant="outline" className="border-gray-300">
+                    Generate Exam Card
+                  </Button>
+                  <Button 
+                    onClick={handleEditRegistration}
+                    className="bg-amber-600 hover:bg-amber-700"
+                  >
+                    <Edit className="mr-2 h-4 w-4" /> Edit Registration
+                  </Button>
+                </div>
+              )}
+
+              {isEditing && (
+                <div className="flex gap-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Course List */}
+            {coursesError && (
+              <div className="text-red-600 mb-4">
+                Error loading courses. Please try again.
+              </div>
+            )}
+
+            {!selectedSeasonId || !selectedSemesterId || !selectedLevelId ? (
+              <div className="text-center py-8 text-gray-500">
+                Please select season, semester, and level to view available courses.
+              </div>
+            ) : courses.length > 0 ? (
+              <div className="space-y-4">
+                {courses.map(course => (
+                  <CourseCard 
+                    key={course.id}
+                    code={course.code}
+                    title={course.title}
+                    units={course.creditUnit}
+                    isSelected={isRegistered && !isEditing ? registeredCourseIds.includes(course.id) : selectedCourses.includes(course.id)}
+                    onSelect={() => !isRegistered || isEditing ? handleCourseSelect(course.id) : undefined}
+                    isRegistered={isRegistered && !isEditing}
+                    isElective={course.isElective}
+                    isCarryOver={course.offeringReason === 'Carryover'}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                No courses available for the selected period.
+              </div>
+            )}
+            
+            {/* Registration Button */}
+            {(!isRegistered || isEditing) && selectedCourses.length > 0 && (
+              <div className="mt-6 flex justify-center">
+                <Button 
+                  className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
+                  onClick={handleRegister}
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending 
+                    ? 'Processing...' 
+                    : isEditing 
+                      ? 'Update Course Registration' 
+                      : 'Register Selected Courses'
+                  }
+                </Button>
+              </div>
+            )}
+          </div>
+          
+          {/* Registration confirmation dialog */}
+          <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Course Registration</DialogTitle>
+                <DialogDescription>
+                  You are about to register {selectedCourses.length} courses for {selectedSeason?.name} {selectedSemester?.name}.
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="my-4 max-h-[300px] overflow-y-auto">
+                {courses
+                  .filter(course => selectedCourses.includes(course.id))
+                  .map(course => (
+                    <div key={course.id} className="mb-2 flex justify-between">
+                      <div>
+                        <p className="font-medium">{course.code}</p>
+                        <p className="text-sm text-gray-600">{course.title}</p>
+                      </div>
+                      <p className="text-sm">{course.creditUnit} units</p>
+                    </div>
+                  ))
+                }
+              </div>
+              <DialogFooter className="flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowRegistrationConfirm(false)}
+                  disabled={registerMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  className="bg-blue-700 hover:bg-blue-800"
+                  onClick={handleConfirmRegistration}
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? 'Processing...' : 'Submit Course Registration'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
-
-      {/* Filters Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
-            Filters
-          </CardTitle>
-          <CardDescription>
-            Filter courses by academic period and course type
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Primary Filters Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="season">Academic Session</Label>
-              <Select value={selectedSeason} onValueChange={setSelectedSeason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select academic session" />
-                </SelectTrigger>
-                <SelectContent>
-                  {seasons.length > 0 ? (
-                    seasons.map((season) => (
-                      <SelectItem key={season.id} value={season.id.toString()}>
-                        {season.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-seasons" disabled>
-                      No sessions available
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="semester">Semester</Label>
-              <Select value={selectedSemester} onValueChange={setSelectedSemester} disabled={!selectedSeason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  {semesters.length > 0 ? (
-                    semesters.map((semester) => (
-                      <SelectItem key={semester.id} value={semester.id.toString()}>
-                        {semester.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="no-semesters" disabled>
-                      {selectedSeason ? "No semesters available" : "Select session first"}
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="level">Level</Label>
-              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select level" />
-                </SelectTrigger>
-                <SelectContent>
-                  {levels.map((level) => (
-                    <SelectItem key={level.id} value={level.id}>
-                      {level.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Secondary Filters Row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search">Search Courses</Label>
-              <div className="relative">
-                <Input
-                  id="search"
-                  type="text"
-                  placeholder="Search by course name, code, or description..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="courseType">Course Type</Label>
-              <Select value={selectedCourseType} onValueChange={setSelectedCourseType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="All course types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Types</SelectItem>
-                  {courseTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex items-end">
-              <Button variant="outline" onClick={handleClearFilters} className="w-full">
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Courses Grid */}
-      {loading ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a4aa6] mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading courses...</p>
-          </div>
-        </div>
-      ) : filteredCourses.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No courses found</h3>
-            <p className="text-gray-600">
-              {courses.length === 0
-                ? "No courses available for the selected filters."
-                : "Try adjusting your search terms or filters."}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCourses.map((course) => (
-            <Card key={course.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg line-clamp-2">{course.title}</CardTitle>
-                    <CardDescription className="font-mono text-sm mt-1">
-                      {course.code}
-                    </CardDescription>
-                  </div>
-                  <Badge className={`ml-2 ${getCourseTypeColor(course.type || '')}`}>
-                    {course.type}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  {course.description || 'No description available'}
-                </p>
-                
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <GraduationCap className="h-4 w-4" />
-                    <span>{course.creditUnits || 0} Credits</span>
-                  </div>
-                  {course.maxStudents && (
-                    <div className="flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      <span>Max {course.maxStudents}</span>
-                    </div>
-                  )}
-                </div>
-
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      onClick={() => setSelectedCourse(course)}
-                    >
-                      View Details
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center justify-between">
-                        <span>{selectedCourse?.title}</span>
-                        <Badge className={getCourseTypeColor(selectedCourse?.type || '')}>
-                          {selectedCourse?.type}
-                        </Badge>
-                      </DialogTitle>
-                      <DialogDescription className="font-mono">
-                        {selectedCourse?.code}
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-2">Description</h4>
-                        <p className="text-sm text-gray-600">
-                          {selectedCourse?.description || 'No description available'}
-                        </p>
-                      </div>
-
-                      <Separator />
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-semibold mb-2">Course Details</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Credit Units:</span>
-                              <span>{selectedCourse?.creditUnits || 0}</span>
-                            </div>
-                            {selectedCourse?.maxStudents && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">Max Students:</span>
-                                <span>{selectedCourse.maxStudents}</span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Status:</span>
-                              <Badge variant={selectedCourse?.isActive ? 'default' : 'secondary'}>
-                                {selectedCourse?.isActive ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h4 className="font-semibold mb-2">Academic Period</h4>
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Level:</span>
-                              <span>{selectedCourse?.level?.name || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Semester:</span>
-                              <span>{selectedCourse?.semester?.name || 'N/A'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Session:</span>
-                              <span>{selectedCourse?.season?.name || 'N/A'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {selectedCourse?.prerequisites && selectedCourse.prerequisites.length > 0 && (
-                        <>
-                          <Separator />
-                          <div>
-                            <h4 className="font-semibold mb-2">Prerequisites</h4>
-                            <div className="space-y-1">
-                              {selectedCourse.prerequisites.map((prereq, index) => (
-                                <Badge key={index} variant="outline" className="mr-2">
-                                  {prereq}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+    </>
   );
 };
 
