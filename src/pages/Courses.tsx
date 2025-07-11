@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -37,7 +36,7 @@ const Courses = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  // State for selected filters
+  // State for selected filters - initialize with user's current values if available
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
     user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
   );
@@ -52,6 +51,19 @@ const Courses = () => {
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Update state when user data becomes available
+  useEffect(() => {
+    if (user && !selectedSeasonId && user.currentSeasonId) {
+      setSelectedSeasonId(parseInt(user.currentSeasonId));
+    }
+    if (user && !selectedSemesterId && user.currentSemesterId) {
+      setSelectedSemesterId(parseInt(user.currentSemesterId));
+    }
+    if (user && !selectedLevelId && user.currentLevelId) {
+      setSelectedLevelId(parseInt(user.currentLevelId));
+    }
+  }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
   // Fetch seasons
   const { data: seasonsData } = useQuery({
