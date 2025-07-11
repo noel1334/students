@@ -1,14 +1,10 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Printer, Check, Edit } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import CourseCard from '@/components/CourseCard';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   Select,
   SelectContent,
@@ -24,111 +20,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  getMyRegistrableCourses, 
-  registerForCourses, 
-  getMyRegistrations, 
-  getAllSeasons,
-  getAllSemesters,
-  getAllLevels,
-  Course, 
-  CourseRegistration,
-  Season,
-  Semester,
-  Level
-} from '@/services/courseApi';
 
 const Courses = () => {
-  const { user } = useAuth();
-  const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
-  const [selectedSemesterId, setSelectedSemesterId] = useState<string>('');
-  const [selectedLevelId, setSelectedLevelId] = useState<string>('');
+  const [session, setSession] = useState('2024/2025');
+  const [semester, setSemester] = useState('First Semester');
   const [isRegistered, setIsRegistered] = useState(false);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  // Initialize with current user's data
-  useEffect(() => {
-    if (user) {
-      // Set default values from user's current data
-      setSelectedSeasonId(user.currentSeasonId || '');
-      setSelectedSemesterId(user.currentSemesterId || '');
-      setSelectedLevelId(user.currentLevelId || '');
-    }
-  }, [user]);
-
-  // Fetch seasons
-  const { data: seasonsData } = useQuery({
-    queryKey: ['seasons'],
-    queryFn: getAllSeasons,
-  });
-
-  // Fetch semesters
-  const { data: semestersData } = useQuery({
-    queryKey: ['semesters'],
-    queryFn: getAllSemesters,
-  });
-
-  // Fetch levels
-  const { data: levelsData } = useQuery({
-    queryKey: ['levels'],
-    queryFn: getAllLevels,
-  });
-
-  // Fetch registrable courses (only when we have the required IDs)
-  const { data: registrableCoursesData, isLoading: isLoadingCourses, error: coursesError } = useQuery({
-    queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
-    queryFn: () => getMyRegistrableCourses(selectedSeasonId, selectedSemesterId, selectedLevelId),
-    enabled: !!selectedSeasonId && !!selectedSemesterId,
-  });
-
-  // Fetch current registrations
-  const { data: registrationsData, isLoading: isLoadingRegistrations } = useQuery({
-    queryKey: ['my-registrations'],
-    queryFn: getMyRegistrations,
-  });
-
-  // Course registration mutation
-  const registerMutation = useMutation({
-    mutationFn: registerForCourses,
-    onSuccess: (data) => {
-      toast({
-        title: "Registration Successful",
-        description: `Successfully registered for ${selectedCourses.length} courses.`,
-      });
-      setIsRegistered(true);
-      setShowRegistrationConfirm(false);
-      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Registration Failed",
-        description: error?.response?.data?.message || "Failed to register for courses. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const seasons = seasonsData?.data?.seasons || [];
-  const semesters = semestersData?.data?.semesters || [];
-  const levels = levelsData?.data?.levels || [];
-  const courses = registrableCoursesData?.data?.courses || [];
-  const registrations = registrationsData?.data?.registrations || [];
-
-  // Get current selections for display
-  const currentSeason = seasons.find(s => s.id === selectedSeasonId);
-  const currentSemester = semesters.find(s => s.id === selectedSemesterId);
-  const currentLevel = levels.find(l => l.id === selectedLevelId);
-
-  // Check if user has existing registrations
-  useEffect(() => {
-    if (registrations.length > 0) {
-      setIsRegistered(true);
-    }
-  }, [registrations]);
+  // Sample courses data
+  const courses = [
+    { code: 'SIWES', title: 'Students\' Industrial Work Experience Scheme', units: 8, isElective: false, isCarryOver: false },
+    { code: 'CS511', title: 'Design and Analysis of Algorithm', units: 3, isElective: false, isCarryOver: false },
+    { code: 'CS512', title: 'Compiler Construction', units: 3, isElective: false, isCarryOver: false },
+    { code: 'CS513', title: 'Fundamentals of Software Engineering', units: 3, isElective: false, isCarryOver: false },
+    { code: 'CS515', title: 'Advanced Computer Programming', units: 3, isElective: false, isCarryOver: false },
+    { code: 'EDU571', title: 'Educational administration and planning', units: 3, isElective: true, isCarryOver: false },
+    { code: 'EDU581', title: 'Measurement and evaluation', units: 3, isElective: true, isCarryOver: false },
+  ];
 
   const handleCourseSelect = (courseCode: string) => {
     setSelectedCourses(prev => {
@@ -166,11 +76,8 @@ const Courses = () => {
   };
 
   const handleConfirmRegistration = () => {
-    const selectedCourseIds = courses
-      .filter(course => selectedCourses.includes(course.code))
-      .map(course => course.id);
-    
-    registerMutation.mutate(selectedCourseIds);
+    setIsRegistered(true);
+    setShowRegistrationConfirm(false);
   };
 
   const handleCancelRegistration = () => {
@@ -180,62 +87,14 @@ const Courses = () => {
   const handleEditRegistration = () => {
     setIsEditing(true);
     setIsRegistered(false);
-    // Pre-populate selected courses with registered courses
-    const registeredCourses = registrations.map(reg => reg.course.code);
-    setSelectedCourses(registeredCourses);
+    // Pre-populate selected courses with all courses when editing
+    setSelectedCourses(courses.map(course => course.code));
   };
 
   const handleUpdateRegistration = () => {
-    const selectedCourseIds = courses
-      .filter(course => selectedCourses.includes(course.code))
-      .map(course => course.id);
-    
-    registerMutation.mutate(selectedCourseIds);
+    setIsRegistered(true);
+    setIsEditing(false);
   };
-
-  if (isLoadingCourses || isLoadingRegistrations) {
-    return (
-      <>
-        <DashboardHeader />
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading courses...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (coursesError) {
-    return (
-      <>
-        <DashboardHeader />
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <p className="text-red-600">Failed to load courses. Please try again.</p>
-                <Button 
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['registrable-courses'] })}
-                  className="mt-2"
-                >
-                  Retry
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // Use registered courses if user has registrations, otherwise use registrable courses
-  const displayCourses = isRegistered ? registrations.map(reg => reg.course) : courses;
 
   return (
     <>
@@ -246,9 +105,9 @@ const Courses = () => {
             <h1 className="text-xl font-bold mb-1">Courses</h1>
             {!isRegistered && (
               <div className="text-sm text-gray-500">
-                <p>{currentSeason?.name || 'Select Season'}</p>
-                <p className="font-medium text-gray-800">{currentLevel?.name || 'Select Level'}</p>
-                <p>{currentSemester?.name || 'Select Semester'}</p>
+                <p>2024/25</p>
+                <p className="font-medium text-gray-800">600 Level</p>
+                <p>{semester}</p>
               </div>
             )}
           </div>
@@ -259,44 +118,25 @@ const Courses = () => {
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                   <div>
                     <div className="mb-2">
-                      <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select season" />
+                      <Select value={session} onValueChange={setSession}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select session" />
                         </SelectTrigger>
                         <SelectContent>
-                          {seasons.map(season => (
-                            <SelectItem key={season.id} value={season.id}>
-                              {season.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="mb-2">
-                      <Select value={selectedLevelId} onValueChange={setSelectedLevelId}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {levels.map(level => (
-                            <SelectItem key={level.id} value={level.id}>
-                              {level.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="2023/2024">2023/2024</SelectItem>
+                          <SelectItem value="2024/2025">2024/2025</SelectItem>
+                          <SelectItem value="2025/2026">2025/2026</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Select value={selectedSemesterId} onValueChange={setSelectedSemesterId}>
-                        <SelectTrigger className="w-[200px]">
+                      <Select value={semester} onValueChange={setSemester}>
+                        <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select semester" />
                         </SelectTrigger>
                         <SelectContent>
-                          {semesters.map(semester => (
-                            <SelectItem key={semester.id} value={semester.id}>
-                              {semester.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="First Semester">First Semester</SelectItem>
+                          <SelectItem value="Second Semester">Second Semester</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -319,7 +159,7 @@ const Courses = () => {
                 </div>
                 
                 <div className="space-y-4">
-                  {displayCourses.map(course => (
+                  {courses.map(course => (
                     <CourseCard 
                       key={course.code}
                       code={course.code}
@@ -339,84 +179,56 @@ const Courses = () => {
             <>
               <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Season</label>
-                      <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select season" />
+                  <div>
+                    <div className="mb-2">
+                      <Select value={session} onValueChange={setSession}>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Select session" />
                         </SelectTrigger>
                         <SelectContent>
-                          {seasons.map(season => (
-                            <SelectItem key={season.id} value={season.id}>
-                              {season.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="2023/2024">2023/2024</SelectItem>
+                          <SelectItem value="2024/2025">2024/2025</SelectItem>
+                          <SelectItem value="2025/2026">2025/2026</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Level</label>
-                      <Select value={selectedLevelId} onValueChange={setSelectedLevelId}>
-                        <SelectTrigger className="w-[200px]">
-                          <SelectValue placeholder="Select level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {levels.map(level => (
-                            <SelectItem key={level.id} value={level.id}>
-                              {level.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Semester</label>
-                      <Select value={selectedSemesterId} onValueChange={setSelectedSemesterId}>
-                        <SelectTrigger className="w-[200px]">
+                      <Select value={semester} onValueChange={setSemester}>
+                        <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Select semester" />
                         </SelectTrigger>
                         <SelectContent>
-                          {semesters.map(semester => (
-                            <SelectItem key={semester.id} value={semester.id}>
-                              {semester.name}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="First Semester">First Semester</SelectItem>
+                          <SelectItem value="Second Semester">Second Semester</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
                 </div>
                 
-                {selectedSeasonId && selectedSemesterId && (
-                  <div className="space-y-4">
-                    {displayCourses.map(course => (
-                      <CourseCard 
-                        key={course.code}
-                        code={course.code}
-                        title={course.title}
-                        units={course.units}
-                        isSelected={selectedCourses.includes(course.code)}
-                        onSelect={() => handleCourseSelect(course.code)}
-                        isElective={course.isElective}
-                        isCarryOver={course.isCarryOver}
-                        isRegistered={false}
-                      />
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-4">
+                  {courses.map(course => (
+                    <CourseCard 
+                      key={course.code}
+                      code={course.code}
+                      title={course.title}
+                      units={course.units}
+                      isSelected={selectedCourses.includes(course.code)}
+                      onSelect={() => handleCourseSelect(course.code)}
+                      isElective={course.isElective}
+                      isCarryOver={course.isCarryOver}
+                      isRegistered={false}
+                    />
+                  ))}
+                </div>
                 
                 {selectedCourses.length > 0 && (
                   <div className="mt-6 flex justify-center">
                     <Button 
                       className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
                       onClick={isEditing ? handleUpdateRegistration : handleRegister}
-                      disabled={registerMutation.isPending}
                     >
-                      {registerMutation.isPending 
-                        ? 'Processing...' 
-                        : (isEditing ? 'Update Course Registration' : 'Register Selected Courses')
-                      }
+                      {isEditing ? 'Update Course Registration' : 'Register Selected Courses'}
                     </Button>
                   </div>
                 )}
@@ -430,7 +242,7 @@ const Courses = () => {
               <DialogHeader>
                 <DialogTitle>Confirm Course Registration</DialogTitle>
                 <DialogDescription>
-                  You are about to register {selectedCourses.length} courses for {currentSeason?.name} {currentSemester?.name}.
+                  You are about to register {selectedCourses.length} courses for {session} {semester}.
                   This action cannot be undone.
                 </DialogDescription>
               </DialogHeader>
@@ -455,9 +267,8 @@ const Courses = () => {
                 <Button 
                   className="bg-blue-700 hover:bg-blue-800"
                   onClick={handleConfirmRegistration}
-                  disabled={registerMutation.isPending}
                 >
-                  {registerMutation.isPending ? 'Registering...' : 'Submit Course Registration'}
+                  Submit Course Registration
                 </Button>
               </DialogFooter>
             </DialogContent>

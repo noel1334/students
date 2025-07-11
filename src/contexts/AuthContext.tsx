@@ -1,4 +1,3 @@
-
 // src/contexts/AuthContext.tsx
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
@@ -26,11 +25,8 @@ interface User {
   studyMode?: string; // e.g., "FULL_TIME", "PART_TIME"
   currentLevelName?: string; // e.g., "100 Level", "200 Level"
   currentLevelValue?: number; // e.g., 100, 200
-  currentLevelId?: string; // Level ID for API calls
   currentSeasonName?: string; // e.g., "2024/2025 Academic Session"
-  currentSeasonId?: string; // Season ID for API calls
   currentSemesterName?: string; // e.g., "First Semester"
-  currentSemesterId?: string; // Semester ID for API calls
   currentSemesterType?: string; // e.g., "FIRST"
 
   isActive?: boolean;
@@ -103,11 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           studyMode: profileData.program?.modeOfStudy,
           currentLevelName: profileData.currentLevel?.name,
           currentLevelValue: profileData.currentLevel?.value,
-          currentLevelId: profileData.currentLevel?.id?.toString(), // Convert to string
           currentSeasonName: profileData.currentSeason?.name,
-          currentSeasonId: profileData.currentSeason?.id?.toString(), // Convert to string
           currentSemesterName: profileData.currentSemester?.name,
-          currentSemesterId: profileData.currentSemester?.id?.toString(), // Convert to string
           currentSemesterType: profileData.currentSemester?.type,
 
           isActive: profileData.isActive,
