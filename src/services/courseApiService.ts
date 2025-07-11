@@ -142,7 +142,7 @@ export const getMyRegistrations = async (
   seasonId: number,
   semesterId: number
 ): Promise<ApiResponse<{ items: CourseRegistration[] }>> => {
-  const response = await api.get('/student-course-registrations', {
+  const response = await api.get('/me/registrable-courses', {
     params: {
       seasonId,
       semesterId,
