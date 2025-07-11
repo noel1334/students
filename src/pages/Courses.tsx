@@ -67,20 +67,20 @@ const Courses = () => {
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
   // Fetch seasons
-  const { data: seasonsData, isLoading: seasonsLoading } = useQuery({
+  const { data: seasonsData, isLoading: seasonsLoading, error: seasonsError } = useQuery({
     queryKey: ['seasons'],
     queryFn: getAllSeasons,
   });
 
   // Fetch semesters based on selected season
-  const { data: semestersData, isLoading: semestersLoading } = useQuery({
+  const { data: semestersData, isLoading: semestersLoading, error: semestersError } = useQuery({
     queryKey: ['semesters', selectedSeasonId],
     queryFn: () => getAllSemesters(selectedSeasonId || undefined),
     enabled: !!selectedSeasonId,
   });
 
   // Fetch levels
-  const { data: levelsData, isLoading: levelsLoading } = useQuery({
+  const { data: levelsData, isLoading: levelsLoading, error: levelsError } = useQuery({
     queryKey: ['levels'],
     queryFn: getAllLevels,
   });
@@ -125,11 +125,19 @@ const Courses = () => {
     },
   });
 
-  // Get data arrays with fallbacks
+  // Get data arrays with proper error handling
   const seasons = seasonsData?.data?.items || [];
   const semesters = semestersData?.data?.items || [];
   const levels = levelsData?.data?.items || [];
   const courses = coursesData?.data?.availableCourses || [];
+
+  // Debug logging
+  console.log('Seasons data:', seasonsData);
+  console.log('Seasons array:', seasons);
+  console.log('Semesters data:', semestersData);
+  console.log('Semesters array:', semesters);
+  console.log('Levels data:', levelsData);
+  console.log('Levels array:', levels);
 
   // Get current registration status
   const isRegistered = registrationsData?.data?.items && registrationsData.data.items.length > 0;
@@ -216,6 +224,16 @@ const Courses = () => {
           </div>
 
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            {/* Error Messages */}
+            {(seasonsError || semestersError || levelsError) && (
+              <div className="text-red-600 mb-4">
+                Error loading data. Please try again.
+                {seasonsError && <div>Seasons: {seasonsError.message}</div>}
+                {semestersError && <div>Semesters: {semestersError.message}</div>}
+                {levelsError && <div>Levels: {levelsError.message}</div>}
+              </div>
+            )}
+
             {/* Filters */}
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
               <div className="flex flex-col sm:flex-row gap-4">
@@ -229,14 +247,20 @@ const Courses = () => {
                     }}
                   >
                     <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder={user?.currentSeasonName || "Select season"} />
+                      <SelectValue placeholder="Select season" />
                     </SelectTrigger>
                     <SelectContent>
-                      {seasons.map(season => (
-                        <SelectItem key={season.id} value={season.id.toString()}>
-                          {season.name}
+                      {seasons.length > 0 ? (
+                        seasons.map(season => (
+                          <SelectItem key={season.id} value={season.id.toString()}>
+                            {season.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-seasons" disabled>
+                          {seasonsLoading ? 'Loading...' : 'No seasons available'}
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -246,17 +270,23 @@ const Courses = () => {
                   <Select 
                     value={selectedSemesterId?.toString() || ''} 
                     onValueChange={(value) => setSelectedSemesterId(parseInt(value))}
-                    disabled={!selectedSeasonId || semestersLoading}
+                    disabled={!selectedSeasonId}
                   >
                     <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder={user?.currentSemesterName || "Select semester"} />
+                      <SelectValue placeholder="Select semester" />
                     </SelectTrigger>
                     <SelectContent>
-                      {semesters.map(semester => (
-                        <SelectItem key={semester.id} value={semester.id.toString()}>
-                          {semester.name}
+                      {semesters.length > 0 ? (
+                        semesters.map(semester => (
+                          <SelectItem key={semester.id} value={semester.id.toString()}>
+                            {semester.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-semesters" disabled>
+                          {semestersLoading ? 'Loading...' : selectedSeasonId ? 'No semesters available' : 'Select season first'}
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -268,14 +298,20 @@ const Courses = () => {
                     onValueChange={(value) => setSelectedLevelId(parseInt(value))}
                   >
                     <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder={user?.currentLevelName || "Select level"} />
+                      <SelectValue placeholder="Select level" />
                     </SelectTrigger>
                     <SelectContent>
-                      {levels.map(level => (
-                        <SelectItem key={level.id} value={level.id.toString()}>
-                          {level.name}
+                      {levels.length > 0 ? (
+                        levels.map(level => (
+                          <SelectItem key={level.id} value={level.id.toString()}>
+                            {level.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-levels" disabled>
+                          {levelsLoading ? 'Loading...' : 'No levels available'}
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -402,8 +438,8 @@ const Courses = () => {
                   {registerMutation.isPending ? 'Processing...' : 'Submit Course Registration'}
                 </Button>
               </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
       </div>
     </>
