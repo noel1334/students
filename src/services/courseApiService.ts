@@ -60,11 +60,33 @@ export interface CourseRegistration {
   levelId: number;
   programCourseId?: number;
   registeredAt: string;
+  isScoreRecorded: boolean;
   course: {
     id: number;
     code: string;
     title: string;
     creditUnit: number;
+  };
+  semester: {
+    id: number;
+    name: string;
+    type: string;
+    areStudentEditsLocked: boolean;
+  };
+  level: {
+    id: number;
+    name: string;
+  };
+  season: {
+    id: number;
+    name: string;
+  };
+  student: {
+    id: number;
+    regNo: string;
+    name: string;
+    departmentId: number;
+    programId: number;
   };
 }
 
