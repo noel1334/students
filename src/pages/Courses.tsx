@@ -131,7 +131,7 @@ const Courses = () => {
 
   // Get current registration status
   const isRegistered = registrations && registrations.length > 0;
-  const registeredCourseIds = registrations?.map(reg => reg.courseId) || [];
+  const registeredCourseIds = registrations?.map(reg => reg.course.id) || [];
 
   // Get selected items for display
   const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
