@@ -1,3 +1,4 @@
+// src/pages/Courses.tsx
 
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -13,14 +14,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  getRegistrableCourses, 
-  getAllLevels, 
-  registerForCourses, 
+import {
+  getRegistrableCourses,
+  registerForCourses,
   getMyRegistrations,
-  type RegistrableCourse 
+  type RegistrableCourse,
+  type Level,
+  type CourseRegistration,
 } from '@/services/courseApiService';
-import { getAllSeasons, getAllSemesters, type Season, type Semester } from '@/services/academicPeriodsApiService';
+import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
+
 
 // Import refactored components
 import CoursesHeader from '@/components/courses/CoursesHeader';
@@ -28,13 +31,14 @@ import CourseFilters from '@/components/courses/CourseFilters';
 import CourseActions from '@/components/courses/CourseActions';
 import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
 import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
-import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
+// CourseFormDownloader is used within CourseActions now, but keep import if also used elsewhere directly
+import CourseFormDownloader from '@/components/courses/CourseFormDownloader'; 
 
 const Courses = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Initialize with user's current values from landing page data
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
     user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
@@ -45,7 +49,7 @@ const Courses = () => {
   const [selectedLevelId, setSelectedLevelId] = useState<number | null>(
     user?.currentLevelId ? parseInt(user.currentLevelId) : null
   );
-  
+
   // UI state
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
@@ -64,41 +68,49 @@ const Courses = () => {
     }
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
-  // Fetch seasons
-  const { data: seasonsData, isLoading: seasonsLoading } = useQuery({
-    queryKey: ['seasons'],
-    queryFn: getAllSeasons,
-  });
 
-  // Fetch semesters based on selected season
-  const { data: semestersData, isLoading: semestersLoading } = useQuery({
-    queryKey: ['semesters', selectedSeasonId],
-    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
-    enabled: !!selectedSeasonId,
-  });
-
-  // Fetch levels
-  const { data: levelsData, isLoading: levelsLoading } = useQuery({
-    queryKey: ['levels'],
-    queryFn: getAllLevels,
-  });
-
-  // Fetch registrable courses - only when all required filters are selected
-  const { 
-    data: coursesData, 
-    isLoading: coursesLoading, 
-    error: coursesError 
-  } = useQuery({
-    queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
-    queryFn: () => getRegistrableCourses(selectedSeasonId!, selectedSemesterId!, selectedLevelId!),
-    enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
-  });
-
-  // Fetch current registrations
+  // Fetch current registrations (for the "Registered Courses" section and its filter options)
   const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
     queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
     queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
     enabled: !!selectedSeasonId && !!selectedSemesterId,
+  });
+
+  // Determine if the student has any registrations for the selected period
+  const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
+  const isRegistered = registrations.length > 0;
+  const registeredCourseIds = registrations?.map(reg => reg.course.id) || [];
+
+
+  // Fetch global academic periods ONLY IF the student is NOT registered (i.e., new registration flow)
+  // This helps prevent unnecessary fetches when the student has existing registrations and filter options are derived from them.
+  const { data: allSeasonsData, isLoading: allSeasonsLoading } = useQuery({
+    queryKey: ['allSeasons'],
+    queryFn: getAllSeasons,
+    enabled: !isRegistered // Only enabled if student is not registered
+  });
+
+  const { data: allSemestersData, isLoading: allSemestersLoading } = useQuery({
+    queryKey: ['allSemesters', selectedSeasonId],
+    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
+    enabled: !isRegistered && !!selectedSeasonId // Only enabled if student is not registered AND season selected
+  });
+
+  const { data: allLevelsData, isLoading: allLevelsLoading } = useQuery({
+    queryKey: ['allLevels'],
+    queryFn: getAllLevels,
+    enabled: !isRegistered // Only enabled if student is not registered
+  });
+
+  // Fetch registrable courses (for the "Available Courses" section when not registered or editing)
+  const {
+    data: coursesData,
+    isLoading: coursesLoading,
+    error: coursesError
+  } = useQuery({
+    queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
+    queryFn: () => getRegistrableCourses(selectedSeasonId!, selectedSemesterId!, selectedLevelId!),
+    enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
   });
 
   // Registration mutation
@@ -110,6 +122,7 @@ const Courses = () => {
         description: "Your courses have been registered successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      // Reset state related to editing/selection after successful registration
       setShowRegistrationConfirm(false);
       setSelectedCourses([]);
       setIsEditing(false);
@@ -123,21 +136,29 @@ const Courses = () => {
     },
   });
 
-  // Get data arrays with fallbacks
-  const seasons = Array.isArray(seasonsData?.data?.seasons) ? seasonsData.data.seasons : [];
-  const semesters = Array.isArray(semestersData?.data?.semesters) ? semestersData.data.semesters : [];
-  const levels = Array.isArray(levelsData?.data?.items) ? levelsData.data.items : [];
+  // Determine which filter options to use based on isRegistered state
+  const currentFilterSeasons = isRegistered && !isEditing
+    ? (Array.isArray(registrationsData?.data?.filterOptions?.seasons) ? registrationsData.data.filterOptions.seasons : [])
+    : (Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : []);
+
+  const currentFilterSemesters = isRegistered && !isEditing
+    ? (Array.isArray(registrationsData?.data?.filterOptions?.semesters) ? registrationsData.data.filterOptions.semesters : [])
+    : (Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : []);
+
+  const currentFilterLevels = isRegistered && !isEditing
+    ? (Array.isArray(registrationsData?.data?.filterOptions?.levels) ? registrationsData.data.filterOptions.levels : [])
+    : (Array.isArray(allLevelsData?.data?.items) ? allLevelsData.data.items : []);
+
   const courses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
-  const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
 
-  // Get current registration status
-  const isRegistered = registrations && registrations.length > 0;
-  const registeredCourseIds = registrations?.map(reg => reg.course.id) || [];
 
-  // Get selected items for display
-  const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
-  const selectedSemester = semesters.find(s => s.id === selectedSemesterId);
-  const selectedLevel = levels.find(l => l.id === selectedLevelId);
+  // Get selected items for display (these still use the *selected* IDs for UI representation)
+  // Use the *current* filter options (which will be `allSeasons` when not registered/editing,
+  // or `registeredCoursesFilterSeasons` when viewing registered courses)
+  const selectedSeason = currentFilterSeasons.find(s => s.id === selectedSeasonId);
+  const selectedSemester = currentFilterSemesters.find(s => s.id === selectedSemesterId);
+  const selectedLevel = currentFilterLevels.find(l => l.id === selectedLevelId);
+
 
   const handleCourseSelect = (courseId: number) => {
     setSelectedCourses(prev => {
@@ -163,7 +184,7 @@ const Courses = () => {
       return;
     }
 
-    const registrations = selectedCourses.map(courseId => {
+    const registrationsToSubmit = selectedCourses.map(courseId => {
       const course = courses.find(c => c.id === courseId);
       return {
         courseId,
@@ -174,22 +195,23 @@ const Courses = () => {
       };
     });
 
-    registerMutation.mutate(registrations);
+    registerMutation.mutate(registrationsToSubmit);
   };
 
   const handleEditRegistration = () => {
     setIsEditing(true);
+    // When entering edit mode, pre-select the courses already registered
     setSelectedCourses(registeredCourseIds);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setSelectedCourses([]);
+    setSelectedCourses([]); // Clear selected courses when canceling edit
   };
 
   const handleSeasonChange = (seasonId: number) => {
     setSelectedSeasonId(seasonId);
-    setSelectedSemesterId(null);
+    setSelectedSemesterId(null); // Reset semester when season changes
   };
 
   const handleSemesterChange = (semesterId: number) => {
@@ -200,7 +222,10 @@ const Courses = () => {
     setSelectedLevelId(levelId);
   };
 
-  if (coursesLoading || seasonsLoading || levelsLoading || registrationsLoading) {
+  // Adjust loading state to include all necessary queries
+  // Only check loading for global lists if `isRegistered` is false
+  if (coursesLoading || registrationsLoading ||
+      (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading))) {
     return (
       <>
         <DashboardHeader />
@@ -235,28 +260,24 @@ const Courses = () => {
                 isEditing={isEditing}
                 onEditRegistration={handleEditRegistration}
                 onCancelEdit={handleCancelEdit}
+                registrations={registrations}
               />
-              
-              {/* Download Course Form Button */}
-              {isRegistered && !isEditing && (
-                <CourseFormDownloader registrations={registrations} />
-              )}
             </div>
 
-            {/* Filters (only for registered courses) */}
+            {/* Filters for Registered Courses (only visible when not editing) */}
             {isRegistered && !isEditing && (
               <div className="mb-6">
                 <CourseFilters
-                  seasons={seasons}
-                  semesters={semesters}
-                  levels={levels}
+                  seasons={currentFilterSeasons}
+                  semesters={currentFilterSemesters}
+                  levels={currentFilterLevels}
                   selectedSeasonId={selectedSeasonId}
                   selectedSemesterId={selectedSemesterId}
                   selectedLevelId={selectedLevelId}
                   onSeasonChange={handleSeasonChange}
                   onSemesterChange={handleSemesterChange}
                   onLevelChange={handleLevelChange}
-                  semestersLoading={semestersLoading}
+                  semestersLoading={registrationsLoading}
                 />
               </div>
             )}
@@ -278,26 +299,11 @@ const Courses = () => {
                 {isRegistered && !isEditing && (
                   <RegisteredCoursesList registrations={registrations} />
                 )}
-                
+
                 {/* Available Courses Section - Only show when not registered or when editing */}
                 {(!isRegistered || isEditing) && (
                   <>
-                    {/* Filters for available courses */}
-                    <div className="mb-6">
-                      <CourseFilters
-                        seasons={seasons}
-                        semesters={semesters}
-                        levels={levels}
-                        selectedSeasonId={selectedSeasonId}
-                        selectedSemesterId={selectedSemesterId}
-                        selectedLevelId={selectedLevelId}
-                        onSeasonChange={handleSeasonChange}
-                        onSemesterChange={handleSemesterChange}
-                        onLevelChange={handleLevelChange}
-                        semestersLoading={semestersLoading}
-                      />
-                    </div>
-                    
+                    {/* NO FILTERS HERE, as per your request */}
                     {courses.length > 0 && (
                       <AvailableCoursesList
                         courses={courses}
@@ -315,7 +321,7 @@ const Courses = () => {
               </div>
             )}
           </div>
-          
+
           {/* Registration confirmation dialog */}
           <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
             <DialogContent>
@@ -341,14 +347,14 @@ const Courses = () => {
                 }
               </div>
               <DialogFooter className="flex justify-end gap-3">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setShowRegistrationConfirm(false)}
                   disabled={registerMutation.isPending}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   className="bg-blue-700 hover:bg-blue-800"
                   onClick={handleConfirmRegistration}
                   disabled={registerMutation.isPending}

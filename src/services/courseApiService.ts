@@ -40,6 +40,22 @@ export interface RegistrableCoursesResponseData {
   };
   availableCourses: RegistrableCourse[];
 }
+export interface RegistrationFilterOptions {
+  seasons: { id: number; name: string; }[];
+  semesters: { id: number; name: string; }[];
+  levels: { id: number; name: string; }[];
+}
+
+// Update the return type for getMyRegistrations
+export interface MyRegistrationsResponseData {
+  items: CourseRegistration[];
+  totalPages: number;
+  currentPage: number;
+  limit: number;
+  totalItems: number;
+  filterOptions: RegistrationFilterOptions; // Add this new field
+}
+
 
 // Interface for Level
 export interface Level {
@@ -154,8 +170,8 @@ export const registerForCourses = async (registrations: {
 export const getMyRegistrations = async (
   seasonId: number,
   semesterId: number
-): Promise<ApiResponse<{ items: CourseRegistration[] }>> => {
-  const response = await api.get('/student-registrations/me', { // Corrected endpoint here
+): Promise<ApiResponse<MyRegistrationsResponseData>> => { // Use the updated interface
+  const response = await api.get('/student-registrations/me', {
     params: {
       seasonId,
       semesterId,
@@ -164,3 +180,4 @@ export const getMyRegistrations = async (
   console.log(response.data)
   return response.data;
 };
+

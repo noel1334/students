@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+// src/components/courses/CourseFormDownloader.tsx
+
+import React, { useRef, cloneElement, ReactElement } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseRegistration } from '@/services/courseApiService';
 import jsPDF from 'jspdf';
@@ -8,56 +8,85 @@ import html2canvas from 'html2canvas';
 
 interface CourseFormDownloaderProps {
   registrations: CourseRegistration[];
+  children: ReactElement; // Accepts a React element (the button) as children
 }
 
-const CourseFormDownloader = ({ registrations }: CourseFormDownloaderProps) => {
+const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderProps) => {
   const { user } = useAuth();
   const formRef = useRef<HTMLDivElement>(null);
 
   const downloadPDF = async () => {
-    if (!formRef.current || !user) return;
+    if (!formRef.current || !user) {
+      console.warn('PDF download skipped: formRef.current or user is missing.');
+      return;
+    }
 
     try {
-      const canvas = await html2canvas(formRef.current);
+      // --- IMPORTANT: Make the element temporarily visible for html2canvas ---
+      // Option 1: More robust for hiding visually without display: none
+      // formRef.current.style.position = 'absolute';
+      // formRef.current.style.left = '-9999px'; // Move off-screen
+      // formRef.current.style.opacity = '0'; // Make transparent
+      // formRef.current.style.zIndex = '-1'; // Ensure it's behind everything
+
+      // Option 2: Directly remove/add hidden class (less robust if hidden implies display:none)
+      formRef.current.classList.remove('hidden'); // Temporarily make it visible
+
+
+      const canvas = await html2canvas(formRef.current, {
+        useCORS: true, // Important if you have images from different origins (e.g., user profile image, school logo)
+        // Adjust scale for higher quality PDF, but can increase processing time
+        // scale: 2, 
+      });
+
+      // --- IMPORTANT: Hide the element again after capturing ---
+      formRef.current.classList.add('hidden'); // Hide it again
+
+
       const imgData = canvas.toDataURL('image/png');
-      
+
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgWidth = 210;
       const pageHeight = 295;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       let heightLeft = imgHeight;
-      
+
       let position = 0;
-      
+
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
-      
+
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pageHeight;
       }
-      
+
       pdf.save(`${user.regNo || 'student'}_course_registration.pdf`);
+      console.log('PDF generation and download initiated successfully.');
+
     } catch (error) {
       console.error('Error generating PDF:', error);
+      // You might want to show a toast message to the user here
+      // import { useToast } from '@/hooks/use-toast'; and then const { toast } = useToast();
+      // toast({ title: "PDF Download Failed", description: "Could not generate the course form. Please try again.", variant: "destructive" });
     }
   };
 
   if (!registrations || registrations.length === 0) {
-    return null;
+    return null; // Don't render anything if there are no registrations
   }
 
   return (
-    <div>
-      <Button onClick={downloadPDF} className="mb-4">
-        <Download className="mr-2 h-4 w-4" />
-        Download Course Form
-      </Button>
+    <>
+      {/* Clone the child element (the Button) and add the onClick handler */}
+      {cloneElement(children, { onClick: downloadPDF })}
 
-      {/* Hidden form for PDF generation */}
-      <div ref={formRef} className="hidden print:block bg-white p-8" style={{ width: '210mm', minHeight: '297mm' }}>
+      {/* Hidden form for PDF generation - only visible to print media or temporarily by JS */}
+      {/* The 'print:block' part is less relevant for html2canvas, which reads the DOM. */}
+      {/* Keeping 'print:block' for actual printing if needed, but 'hidden' is problematic. */}
+      <div ref={formRef} className="hidden bg-white p-8" style={{ width: '210mm', minHeight: '297mm' }}>
         {/* Header with logos and title */}
         <div className="flex justify-between items-start mb-8">
           {/* Student Profile Image */}
@@ -80,7 +109,9 @@ const CourseFormDownloader = ({ registrations }: CourseFormDownloaderProps) => {
 
           {/* School Logo */}
           <div className="w-20 h-20 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
-            <span className="text-sm font-bold text-gray-600">SCHOOL LOGO</span>
+            {/* If school logo is an actual image URL from your backend */}
+            {/* <img src="/path/to/school-logo.png" alt="School Logo" className="w-full h-full object-contain" /> */}
+            <span className="text-sm font-bold text-gray-600">SCHOOL LOGO</span> {/* Placeholder */}
           </div>
         </div>
 
@@ -125,7 +156,7 @@ const CourseFormDownloader = ({ registrations }: CourseFormDownloaderProps) => {
               ))}
             </tbody>
           </table>
-          
+
           <div className="mt-4">
             <p><strong>Total Units:</strong> {registrations.reduce((sum, reg) => sum + reg.course.creditUnit, 0)}</p>
           </div>
@@ -155,7 +186,7 @@ const CourseFormDownloader = ({ registrations }: CourseFormDownloaderProps) => {
           <p>Generated on: {new Date().toLocaleDateString()}</p>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
