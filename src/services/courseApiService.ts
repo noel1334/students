@@ -133,12 +133,12 @@ export const getMyRegistrations = async (
   seasonId: number,
   semesterId: number
 ): Promise<ApiResponse<{ items: CourseRegistration[] }>> => {
-  const response = await api.get('/student-registrations', { // Corrected endpoint here
+  const response = await api.get('/student-registrations/me', { // Corrected endpoint here
     params: {
       seasonId,
       semesterId,
     },
   });
-  console.log(response)
+  console.log(response.data)
   return response.data;
 };
