@@ -1,17 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { Printer, Check, Edit } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import DashboardHeader from '@/components/DashboardHeader';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import CourseCard from '@/components/CourseCard';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -30,6 +21,13 @@ import {
   type RegistrableCourse 
 } from '@/services/courseApiService';
 import { getAllSeasons, getAllSemesters, type Season, type Semester } from '@/services/academicPeriodsApiService';
+
+// Import refactored components
+import CoursesHeader from '@/components/courses/CoursesHeader';
+import CourseFilters from '@/components/courses/CourseFilters';
+import CourseActions from '@/components/courses/CourseActions';
+import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
+import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
 
 const Courses = () => {
   const { user } = useAuth();
@@ -125,14 +123,15 @@ const Courses = () => {
   });
 
   // Get data arrays with fallbacks
-  const seasons = seasonsData?.data?.items || [];
-  const semesters = semestersData?.data?.items || [];
+  const seasons = seasonsData?.data?.seasons || [];
+  const semesters = semestersData?.data?.semesters || [];
   const levels = levelsData?.data?.items || [];
   const courses = coursesData?.data?.availableCourses || [];
+  const registrations = registrationsData?.data?.items || [];
 
   // Get current registration status
-  const isRegistered = registrationsData?.data?.items && registrationsData.data.items.length > 0;
-  const registeredCourseIds = registrationsData?.data?.items?.map(reg => reg.courseId) || [];
+  const isRegistered = registrations && registrations.length > 0;
+  const registeredCourseIds = registrations?.map(reg => reg.courseId) || [];
 
   // Get selected items for display
   const selectedSeason = seasons.find(s => s.id === selectedSeasonId);
@@ -187,12 +186,25 @@ const Courses = () => {
     setSelectedCourses([]);
   };
 
-  if (coursesLoading || seasonsLoading || levelsLoading) {
+  const handleSeasonChange = (seasonId: number) => {
+    setSelectedSeasonId(seasonId);
+    setSelectedSemesterId(null);
+  };
+
+  const handleSemesterChange = (semesterId: number) => {
+    setSelectedSemesterId(semesterId);
+  };
+
+  const handleLevelChange = (levelId: number) => {
+    setSelectedLevelId(levelId);
+  };
+
+  if (coursesLoading || seasonsLoading || levelsLoading || registrationsLoading) {
     return (
       <>
         <DashboardHeader />
         <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="text-center py-8">Loading courses...</div>
           </div>
         </div>
@@ -204,112 +216,41 @@ const Courses = () => {
     <>
       <DashboardHeader />
       <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold mb-1">Courses</h1>
-            <div className="text-sm text-gray-500">
-              <p>{selectedSeason?.name || user?.currentSeasonName || 'No Season Selected'}</p>
-              <p className="font-medium text-gray-800">{selectedLevel?.name || user?.currentLevelName || 'No Level Selected'}</p>
-              <p>{selectedSemester?.name || user?.currentSemesterName || 'No Semester Selected'}</p>
-            </div>
-          </div>
+        <div className="max-w-6xl mx-auto">
+          <CoursesHeader
+            selectedSeason={selectedSeason}
+            selectedSemester={selectedSemester}
+            selectedLevel={selectedLevel}
+            userCurrentSeasonName={user?.currentSeasonName}
+            userCurrentSemesterName={user?.currentSemesterName}
+            userCurrentLevelName={user?.currentLevelName}
+          />
 
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Season</label>
-                  <Select 
-                    value={selectedSeasonId?.toString() || ''} 
-                    onValueChange={(value) => {
-                      setSelectedSeasonId(parseInt(value));
-                      setSelectedSemesterId(null);
-                    }}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select season" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {seasons.map(season => (
-                        <SelectItem key={season.id} value={season.id.toString()}>
-                          {season.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Semester</label>
-                  <Select 
-                    value={selectedSemesterId?.toString() || ''} 
-                    onValueChange={(value) => setSelectedSemesterId(parseInt(value))}
-                    disabled={!selectedSeasonId || semestersLoading}
-                  >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select semester" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {semesters.map(semester => (
-                        <SelectItem key={semester.id} value={semester.id.toString()}>
-                          {semester.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Level</label>
-                  <Select 
-                    value={selectedLevelId?.toString() || ''} 
-                    onValueChange={(value) => setSelectedLevelId(parseInt(value))}
-                  >
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Select level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {levels.map(level => (
-                        <SelectItem key={level.id} value={level.id.toString()}>
-                          {level.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            {/* Filters and Actions */}
+            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+              <CourseFilters
+                seasons={seasons}
+                semesters={semesters}
+                levels={levels}
+                selectedSeasonId={selectedSeasonId}
+                selectedSemesterId={selectedSemesterId}
+                selectedLevelId={selectedLevelId}
+                onSeasonChange={handleSeasonChange}
+                onSemesterChange={handleSemesterChange}
+                onLevelChange={handleLevelChange}
+                semestersLoading={semestersLoading}
+              />
               
-              {isRegistered && !isEditing && (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button className="bg-blue-700 hover:bg-blue-800">
-                    <Printer className="mr-2 h-4 w-4" /> Download Course Form
-                  </Button>
-                  <Button variant="outline" className="border-gray-300">
-                    Generate Exam Card
-                  </Button>
-                  <Button 
-                    onClick={handleEditRegistration}
-                    className="bg-amber-600 hover:bg-amber-700"
-                  >
-                    <Edit className="mr-2 h-4 w-4" /> Edit Registration
-                  </Button>
-                </div>
-              )}
-
-              {isEditing && (
-                <div className="flex gap-3">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleCancelEdit}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
+              <CourseActions
+                isRegistered={isRegistered}
+                isEditing={isEditing}
+                onEditRegistration={handleEditRegistration}
+                onCancelEdit={handleCancelEdit}
+              />
             </div>
 
-            {/* Course List */}
+            {/* Error message */}
             {coursesError && (
               <div className="text-red-600 mb-4">
                 Error loading courses. Please try again.
@@ -320,43 +261,26 @@ const Courses = () => {
               <div className="text-center py-8 text-gray-500">
                 Please select season, semester, and level to view available courses.
               </div>
-            ) : courses.length > 0 ? (
-              <div className="space-y-4">
-                {courses.map(course => (
-                  <CourseCard 
-                    key={course.id}
-                    code={course.code}
-                    title={course.title}
-                    units={course.creditUnit}
-                    isSelected={isRegistered && !isEditing ? registeredCourseIds.includes(course.id) : selectedCourses.includes(course.id)}
-                    onSelect={() => !isRegistered || isEditing ? handleCourseSelect(course.id) : undefined}
-                    isRegistered={isRegistered && !isEditing}
-                    isElective={course.isElective}
-                    isCarryOver={course.offeringReason === 'Carryover'}
-                  />
-                ))}
-              </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">
-                No courses available for the selected period.
-              </div>
-            )}
-            
-            {/* Registration Button */}
-            {(!isRegistered || isEditing) && selectedCourses.length > 0 && (
-              <div className="mt-6 flex justify-center">
-                <Button 
-                  className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
-                  onClick={handleRegister}
-                  disabled={registerMutation.isPending}
-                >
-                  {registerMutation.isPending 
-                    ? 'Processing...' 
-                    : isEditing 
-                      ? 'Update Course Registration' 
-                      : 'Register Selected Courses'
-                  }
-                </Button>
+              <div className="space-y-8">
+                {/* Registered Courses Section */}
+                {isRegistered && !isEditing && (
+                  <RegisteredCoursesList registrations={registrations} />
+                )}
+                
+                {/* Available Courses Section */}
+                {(courses.length > 0 || isEditing) && (
+                  <AvailableCoursesList
+                    courses={courses}
+                    selectedCourses={selectedCourses}
+                    registeredCourseIds={registeredCourseIds}
+                    isRegistered={isRegistered}
+                    isEditing={isEditing}
+                    onCourseSelect={handleCourseSelect}
+                    onRegister={handleRegister}
+                    isRegistering={registerMutation.isPending}
+                  />
+                )}
               </div>
             )}
           </div>
