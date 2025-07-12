@@ -18,10 +18,15 @@ import {
   getRegistrableCourses,
   registerForCourses,
   getMyRegistrations,
+  deleteIndividualRegistration,
+  deleteBatchRegistrations,
   type RegistrableCourse,
   type Level,
   type CourseRegistration,
+  type Season, // Assuming Season type is defined/available
+  type Semester, // Assuming Semester type is defined/available
 } from '@/services/courseApiService';
+// Correct import assuming getAllSeasons, getAllSemesters, getAllLevels are named exports
 import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 
 
@@ -31,8 +36,7 @@ import CourseFilters from '@/components/courses/CourseFilters';
 import CourseActions from '@/components/courses/CourseActions';
 import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
 import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
-// CourseFormDownloader is used within CourseActions now, but keep import if also used elsewhere directly
-import CourseFormDownloader from '@/components/courses/CourseFormDownloader'; 
+import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
 
 const Courses = () => {
   const { user } = useAuth();
@@ -54,6 +58,11 @@ const Courses = () => {
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  // NEW STATE: For managing selected registered courses for deletion
+  const [selectedRegisteredCourseIds, setSelectedRegisteredCourseIds] = useState<number[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // For delete confirmation dialog
+
 
   // Update state when user data becomes available
   useEffect(() => {
@@ -136,6 +145,47 @@ const Courses = () => {
     },
   });
 
+  // NEW: Individual delete mutation
+  const deleteIndividualMutation = useMutation({
+    mutationFn: deleteIndividualRegistration,
+    onSuccess: () => {
+      toast({
+        title: "Course deleted",
+        description: "The course registration has been removed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      setSelectedRegisteredCourseIds([]); // Clear selection after deletion
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Deletion failed",
+        description: error.response?.data?.message || "Failed to delete course.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // NEW: Batch delete mutation
+  const deleteBatchMutation = useMutation({
+    mutationFn: deleteBatchRegistrations,
+    onSuccess: (data) => {
+      toast({
+        title: "Courses deleted",
+        description: data.message || "Selected courses have been removed.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      setSelectedRegisteredCourseIds([]); // Clear selection after deletion
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Batch deletion failed",
+        description: error.response?.data?.message || "Failed to delete selected courses.",
+        variant: "destructive",
+      });
+    },
+  });
+
+
   // Determine which filter options to use based on isRegistered state
   const currentFilterSeasons = isRegistered && !isEditing
     ? (Array.isArray(registrationsData?.data?.filterOptions?.seasons) ? registrationsData.data.filterOptions.seasons : [])
@@ -153,8 +203,6 @@ const Courses = () => {
 
 
   // Get selected items for display (these still use the *selected* IDs for UI representation)
-  // Use the *current* filter options (which will be `allSeasons` when not registered/editing,
-  // or `registeredCoursesFilterSeasons` when viewing registered courses)
   const selectedSeason = currentFilterSeasons.find(s => s.id === selectedSeasonId);
   const selectedSemester = currentFilterSemesters.find(s => s.id === selectedSemesterId);
   const selectedLevel = currentFilterLevels.find(l => l.id === selectedLevelId);
@@ -202,30 +250,71 @@ const Courses = () => {
     setIsEditing(true);
     // When entering edit mode, pre-select the courses already registered
     setSelectedCourses(registeredCourseIds);
+    setSelectedRegisteredCourseIds([]); // Clear any existing registered course selections
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setSelectedCourses([]); // Clear selected courses when canceling edit
+    setSelectedRegisteredCourseIds([]); // Clear selection for deletion too
   };
 
   const handleSeasonChange = (seasonId: number) => {
     setSelectedSeasonId(seasonId);
     setSelectedSemesterId(null); // Reset semester when season changes
+    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
   };
 
   const handleSemesterChange = (semesterId: number) => {
     setSelectedSemesterId(semesterId);
+    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
   };
 
   const handleLevelChange = (levelId: number) => {
     setSelectedLevelId(levelId);
+    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
   };
+
+  // NEW: Handle checkbox toggle for registered courses for deletion
+  const handleToggleRegisteredCourseSelection = (registrationId: number, isChecked: boolean) => {
+    setSelectedRegisteredCourseIds(prev => {
+      if (isChecked) {
+        return [...prev, registrationId];
+      } else {
+        return prev.filter(id => id !== registrationId);
+      }
+    });
+  };
+
+  // NEW: Handle individual course deletion click
+  const handleDeleteIndividual = (registrationId: number) => {
+    // Optionally show a confirmation dialog here before mutation
+    if (window.confirm("Are you sure you want to delete this course registration?")) {
+      deleteIndividualMutation.mutate(registrationId);
+    }
+  };
+
+  // NEW: Handle "Remove All Selected" button click
+  const handleRemoveSelectedCourses = () => {
+    if (selectedRegisteredCourseIds.length === 0) {
+      toast({ title: "No courses selected", description: "Please select courses to remove.", variant: "destructive" });
+      return;
+    }
+    setShowDeleteConfirm(true); // Open confirmation dialog
+  };
+
+  // NEW: Confirm deletion from dialog
+  const handleConfirmDelete = () => {
+    deleteBatchMutation.mutate(selectedRegisteredCourseIds);
+    setShowDeleteConfirm(false); // Close dialog
+  };
+
 
   // Adjust loading state to include all necessary queries
   // Only check loading for global lists if `isRegistered` is false
   if (coursesLoading || registrationsLoading ||
-      (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading))) {
+      (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading)) ||
+      deleteIndividualMutation.isPending || deleteBatchMutation.isPending) { // Include deletion loading
     return (
       <>
         <DashboardHeader />
@@ -282,6 +371,21 @@ const Courses = () => {
               </div>
             )}
 
+            {/* NEW: Remove Selected Courses Button */}
+            {isRegistered && !isEditing && selectedRegisteredCourseIds.length > 0 && (
+              <div className="mb-4 flex justify-end">
+                <Button
+                  variant="destructive"
+                  onClick={handleRemoveSelectedCourses}
+                  disabled={deleteBatchMutation.isPending}
+                >
+                  Remove Selected Courses ({selectedRegisteredCourseIds.length})
+                </Button>
+              </div>
+            )}
+            {/* END NEW */}
+
+
             {/* Error message */}
             {coursesError && (
               <div className="text-red-600 mb-4">
@@ -297,7 +401,12 @@ const Courses = () => {
               <div className="space-y-8">
                 {/* Registered Courses Section */}
                 {isRegistered && !isEditing && (
-                  <RegisteredCoursesList registrations={registrations} />
+                  <RegisteredCoursesList
+                    registrations={registrations}
+                    selectedRegisteredCourseIds={selectedRegisteredCourseIds} // Pass selected IDs
+                    onToggleRegisteredCourseSelection={handleToggleRegisteredCourseSelection} // Pass toggle handler
+                    onDeleteIndividual={handleDeleteIndividual} // Pass individual delete handler
+                  />
                 )}
 
                 {/* Available Courses Section - Only show when not registered or when editing */}
@@ -364,6 +473,37 @@ const Courses = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* NEW: Delete Confirmation Dialog */}
+          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to remove the selected {selectedRegisteredCourseIds.length} course(s)?
+                  This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteBatchMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleConfirmDelete}
+                  disabled={deleteBatchMutation.isPending}
+                >
+                  {deleteBatchMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {/* END NEW: Delete Confirmation Dialog */}
+
         </div>
       </div>
     </>

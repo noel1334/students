@@ -23,20 +23,13 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
 
     try {
       // --- IMPORTANT: Make the element temporarily visible for html2canvas ---
-      // Option 1: More robust for hiding visually without display: none
-      // formRef.current.style.position = 'absolute';
-      // formRef.current.style.left = '-9999px'; // Move off-screen
-      // formRef.current.style.opacity = '0'; // Make transparent
-      // formRef.current.style.zIndex = '-1'; // Ensure it's behind everything
-
-      // Option 2: Directly remove/add hidden class (less robust if hidden implies display:none)
       formRef.current.classList.remove('hidden'); // Temporarily make it visible
 
 
       const canvas = await html2canvas(formRef.current, {
         useCORS: true, // Important if you have images from different origins (e.g., user profile image, school logo)
         // Adjust scale for higher quality PDF, but can increase processing time
-        // scale: 2, 
+        // scale: 2,
       });
 
       // --- IMPORTANT: Hide the element again after capturing ---
@@ -84,7 +77,6 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
       {cloneElement(children, { onClick: downloadPDF })}
 
       {/* Hidden form for PDF generation - only visible to print media or temporarily by JS */}
-      {/* The 'print:block' part is less relevant for html2canvas, which reads the DOM. */}
       {/* Keeping 'print:block' for actual printing if needed, but 'hidden' is problematic. */}
       <div ref={formRef} className="hidden bg-white p-8" style={{ width: '210mm', minHeight: '297mm' }}>
         {/* Header with logos and title */}

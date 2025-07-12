@@ -44,6 +44,7 @@ const CourseActions = ({
       {/* Conditionally render CourseFormDownloader here */}
       {isRegistered && !isEditing && registrations.length > 0 && (
         <CourseFormDownloader registrations={registrations}>
+          {/* Children will be the button that triggers the download */}
           <Button className="bg-blue-700 hover:bg-blue-800">
             <Printer className="mr-2 h-4 w-4" /> Download Course Form
           </Button>
