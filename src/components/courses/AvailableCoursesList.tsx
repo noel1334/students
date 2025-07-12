@@ -1,15 +1,23 @@
+// src/components/courses/AvailableCoursesList.tsx
 
 import React from 'react';
-import { RegistrableCourse } from '@/services/courseApiService';
+import { RegistrableCourse, CourseRegistration } from '@/services/courseApiService';
 import CourseCard from '@/components/CourseCard';
 import { Button } from '@/components/ui/button';
+// No Badge import needed here, it's used inside CourseCard
+
+// Extend RegistrableCourse to include the `isAlreadyRegistered` flag
+// This type will be used for the `courses` prop in editing mode
+export interface DisplayCourse extends RegistrableCourse {
+  isAlreadyRegistered?: boolean;
+}
 
 interface AvailableCoursesListProps {
-  courses: RegistrableCourse[];
+  courses: DisplayCourse[]; // Use the new DisplayCourse type
   selectedCourses: number[];
-  registeredCourseIds: number[];
-  isRegistered: boolean;
-  isEditing: boolean;
+  currentlyRegisteredCoursesMap: Map<number, CourseRegistration>; // Map of courseId -> CourseRegistration
+  isEditing: boolean; // Explicitly pass isEditing to control behavior
+
   onCourseSelect: (courseId: number) => void;
   onRegister: () => void;
   isRegistering: boolean;
@@ -18,8 +26,7 @@ interface AvailableCoursesListProps {
 const AvailableCoursesList = ({
   courses,
   selectedCourses,
-  registeredCourseIds,
-  isRegistered,
+  currentlyRegisteredCoursesMap,
   isEditing,
   onCourseSelect,
   onRegister,
@@ -33,37 +40,55 @@ const AvailableCoursesList = ({
     );
   }
 
+  const isSubmitButtonEnabled = !isRegistering && selectedCourses.length > 0;
+
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold mb-4">Available Courses</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        {isEditing ? "Modify Registered Courses" : "Available Courses"}
+      </h3>
       <div className="space-y-4">
-        {courses.map(course => (
-          <CourseCard 
-            key={course.id}
-            code={course.code}
-            title={course.title}
-            units={course.creditUnit}
-            isSelected={isRegistered && !isEditing ? registeredCourseIds.includes(course.id) : selectedCourses.includes(course.id)}
-            onSelect={() => !isRegistered || isEditing ? onCourseSelect(course.id) : undefined}
-            isRegistered={isRegistered && !isEditing}
-            isElective={course.isElective}
-            isCarryOver={course.offeringReason === 'Carryover'}
-          />
-        ))}
+        {courses.map(course => {
+          // Get the full registration object if this course is currently registered
+          const registeredReg = currentlyRegisteredCoursesMap.get(course.id);
+          const isCurrentlyRegistered = !!registeredReg;
+
+          // Determine if the checkbox for this specific course should be disabled
+          // It's disabled if score recorded OR semester locked
+          const isCheckboxDisabled = isCurrentlyRegistered && (registeredReg!.isScoreRecorded || registeredReg!.semester.areStudentEditsLocked);
+          // Note: The `isAlreadyRegistered` flag in DisplayCourse will come from Courses.tsx's useMemo.
+          // We combine it with `isCurrentlyRegistered` for clarity.
+
+          return (
+            <CourseCard
+              key={course.id}
+              code={course.code}
+              title={course.title}
+              units={course.creditUnit}
+              isSelected={selectedCourses.includes(course.id)} // Whether it's checked in the UI
+              onSelect={() => onCourseSelect(course.id)}
+              isElective={course.isElective}
+              isCarryOver={course.offeringReason === 'Carryover'}
+              isAlreadyRegistered={isCurrentlyRegistered} // Pass the status (derived from map)
+              isCheckboxDisabled={isCheckboxDisabled} // Pass the disable status
+              // isRegistered prop is no longer needed as we use isAlreadyRegistered and isCheckboxDisabled
+            />
+          );
+        })}
       </div>
-      
-      {/* Registration Button */}
-      {(!isRegistered || isEditing) && selectedCourses.length > 0 && (
+
+      {/* Registration/Update Button */}
+      {isSubmitButtonEnabled && (
         <div className="mt-6 flex justify-center">
-          <Button 
+          <Button
             className="bg-blue-700 hover:bg-blue-800 w-full md:w-auto md:px-12"
             onClick={onRegister}
             disabled={isRegistering}
           >
-            {isRegistering 
-              ? 'Processing...' 
-              : isEditing 
-                ? 'Update Course Registration' 
+            {isRegistering
+              ? 'Processing...'
+              : isEditing
+                ? 'Update Course Registration'
                 : 'Register Selected Courses'
             }
           </Button>

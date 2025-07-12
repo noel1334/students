@@ -20,13 +20,14 @@ import {
   getMyRegistrations,
   deleteIndividualRegistration,
   deleteBatchRegistrations,
+  updateStudentRegistrations,
   type RegistrableCourse,
   type Level,
   type CourseRegistration,
-  type Season, // Assuming Season type is defined/available
-  type Semester, // Assuming Semester type is defined/available
+  type Season,
+  type Semester,
+  type DisplayCourse, // IMPORT NEW DisplayCourse interface
 } from '@/services/courseApiService';
-// Correct import assuming getAllSeasons, getAllSemesters, getAllLevels are named exports
 import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 
 
@@ -43,7 +44,6 @@ const Courses = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Initialize with user's current values from landing page data
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
     user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
   );
@@ -54,17 +54,14 @@ const Courses = () => {
     user?.currentLevelId ? parseInt(user.currentLevelId) : null
   );
 
-  // UI state
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
 
-  // NEW STATE: For managing selected registered courses for deletion
   const [selectedRegisteredCourseIds, setSelectedRegisteredCourseIds] = useState<number[]>([]);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // For delete confirmation dialog
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 
-  // Update state when user data becomes available
   useEffect(() => {
     if (user && !selectedSeasonId && user.currentSeasonId) {
       setSelectedSeasonId(parseInt(user.currentSeasonId));
@@ -78,40 +75,36 @@ const Courses = () => {
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
 
-  // Fetch current registrations (for the "Registered Courses" section and its filter options)
   const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
     queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
     queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
     enabled: !!selectedSeasonId && !!selectedSemesterId,
   });
 
-  // Determine if the student has any registrations for the selected period
   const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
   const isRegistered = registrations.length > 0;
-  const registeredCourseIds = registrations?.map(reg => reg.course.id) || [];
+  const currentlyRegisteredCourseIds = registrations?.map(reg => reg.course.id) || [];
+  const currentlyRegisteredCoursesMap = new Map(registrations.map(reg => [reg.course.id, reg]));
 
 
-  // Fetch global academic periods ONLY IF the student is NOT registered (i.e., new registration flow)
-  // This helps prevent unnecessary fetches when the student has existing registrations and filter options are derived from them.
   const { data: allSeasonsData, isLoading: allSeasonsLoading } = useQuery({
     queryKey: ['allSeasons'],
     queryFn: getAllSeasons,
-    enabled: !isRegistered // Only enabled if student is not registered
+    enabled: !isRegistered
   });
 
   const { data: allSemestersData, isLoading: allSemestersLoading } = useQuery({
     queryKey: ['allSemesters', selectedSeasonId],
     queryFn: () => getAllSemesters(selectedSeasonId || undefined),
-    enabled: !isRegistered && !!selectedSeasonId // Only enabled if student is not registered AND season selected
+    enabled: !isRegistered && !!selectedSeasonId
   });
 
   const { data: allLevelsData, isLoading: allLevelsLoading } = useQuery({
     queryKey: ['allLevels'],
     queryFn: getAllLevels,
-    enabled: !isRegistered // Only enabled if student is not registered
+    enabled: !isRegistered
   });
 
-  // Fetch registrable courses (for the "Available Courses" section when not registered or editing)
   const {
     data: coursesData,
     isLoading: coursesLoading,
@@ -122,7 +115,31 @@ const Courses = () => {
     enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
   });
 
-  // Registration mutation
+  const updateRegistrationMutation = useMutation({
+    mutationFn: updateStudentRegistrations,
+    onSuccess: (data) => {
+      toast({
+        title: "Registration update successful",
+        description: data.message || "Your course registrations have been updated.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
+      setShowRegistrationConfirm(false);
+      setSelectedCourses([]);
+      setIsEditing(false);
+    },
+    onError: (error: any) => {
+      // MORE ROBUST ERROR MESSAGE EXTRACTION
+      const errorMessage = error.response?.data?.message ||
+                           error.message ||
+                           "An unexpected error occurred.";
+      toast({
+        title: "Registration update failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
   const registerMutation = useMutation({
     mutationFn: registerForCourses,
     onSuccess: () => {
@@ -131,21 +148,24 @@ const Courses = () => {
         description: "Your courses have been registered successfully!",
       });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-      // Reset state related to editing/selection after successful registration
       setShowRegistrationConfirm(false);
       setSelectedCourses([]);
       setIsEditing(false);
     },
     onError: (error: any) => {
+      // Apply same robust error message extraction here too
+      const errorMessage = error.response?.data?.message ||
+                           error.message ||
+                           "An unexpected error occurred.";
       toast({
         title: "Registration failed",
-        description: error.response?.data?.message || "Failed to register courses",
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
-  // NEW: Individual delete mutation
+
   const deleteIndividualMutation = useMutation({
     mutationFn: deleteIndividualRegistration,
     onSuccess: () => {
@@ -154,7 +174,7 @@ const Courses = () => {
         description: "The course registration has been removed.",
       });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-      setSelectedRegisteredCourseIds([]); // Clear selection after deletion
+      setSelectedRegisteredCourseIds([]);
     },
     onError: (error: any) => {
       toast({
@@ -165,7 +185,6 @@ const Courses = () => {
     },
   });
 
-  // NEW: Batch delete mutation
   const deleteBatchMutation = useMutation({
     mutationFn: deleteBatchRegistrations,
     onSuccess: (data) => {
@@ -174,7 +193,7 @@ const Courses = () => {
         description: data.message || "Selected courses have been removed.",
       });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-      setSelectedRegisteredCourseIds([]); // Clear selection after deletion
+      setSelectedRegisteredCourseIds([]);
     },
     onError: (error: any) => {
       toast({
@@ -186,7 +205,6 @@ const Courses = () => {
   });
 
 
-  // Determine which filter options to use based on isRegistered state
   const currentFilterSeasons = isRegistered && !isEditing
     ? (Array.isArray(registrationsData?.data?.filterOptions?.seasons) ? registrationsData.data.filterOptions.seasons : [])
     : (Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : []);
@@ -199,10 +217,43 @@ const Courses = () => {
     ? (Array.isArray(registrationsData?.data?.filterOptions?.levels) ? registrationsData.data.filterOptions.levels : [])
     : (Array.isArray(allLevelsData?.data?.items) ? allLevelsData.data.items : []);
 
-  const courses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
+  const availableCourses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
+
+  // Create a combined list of courses for editing mode
+  const combinedCoursesForEditing = React.useMemo(() => {
+    // This Map should be of type Map<number, DisplayCourse>
+    const courseMap = new Map<number, DisplayCourse>();
+
+    // Add all available courses first
+    availableCourses.forEach(course => {
+      courseMap.set(course.id, { ...course, isAlreadyRegistered: false }); // Explicitly mark as not registered yet
+    });
+
+    // Overlay with currently registered courses, marking them as registered
+    registrations.forEach(reg => {
+      const existingCourse = courseMap.get(reg.course.id);
+      if (existingCourse) {
+        // If the course is already in availableCourses, just update its status
+        courseMap.set(reg.course.id, { ...existingCourse, isAlreadyRegistered: true });
+      } else {
+        courseMap.set(reg.course.id, {
+          id: reg.course.id,
+          code: reg.course.code,
+          title: reg.course.title,
+          creditUnit: reg.course.creditUnit,
+          courseType: reg.course.courseType || 'CORE', 
+          isElective: false, 
+          preferredSemesterType: reg.course.preferredSemesterType || null,
+          isAlreadyRegistered: true, 
+        });
+      }
+    });
+
+    // Sort the combined list for consistent display
+    return Array.from(courseMap.values()).sort((a, b) => a.code.localeCompare(b.code));
+  }, [availableCourses, registrations]);
 
 
-  // Get selected items for display (these still use the *selected* IDs for UI representation)
   const selectedSeason = currentFilterSeasons.find(s => s.id === selectedSeasonId);
   const selectedSemester = currentFilterSemesters.find(s => s.id === selectedSemesterId);
   const selectedLevel = currentFilterLevels.find(l => l.id === selectedLevelId);
@@ -232,50 +283,55 @@ const Courses = () => {
       return;
     }
 
-    const registrationsToSubmit = selectedCourses.map(courseId => {
-      const course = courses.find(c => c.id === courseId);
-      return {
-        courseId,
-        seasonId: selectedSeasonId,
-        semesterId: selectedSemesterId,
-        levelId: selectedLevelId,
-        programCourseId: course?.programCourseId || undefined,
-      };
+    const coursesToSubmit = selectedCourses.map(courseId => {
+      return { courseId }; // Only send courseId
     });
 
-    registerMutation.mutate(registrationsToSubmit);
+    if (isEditing) {
+      updateRegistrationMutation.mutate({
+        seasonId: selectedSeasonId!,
+        semesterId: selectedSemesterId!,
+        levelId: selectedLevelId!,
+        desiredCourses: coursesToSubmit
+      });
+    } else {
+      registerMutation.mutate(coursesToSubmit.map(c => ({
+        ...c, // Spread courseId
+        seasonId: selectedSeasonId!,
+        semesterId: selectedSemesterId!,
+        levelId: selectedLevelId!,
+      })));
+    }
   };
 
   const handleEditRegistration = () => {
     setIsEditing(true);
-    // When entering edit mode, pre-select the courses already registered
-    setSelectedCourses(registeredCourseIds);
-    setSelectedRegisteredCourseIds([]); // Clear any existing registered course selections
+    setSelectedCourses(currentlyRegisteredCourseIds);
+    setSelectedRegisteredCourseIds([]);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setSelectedCourses([]); // Clear selected courses when canceling edit
-    setSelectedRegisteredCourseIds([]); // Clear selection for deletion too
+    setSelectedCourses([]);
+    setSelectedRegisteredCourseIds([]);
   };
 
   const handleSeasonChange = (seasonId: number) => {
     setSelectedSeasonId(seasonId);
-    setSelectedSemesterId(null); // Reset semester when season changes
-    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
+    setSelectedSemesterId(null);
+    setSelectedRegisteredCourseIds([]);
   };
 
   const handleSemesterChange = (semesterId: number) => {
     setSelectedSemesterId(semesterId);
-    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
+    setSelectedRegisteredCourseIds([]);
   };
 
   const handleLevelChange = (levelId: number) => {
     setSelectedLevelId(levelId);
-    setSelectedRegisteredCourseIds([]); // Clear selections on filter change
+    setSelectedRegisteredCourseIds([]);
   };
 
-  // NEW: Handle checkbox toggle for registered courses for deletion
   const handleToggleRegisteredCourseSelection = (registrationId: number, isChecked: boolean) => {
     setSelectedRegisteredCourseIds(prev => {
       if (isChecked) {
@@ -286,35 +342,30 @@ const Courses = () => {
     });
   };
 
-  // NEW: Handle individual course deletion click
   const handleDeleteIndividual = (registrationId: number) => {
-    // Optionally show a confirmation dialog here before mutation
     if (window.confirm("Are you sure you want to delete this course registration?")) {
       deleteIndividualMutation.mutate(registrationId);
     }
   };
 
-  // NEW: Handle "Remove All Selected" button click
   const handleRemoveSelectedCourses = () => {
     if (selectedRegisteredCourseIds.length === 0) {
       toast({ title: "No courses selected", description: "Please select courses to remove.", variant: "destructive" });
       return;
     }
-    setShowDeleteConfirm(true); // Open confirmation dialog
+    setShowDeleteConfirm(true);
   };
 
-  // NEW: Confirm deletion from dialog
   const handleConfirmDelete = () => {
     deleteBatchMutation.mutate(selectedRegisteredCourseIds);
-    setShowDeleteConfirm(false); // Close dialog
+    setShowDeleteConfirm(false);
   };
 
 
-  // Adjust loading state to include all necessary queries
-  // Only check loading for global lists if `isRegistered` is false
   if (coursesLoading || registrationsLoading ||
       (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading)) ||
-      deleteIndividualMutation.isPending || deleteBatchMutation.isPending) { // Include deletion loading
+      deleteIndividualMutation.isPending || deleteBatchMutation.isPending ||
+      updateRegistrationMutation.isPending || registerMutation.isPending) {
     return (
       <>
         <DashboardHeader />
@@ -371,7 +422,7 @@ const Courses = () => {
               </div>
             )}
 
-            {/* NEW: Remove Selected Courses Button */}
+            {/* Remove Selected Courses Button (only visible when NOT in edit mode) */}
             {isRegistered && !isEditing && selectedRegisteredCourseIds.length > 0 && (
               <div className="mb-4 flex justify-end">
                 <Button
@@ -383,7 +434,6 @@ const Courses = () => {
                 </Button>
               </div>
             )}
-            {/* END NEW */}
 
 
             {/* Error message */}
@@ -399,30 +449,28 @@ const Courses = () => {
               </div>
             ) : (
               <div className="space-y-8">
-                {/* Registered Courses Section */}
+                {/* Registered Courses Section (only visible when NOT in edit mode) */}
                 {isRegistered && !isEditing && (
                   <RegisteredCoursesList
                     registrations={registrations}
-                    selectedRegisteredCourseIds={selectedRegisteredCourseIds} // Pass selected IDs
-                    onToggleRegisteredCourseSelection={handleToggleRegisteredCourseSelection} // Pass toggle handler
-                    onDeleteIndividual={handleDeleteIndividual} // Pass individual delete handler
+                    selectedRegisteredCourseIds={selectedRegisteredCourseIds}
+                    onToggleRegisteredCourseSelection={handleToggleRegisteredCourseSelection}
+                    onDeleteIndividual={handleDeleteIndividual}
                   />
                 )}
 
-                {/* Available Courses Section - Only show when not registered or when editing */}
+                {/* Available Courses Section - Show when not registered OR when editing */}
                 {(!isRegistered || isEditing) && (
                   <>
-                    {/* NO FILTERS HERE, as per your request */}
-                    {courses.length > 0 && (
+                    {combinedCoursesForEditing.length > 0 && (
                       <AvailableCoursesList
-                        courses={courses}
+                        courses={isEditing ? combinedCoursesForEditing : availableCourses}
                         selectedCourses={selectedCourses}
-                        registeredCourseIds={registeredCourseIds}
-                        isRegistered={isRegistered}
+                        currentlyRegisteredCoursesMap={currentlyRegisteredCoursesMap}
                         isEditing={isEditing}
                         onCourseSelect={handleCourseSelect}
                         onRegister={handleRegister}
-                        isRegistering={registerMutation.isPending}
+                        isRegistering={registerMutation.isPending || updateRegistrationMutation.isPending}
                       />
                     )}
                   </>
@@ -435,14 +483,17 @@ const Courses = () => {
           <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Confirm Course Registration</DialogTitle>
+                <DialogTitle>
+                  {isEditing ? "Confirm Course Update" : "Confirm Course Registration"}
+                </DialogTitle>
                 <DialogDescription>
-                  You are about to register {selectedCourses.length} courses for {selectedSeason?.name} {selectedSemester?.name}.
+                  You are about to {isEditing ? "update" : "register"} {selectedCourses.length} courses for {selectedSeason?.name} {selectedSemester?.name}.
                   This action cannot be undone.
                 </DialogDescription>
               </DialogHeader>
               <div className="my-4 max-h-[300px] overflow-y-auto">
-                {courses
+                {/* Use the correct source for courses in the confirmation dialog */}
+                {(isEditing ? combinedCoursesForEditing : availableCourses)
                   .filter(course => selectedCourses.includes(course.id))
                   .map(course => (
                     <div key={course.id} className="mb-2 flex justify-between">
@@ -459,22 +510,27 @@ const Courses = () => {
                 <Button
                   variant="outline"
                   onClick={() => setShowRegistrationConfirm(false)}
-                  disabled={registerMutation.isPending}
+                  disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="bg-blue-700 hover:bg-blue-800"
                   onClick={handleConfirmRegistration}
-                  disabled={registerMutation.isPending}
+                  disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
                 >
-                  {registerMutation.isPending ? 'Processing...' : 'Submit Course Registration'}
+                  {(registerMutation.isPending || updateRegistrationMutation.isPending)
+                    ? 'Processing...'
+                    : isEditing
+                      ? 'Submit Course Update'
+                      : 'Register Selected Courses'
+                  }
                 </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
 
-          {/* NEW: Delete Confirmation Dialog */}
+          {/* Delete Confirmation Dialog */}
           <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
             <DialogContent>
               <DialogHeader>
@@ -502,7 +558,6 @@ const Courses = () => {
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          {/* END NEW: Delete Confirmation Dialog */}
 
         </div>
       </div>
