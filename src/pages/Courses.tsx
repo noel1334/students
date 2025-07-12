@@ -123,11 +123,11 @@ const Courses = () => {
   });
 
   // Get data arrays with fallbacks
-  const seasons = seasonsData?.data?.seasons || [];
-  const semesters = semestersData?.data?.semesters || [];
-  const levels = levelsData?.data?.items || [];
-  const courses = coursesData?.data?.availableCourses || [];
-  const registrations = registrationsData?.data?.items || [];
+  const seasons = Array.isArray(seasonsData?.data?.seasons) ? seasonsData.data.seasons : [];
+  const semesters = Array.isArray(semestersData?.data?.semesters) ? semestersData.data.semesters : [];
+  const levels = Array.isArray(levelsData?.data?.items) ? levelsData.data.items : [];
+  const courses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
+  const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
 
   // Get current registration status
   const isRegistered = registrations && registrations.length > 0;
