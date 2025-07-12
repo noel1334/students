@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { CourseRegistration } from '@/services/courseApiService';
-import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 interface RegisteredCoursesListProps {
   registrations: CourseRegistration[];
@@ -18,28 +19,39 @@ const RegisteredCoursesList = ({ registrations }: RegisteredCoursesListProps) =>
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold mb-4">Your Registered Courses ({registrations.length})</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {registrations.map((registration) => (
-          <Card key={registration.id} className="border border-green-200 bg-green-50">
-            <CardContent className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h4 className="font-semibold text-gray-900">{registration.course.code}</h4>
-                  <p className="text-sm text-gray-600 mb-2">{registration.course.title}</p>
-                </div>
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                  Registered
-                </span>
-              </div>
-              <div className="text-sm text-gray-500 space-y-1">
-                <p><span className="font-medium">Units:</span> {registration.course.creditUnit}</p>
-                <p><span className="font-medium">Level:</span> {registration.level.name}</p>
-                <p><span className="font-medium">Registered:</span> {new Date(registration.registeredAt).toLocaleDateString()}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-semibold">Your Registered Courses ({registrations.length})</h3>
+      </div>
+      
+      <div className="border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Course Code</TableHead>
+              <TableHead>Course Title</TableHead>
+              <TableHead>Units</TableHead>
+              <TableHead>Level</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Date Registered</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {registrations.map((registration) => (
+              <TableRow key={registration.id}>
+                <TableCell className="font-medium">{registration.course.code}</TableCell>
+                <TableCell>{registration.course.title}</TableCell>
+                <TableCell>{registration.course.creditUnit}</TableCell>
+                <TableCell>{registration.level.name}</TableCell>
+                <TableCell>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                    Registered
+                  </Badge>
+                </TableCell>
+                <TableCell>{new Date(registration.registeredAt).toLocaleDateString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

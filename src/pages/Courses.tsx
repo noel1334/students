@@ -28,6 +28,7 @@ import CourseFilters from '@/components/courses/CourseFilters';
 import CourseActions from '@/components/courses/CourseActions';
 import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
 import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
+import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
 
 const Courses = () => {
   const { user } = useAuth();
@@ -227,28 +228,38 @@ const Courses = () => {
           />
 
           <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-            {/* Filters and Actions */}
+            {/* Top Actions */}
             <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
-              <CourseFilters
-                seasons={seasons}
-                semesters={semesters}
-                levels={levels}
-                selectedSeasonId={selectedSeasonId}
-                selectedSemesterId={selectedSemesterId}
-                selectedLevelId={selectedLevelId}
-                onSeasonChange={handleSeasonChange}
-                onSemesterChange={handleSemesterChange}
-                onLevelChange={handleLevelChange}
-                semestersLoading={semestersLoading}
-              />
-              
               <CourseActions
                 isRegistered={isRegistered}
                 isEditing={isEditing}
                 onEditRegistration={handleEditRegistration}
                 onCancelEdit={handleCancelEdit}
               />
+              
+              {/* Download Course Form Button */}
+              {isRegistered && !isEditing && (
+                <CourseFormDownloader registrations={registrations} />
+              )}
             </div>
+
+            {/* Filters (only for registered courses) */}
+            {isRegistered && !isEditing && (
+              <div className="mb-6">
+                <CourseFilters
+                  seasons={seasons}
+                  semesters={semesters}
+                  levels={levels}
+                  selectedSeasonId={selectedSeasonId}
+                  selectedSemesterId={selectedSemesterId}
+                  selectedLevelId={selectedLevelId}
+                  onSeasonChange={handleSeasonChange}
+                  onSemesterChange={handleSemesterChange}
+                  onLevelChange={handleLevelChange}
+                  semestersLoading={semestersLoading}
+                />
+              </div>
+            )}
 
             {/* Error message */}
             {coursesError && (
@@ -268,18 +279,38 @@ const Courses = () => {
                   <RegisteredCoursesList registrations={registrations} />
                 )}
                 
-                {/* Available Courses Section */}
-                {(courses.length > 0 || isEditing) && (
-                  <AvailableCoursesList
-                    courses={courses}
-                    selectedCourses={selectedCourses}
-                    registeredCourseIds={registeredCourseIds}
-                    isRegistered={isRegistered}
-                    isEditing={isEditing}
-                    onCourseSelect={handleCourseSelect}
-                    onRegister={handleRegister}
-                    isRegistering={registerMutation.isPending}
-                  />
+                {/* Available Courses Section - Only show when not registered or when editing */}
+                {(!isRegistered || isEditing) && (
+                  <>
+                    {/* Filters for available courses */}
+                    <div className="mb-6">
+                      <CourseFilters
+                        seasons={seasons}
+                        semesters={semesters}
+                        levels={levels}
+                        selectedSeasonId={selectedSeasonId}
+                        selectedSemesterId={selectedSemesterId}
+                        selectedLevelId={selectedLevelId}
+                        onSeasonChange={handleSeasonChange}
+                        onSemesterChange={handleSemesterChange}
+                        onLevelChange={handleLevelChange}
+                        semestersLoading={semestersLoading}
+                      />
+                    </div>
+                    
+                    {courses.length > 0 && (
+                      <AvailableCoursesList
+                        courses={courses}
+                        selectedCourses={selectedCourses}
+                        registeredCourseIds={registeredCourseIds}
+                        isRegistered={isRegistered}
+                        isEditing={isEditing}
+                        onCourseSelect={handleCourseSelect}
+                        onRegister={handleRegister}
+                        isRegistering={registerMutation.isPending}
+                      />
+                    )}
+                  </>
                 )}
               </div>
             )}
