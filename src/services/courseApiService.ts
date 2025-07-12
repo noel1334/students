@@ -1,7 +1,5 @@
-
-// src/services/courseApiService.ts
-
-import api from '@/config/api'; // Assuming '@/config/api' points to your axios instance
+import api from '@/config/api'; 
+import { ApiResponse } from './academicPeriodsApiService'; // Re-use the ApiResponse interface from common location
 
 // Interface for a single registrable course item
 export interface RegistrableCourse {
@@ -9,9 +7,9 @@ export interface RegistrableCourse {
   code: string;
   title: string;
   creditUnit: number;
-  courseType: 'CORE' | 'ELECTIVE'; // Based on your backend CourseType enum
-  isElective: boolean; // From ProgramCourse mapping
-  preferredSemesterType: string | null; // From Course model
+  courseType: 'CORE' | 'ELECTIVE'; 
+  isElective: boolean; 
+  preferredSemesterType: string | null; 
   
   // Prerequisite status from backend
   prerequisitesMet?: boolean;
@@ -19,7 +17,7 @@ export interface RegistrableCourse {
   prerequisiteList?: { id: number; code: string; title: string; }[];
   
   offeringReason?: string; // e.g., "Current Program Offering", "Carryover"
-  programCourseId?: number | null; // ID of the ProgramCourse mapping, if applicable
+  programCourseId?: number | null; 
 }
 
 // Interface for the data section of the API response for registrable courses
@@ -28,26 +26,19 @@ export interface RegistrableCoursesResponseData {
     id: number;
     name: string;
     regNo: string;
-    level: string; // e.g., "100 Level"
+    level: string; 
     program: string;
   };
   targetSeason: {
     id: number;
-    name: string; // e.g., "2024/2025 Academic Session"
+    name: string; 
   };
   targetSemester: {
     id: number;
-    name: string; // e.g., "First Semester"
-    type: string; // e.g., "FIRST"
+    name: string; 
+    type: string; 
   };
   availableCourses: RegistrableCourse[];
-}
-
-// Re-using your existing ApiResponse interface
-export interface ApiResponse<T> {
-  status: string;
-  data?: T;
-  message?: string;
 }
 
 // Interface for Level
@@ -126,7 +117,7 @@ export const registerForCourses = async (registrations: {
   levelId: number;
   programCourseId?: number;
 }[]): Promise<ApiResponse<any>> => {
-  const response = await api.post('/student-course-registrations', {
+  const response = await api.post('/student-registrations', {
     registrations,
   });
   return response.data;
@@ -142,11 +133,12 @@ export const getMyRegistrations = async (
   seasonId: number,
   semesterId: number
 ): Promise<ApiResponse<{ items: CourseRegistration[] }>> => {
-  const response = await api.get('/student-course-registrations', {
+  const response = await api.get('/student-registrations', { // Corrected endpoint here
     params: {
       seasonId,
       semesterId,
     },
   });
+  console.log(response)
   return response.data;
 };

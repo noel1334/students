@@ -1,7 +1,11 @@
-// src/services/academicPeriodsApiService.ts
-
 import api from '@/config/api'; 
-import { ApiResponse } from './courseApiService'; // Re-use the ApiResponse interface
+
+// Define a common ApiResponse interface if it's not global
+export interface ApiResponse<T> {
+  status: string;
+  data?: T;
+  message?: string;
+}
 
 // Define interfaces for Season and Semester from your backend schema
 export interface Season {
@@ -32,21 +36,23 @@ export interface Semester {
 
 /**
  * Fetches all academic seasons from the backend.
- * @returns A promise that resolves to an ApiResponse containing an array of Season objects.
+ * @returns A promise that resolves to an ApiResponse containing an object with a 'seasons' array.
  */
-export const getAllSeasons = async (): Promise<ApiResponse<{ items: Season[] }>> => {
+export const getAllSeasons = async (): Promise<ApiResponse<{ seasons: Season[], totalPages: number, currentPage: number, totalSeasons: number }>> => {
   const response = await api.get('/seasons');
-  console.log(response.data);
   return response.data;
 };
 
-
-export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ items: Semester[] }>> => {
+/**
+ * Fetches all academic semesters from the backend.
+ * @param seasonId Optional season ID to filter semesters.
+ * @returns A promise that resolves to an ApiResponse containing an object with a 'semesters' array.
+ */
+export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ semesters: Semester[], totalPages: number, currentPage: number, totalSemesters: number }>> => {
   const params: { seasonId?: number } = {};
   if (seasonId) {
     params.seasonId = seasonId;
   }
   const response = await api.get('/semesters', { params });
-  console.log(response.data);
   return response.data;
 };
