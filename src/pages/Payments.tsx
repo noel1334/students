@@ -154,11 +154,13 @@ const Payments = () => {
     payment_options: 'card,banktransfer,ussd',
     customer: {
       email: user!.email!,
+      phone_number: user!.phoneNumber || '08000000000', // Add required phone_number
       name: user!.name || user!.regNo || "Student",
     },
     customizations: {
       title: 'School Fee Payment',
       description: 'Payment for school fees',
+      logo: '', // Add required logo property (empty string for now)
     },
   });
 
