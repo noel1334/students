@@ -154,7 +154,7 @@ const Payments = () => {
     payment_options: 'card,banktransfer,ussd',
     customer: {
       email: user!.email!,
-      phone_number: user!.phoneNumber || '08000000000', // Add required phone_number
+      phone_number: '08000000000', // Use default phone number since phoneNumber doesn't exist on User interface
       name: user!.name || user!.regNo || "Student",
     },
     customizations: {
