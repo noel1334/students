@@ -4,11 +4,21 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentSchoolFees } from '@/services/schoolFeeApiService';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PaymentStatus = () => {
+  const { user } = useAuth();
+  
   const { data: schoolFeesResponse, isLoading, error } = useQuery({
-    queryKey: ['current-school-fees'],
-    queryFn: getCurrentSchoolFees,
+    queryKey: ['current-school-fees', user?.currentSeasonId, user?.currentSemesterId, user?.currentLevelId],
+    queryFn: async () => {
+      return await getCurrentSchoolFees(
+        user?.currentSeasonId ? parseInt(user.currentSeasonId) : undefined,
+        user?.currentSemesterId ? parseInt(user.currentSemesterId) : undefined,
+        user?.currentLevelId ? parseInt(user.currentLevelId) : undefined
+      );
+    },
+    enabled: !!user, // Only run query when user is available
   });
 
   console.log('School fees API response:', schoolFeesResponse);
@@ -24,9 +34,17 @@ const PaymentStatus = () => {
 
   if (error) {
     console.error('Error fetching school fees:', error);
+    const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error occurred';
+    
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700">Failed to load school fees. Please try again later.</p>
+        <p className="text-red-700 font-semibold">Failed to load school fees</p>
+        <p className="text-red-600 text-sm mt-1">Backend Error: {errorMessage}</p>
+        {errorMessage.includes('Season ID is required') && (
+          <p className="text-red-600 text-sm mt-2">
+            Please ensure your current academic season is set in your profile.
+          </p>
+        )}
       </div>
     );
   }

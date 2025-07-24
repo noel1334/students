@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { CreditCard, Download, AlertCircle, Calendar, Loader2 } from 'lucide-react';
+import { CreditCard, Download, AlertCircle, Calendar, Loader2, RefreshCw } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
 import PaystackPop from '@paystack/inline-js';
 import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
@@ -43,11 +44,19 @@ const Payments = () => {
   console.log('Payments component rendering, user:', user);
 
   const { data: schoolFeesResponse, isLoading, error, refetch } = useQuery({
-    queryKey: ['current-school-fees'],
+    queryKey: ['current-school-fees', user?.currentSeasonId, user?.currentSemesterId, user?.currentLevelId],
     queryFn: async () => {
       console.log('Fetching current school fees...');
+      console.log('User season ID:', user?.currentSeasonId);
+      console.log('User semester ID:', user?.currentSemesterId);
+      console.log('User level ID:', user?.currentLevelId);
+      
       try {
-        const response = await getCurrentSchoolFees();
+        const response = await getCurrentSchoolFees(
+          user?.currentSeasonId ? parseInt(user.currentSeasonId) : undefined,
+          user?.currentSemesterId ? parseInt(user.currentSemesterId) : undefined,
+          user?.currentLevelId ? parseInt(user.currentLevelId) : undefined
+        );
         console.log('School fees API response:', response);
         return response;
       } catch (error) {
@@ -55,7 +64,8 @@ const Payments = () => {
         throw error;
       }
     },
-    retry: 3,
+    enabled: !!user, // Only run query when user is available
+    retry: 1,
     retryDelay: 1000,
   });
 
@@ -298,6 +308,10 @@ const Payments = () => {
 
   if (error) {
     console.error('Payment page error:', error);
+    
+    // Extract error message from the backend response
+    const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error occurred';
+    
     return (
       <>
         <DashboardHeader />
@@ -306,8 +320,28 @@ const Payments = () => {
             <div className="flex flex-col justify-center items-center py-8">
               <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
               <h2 className="text-xl font-semibold mb-2">Failed to Load Payment Details</h2>
-              <p className="text-gray-600 mb-4">There was an error loading your school fees information.</p>
-              <Button onClick={() => refetch()}>Try Again</Button>
+              <div className="text-center mb-4">
+                <p className="text-gray-600 mb-2">Backend Error:</p>
+                <p className="text-red-600 font-mono text-sm bg-red-50 p-3 rounded border max-w-md">
+                  {errorMessage}
+                </p>
+              </div>
+              {errorMessage.includes('Season ID is required') && (
+                <div className="text-center mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-w-md">
+                  <p className="text-yellow-800 text-sm">
+                    <strong>Possible Solutions:</strong>
+                  </p>
+                  <ul className="text-yellow-700 text-sm mt-2 text-left">
+                    <li>• Check if your current season is set in your profile</li>
+                    <li>• Contact admin to assign you to an academic season</li>
+                    <li>• Ensure the academic season is active</li>
+                  </ul>
+                </div>
+              )}
+              <Button onClick={() => refetch()} className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
             </div>
           </div>
         </div>
