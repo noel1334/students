@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
@@ -41,10 +40,26 @@ const Payments = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const receiptRef = useRef(null);
 
+  console.log('Payments component rendering, user:', user);
+
   const { data: schoolFeesResponse, isLoading, error, refetch } = useQuery({
     queryKey: ['current-school-fees'],
-    queryFn: getCurrentSchoolFees,
+    queryFn: async () => {
+      console.log('Fetching current school fees...');
+      try {
+        const response = await getCurrentSchoolFees();
+        console.log('School fees API response:', response);
+        return response;
+      } catch (error) {
+        console.error('Error in getCurrentSchoolFees:', error);
+        throw error;
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  console.log('Query state:', { isLoading, error, data: schoolFeesResponse });
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
@@ -57,7 +72,7 @@ const Payments = () => {
       title: "Payment Successful!",
       description: "Your school fee payment has been successfully processed.",
     });
-    await refetch(); // Refresh the school fees data
+    await refetch();
   }, [refetch, toast]);
 
   const handlePaymentFailure = useCallback((error: any, gateway: string) => {
@@ -154,13 +169,13 @@ const Payments = () => {
     payment_options: 'card,banktransfer,ussd',
     customer: {
       email: user!.email!,
-      phone_number: '08000000000', // Use default phone number since phoneNumber doesn't exist on User interface
+      phone_number: '08000000000',
       name: user!.name || user!.regNo || "Student",
     },
     customizations: {
       title: 'School Fee Payment',
       description: 'Payment for school fees',
-      logo: '', // Add required logo property (empty string for now)
+      logo: '',
     },
   });
 
@@ -281,6 +296,25 @@ const Payments = () => {
     );
   }
 
+  if (error) {
+    console.error('Payment page error:', error);
+    return (
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col justify-center items-center py-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Failed to Load Payment Details</h2>
+              <p className="text-gray-600 mb-4">There was an error loading your school fees information.</p>
+              <Button onClick={() => refetch()}>Try Again</Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <DashboardHeader />
@@ -344,10 +378,10 @@ const Payments = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                       <div className="space-y-2">
-                        <p className="text-gray-800"><span className="font-semibold">Student ID:</span> STD123456</p>
-                        <p className="text-gray-800"><span className="font-semibold">Full Name:</span> John Doe</p>
-                        <p className="text-gray-800"><span className="font-semibold">Department:</span> Computer Science</p>
-                        <p className="text-gray-800"><span className="font-semibold">Program:</span> Bachelor of Science</p>
+                        <p className="text-gray-800"><span className="font-semibold">Student ID:</span> {user?.regNo || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Full Name:</span> {user?.name || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Department:</span> {user?.departmentName || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Program:</span> {user?.programName || 'N/A'}</p>
                       </div>
                       <div className="space-y-2">
                         <p className="text-gray-800"><span className="font-semibold">Academic Session:</span> {selectedSession}</p>
