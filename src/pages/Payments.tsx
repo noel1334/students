@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
@@ -310,7 +309,7 @@ const Payments = () => {
     console.error('Payment page error:', error);
     
     // Extract error message from the backend response
-    const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error occurred';
+    const errorMessage = (error as any)?.response?.data?.message || (error as Error)?.message || 'Unknown error occurred';
     
     return (
       <>

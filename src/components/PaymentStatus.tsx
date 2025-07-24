@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Loader2 } from 'lucide-react';
@@ -34,7 +33,7 @@ const PaymentStatus = () => {
 
   if (error) {
     console.error('Error fetching school fees:', error);
-    const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error occurred';
+    const errorMessage = (error as any)?.response?.data?.message || (error as Error)?.message || 'Unknown error occurred';
     
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
