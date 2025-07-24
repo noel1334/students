@@ -1,45 +1,48 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, Loader2 } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
-import { getCurrentSchoolFees } from '@/services/schoolFeeApiService';
+import { ChevronDown } from 'lucide-react';
+
+type Payment = {
+  id: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: 'paid' | 'pending' | 'overdue';
+};
 
 const PaymentStatus = () => {
-  const { data: schoolFeesResponse, isLoading, error } = useQuery({
-    queryKey: ['current-school-fees'],
-    queryFn: getCurrentSchoolFees,
-  });
-
-  console.log('School fees API response:', schoolFeesResponse);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-gray-600">Loading school fees...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    console.error('Error fetching school fees:', error);
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700">Failed to load school fees. Please try again later.</p>
-      </div>
-    );
-  }
-
-  const schoolFees = schoolFeesResponse?.data?.items || [];
-  const totalAmount = schoolFeesResponse?.data?.totalAmount || 0;
-  
-  // Calculate paid and pending amounts based on mock payment status
-  // In a real app, this would come from payment records
-  const paidAmount = schoolFees
-    .filter(fee => fee.id % 2 === 0) // Mock: even IDs are "paid"
-    .reduce((sum, fee) => sum + fee.amount, 0);
-  const pendingAmount = totalAmount - paidAmount;
+  // This would come from an API in a real application
+  const payments: Payment[] = [
+    {
+      id: '1',
+      description: 'Tuition Fee (First Semester)',
+      amount: 120000,
+      dueDate: '2023-09-15',
+      status: 'paid',
+    },
+    {
+      id: '2',
+      description: 'Technology Fee',
+      amount: 25000,
+      dueDate: '2023-09-30',
+      status: 'paid',
+    },
+    {
+      id: '3',
+      description: 'Library Fee',
+      amount: 10000,
+      dueDate: '2023-10-15',
+      status: 'pending',
+    },
+    {
+      id: '4',
+      description: 'Tuition Fee (Second Semester)',
+      amount: 120000,
+      dueDate: '2024-01-15',
+      status: 'overdue',
+    },
+  ];
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -54,12 +57,12 @@ const PaymentStatus = () => {
     }
   };
 
-  // Mock payment status for display (in real app, this would come from payment records)
-  const getPaymentStatus = (feeId: number) => {
-    if (feeId % 2 === 0) return 'paid';
-    if (feeId % 3 === 0) return 'overdue';
-    return 'pending';
-  };
+  // Calculate total amounts
+  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const paidAmount = payments
+    .filter(payment => payment.status === 'paid')
+    .reduce((sum, payment) => sum + payment.amount, 0);
+  const pendingAmount = totalAmount - paidAmount;
 
   return (
     <div className="space-y-6">
@@ -90,32 +93,20 @@ const PaymentStatus = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {schoolFees.map((fee) => {
-                const status = getPaymentStatus(fee.id);
-                return (
-                  <tr key={fee.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-800">
-                      {fee.name}
-                      {fee.description && (
-                        <div className="text-xs text-gray-500 mt-1">{fee.description}</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
-                      ₦{fee.amount.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-center text-gray-700">
-                      {fee.dueDate ? new Date(fee.dueDate).toLocaleDateString() : 'N/A'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <Badge variant="outline" className={`px-2 py-1 capitalize ${getStatusColor(status)}`}>
-                          {status}
-                        </Badge>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {payments.map((payment) => (
+                <tr key={payment.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-800">{payment.description}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">₦{payment.amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-center text-gray-700">{new Date(payment.dueDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      <Badge variant="outline" className={`px-2 py-1 capitalize ${getStatusColor(payment.status)}`}>
+                        {payment.status}
+                      </Badge>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
             <tfoot className="bg-gray-50 print:bg-gray-100">
               <tr>
@@ -136,12 +127,6 @@ const PaymentStatus = () => {
           <p className="text-sm text-yellow-700">
             You have outstanding payments of <span className="font-medium">₦{pendingAmount.toLocaleString()}</span>. Please settle your fees to avoid late penalties.
           </p>
-        </div>
-      )}
-      
-      {schoolFees.length === 0 && !isLoading && (
-        <div className="p-8 text-center text-gray-500">
-          <p>No school fees found for the current academic period.</p>
         </div>
       )}
     </div>
