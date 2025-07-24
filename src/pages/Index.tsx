@@ -1,9 +1,7 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import CourseList from '@/components/CourseList';
 import { BookOpen, Calendar, CreditCard, User } from 'lucide-react';
 
 const Index = () => {
