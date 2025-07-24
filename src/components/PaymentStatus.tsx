@@ -1,19 +1,33 @@
 
 import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, AlertTriangle } from 'lucide-react';
+import { ChevronDown, AlertTriangle, RefreshCw } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApplicableSchoolFeesForStudent, SchoolFeeListItem } from '@/services/feeApiService';
 import { Button } from '@/components/ui/button';
 
 const PaymentStatus = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [schoolFees, setSchoolFees] = useState<SchoolFeeListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSchoolFees = async () => {
-    if (!user?.currentSeasonId) {
+    console.log('PaymentStatus: Fetching school fees...');
+    console.log('PaymentStatus: User data:', user);
+    
+    if (authLoading) {
+      console.log('PaymentStatus: Auth still loading...');
+      return;
+    }
+    
+    if (!user) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    if (!user.currentSeasonId) {
       setError('Current season information not available');
       setLoading(false);
       return;
@@ -22,24 +36,33 @@ const PaymentStatus = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('PaymentStatus: Fetching school fees for season ID:', user.currentSeasonId);
+      
       const response = await getApplicableSchoolFeesForStudent(parseInt(user.currentSeasonId));
+      console.log('PaymentStatus: School fees response:', response);
       
       if (response.status === 'success' && response.data) {
         setSchoolFees(response.data.items);
+        console.log('PaymentStatus: School fees set:', response.data.items);
       } else {
-        setError(response.message || 'Failed to fetch school fees');
+        const errorMessage = response.message || 'Failed to fetch school fees';
+        console.error('PaymentStatus: API error:', errorMessage);
+        setError(errorMessage);
       }
     } catch (err: any) {
-      console.error('Error fetching school fees:', err);
-      setError('An error occurred while fetching school fees');
+      console.error('PaymentStatus: Error fetching school fees:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while fetching school fees';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSchoolFees();
-  }, [user?.currentSeasonId]);
+    if (!authLoading) {
+      fetchSchoolFees();
+    }
+  }, [user?.currentSeasonId, authLoading]);
 
   if (loading) {
     return (
@@ -73,6 +96,7 @@ const PaymentStatus = () => {
             size="sm"
             className="text-red-600 border-red-300 hover:bg-red-100"
           >
+            <RefreshCw size={14} className="mr-1" />
             Retry
           </Button>
         </div>
@@ -114,34 +138,44 @@ const PaymentStatus = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {schoolFees.map((fee) => (
-                <tr key={fee.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 text-gray-800">
-                    {fee.description || 'School Fee'}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">
-                    ₦{fee.amount.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-center text-gray-700">
-                    {fee.level.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-center">
-                      <Badge variant="outline" className="px-2 py-1 capitalize bg-yellow-100 text-yellow-800 border-yellow-200">
-                        pending
-                      </Badge>
-                    </div>
+              {schoolFees.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
+                    No school fees found for the current session
                   </td>
                 </tr>
-              ))}
+              ) : (
+                schoolFees.map((fee) => (
+                  <tr key={fee.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 text-gray-800">
+                      {fee.description || 'School Fee'}
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-gray-900">
+                      ₦{fee.amount.toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-center text-gray-700">
+                      {fee.level.name}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-center">
+                        <Badge variant="outline" className="px-2 py-1 capitalize bg-yellow-100 text-yellow-800 border-yellow-200">
+                          pending
+                        </Badge>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
-            <tfoot className="bg-gray-50 print:bg-gray-100">
-              <tr>
-                <td className="px-4 py-3 font-medium text-gray-700">Total</td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900">₦{totalAmount.toLocaleString()}</td>
-                <td colSpan={2}></td>
-              </tr>
-            </tfoot>
+            {schoolFees.length > 0 && (
+              <tfoot className="bg-gray-50 print:bg-gray-100">
+                <tr>
+                  <td className="px-4 py-3 font-medium text-gray-700">Total</td>
+                  <td className="px-4 py-3 text-right font-bold text-gray-900">₦{totalAmount.toLocaleString()}</td>
+                  <td colSpan={2}></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>

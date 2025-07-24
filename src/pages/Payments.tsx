@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
@@ -14,10 +15,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { CreditCard, Download, AlertCircle, Calendar, AlertTriangle } from 'lucide-react';
+import { CreditCard, Download, AlertCircle, Calendar, AlertTriangle, RefreshCw } from 'lucide-react';
 
 const Payments = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [selectedSemester, setSelectedSemester] = useState('1st');
   const [selectedSession, setSelectedSession] = useState('2023/2024');
   const [currentBalance, setCurrentBalance] = useState(0);
@@ -26,8 +27,22 @@ const Payments = () => {
   const receiptRef = useRef(null);
 
   const fetchCurrentBalance = async () => {
-    if (!user?.currentSeasonId) {
-      setError('Current season information not available');
+    console.log('Fetching current balance...');
+    console.log('User data:', user);
+    
+    if (authLoading) {
+      console.log('Auth still loading...');
+      return;
+    }
+    
+    if (!user) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    if (!user.currentSeasonId) {
+      setError('Current season information not available. Please contact support.');
       setLoading(false);
       return;
     }
@@ -35,30 +50,77 @@ const Payments = () => {
     try {
       setLoading(true);
       setError(null);
+      console.log('Fetching school fees for season ID:', user.currentSeasonId);
+      
       const response = await getApplicableSchoolFeesForStudent(parseInt(user.currentSeasonId));
+      console.log('School fees response:', response);
       
       if (response.status === 'success' && response.data) {
         const totalAmount = response.data.items.reduce((sum, fee) => sum + fee.amount, 0);
+        console.log('Total amount calculated:', totalAmount);
         setCurrentBalance(totalAmount);
       } else {
-        setError(response.message || 'Failed to fetch school fees');
+        const errorMessage = response.message || 'Failed to fetch school fees';
+        console.error('API error:', errorMessage);
+        setError(errorMessage);
       }
     } catch (err: any) {
       console.error('Error fetching school fees:', err);
-      setError('An error occurred while fetching school fees');
+      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while fetching school fees';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCurrentBalance();
-  }, [user?.currentSeasonId]);
+    if (!authLoading) {
+      fetchCurrentBalance();
+    }
+  }, [user?.currentSeasonId, authLoading]);
 
   const handlePrint = useReactToPrint({
     content: () => receiptRef.current,
     documentTitle: `Payment_Receipt_${selectedSession}_${selectedSemester}`,
   });
+
+  if (authLoading) {
+    return (
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-200 rounded w-64 mb-6"></div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="col-span-1 lg:col-span-2 h-96 bg-gray-200 rounded"></div>
+                <div className="h-96 bg-gray-200 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!user) {
+    return (
+      <>
+        <DashboardHeader />
+        <div className="flex-1 p-4 md:p-6 overflow-auto bg-gray-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex items-center justify-center h-64">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold mb-2">Authentication Required</h2>
+                <p className="text-gray-600">Please log in to view your payment information.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -129,14 +191,15 @@ const Payments = () => {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                       <div className="space-y-2">
-                        <p className="text-gray-800"><span className="font-semibold">Student ID:</span> {user?.regNo || 'STD123456'}</p>
-                        <p className="text-gray-800"><span className="font-semibold">Full Name:</span> {user?.name || 'John Doe'}</p>
-                        <p className="text-gray-800"><span className="font-semibold">Department:</span> {user?.departmentName || 'Computer Science'}</p>
-                        <p className="text-gray-800"><span className="font-semibold">Program:</span> {user?.programName || 'Bachelor of Science'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Student ID:</span> {user?.regNo || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Full Name:</span> {user?.name || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Department:</span> {user?.departmentName || 'N/A'}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Program:</span> {user?.programName || 'N/A'}</p>
                       </div>
                       <div className="space-y-2">
                         <p className="text-gray-800"><span className="font-semibold">Academic Session:</span> {user?.currentSeasonName || selectedSession}</p>
                         <p className="text-gray-800"><span className="font-semibold">Semester:</span> {user?.currentSemesterName || selectedSemester}</p>
+                        <p className="text-gray-800"><span className="font-semibold">Level:</span> {user?.currentLevelName || 'N/A'}</p>
                         <p className="text-gray-800"><span className="font-semibold">Date Issued:</span> {new Date().toLocaleDateString()}</p>
                         <p className="text-gray-800"><span className="font-semibold">Receipt No:</span> RCP-{Math.floor(100000 + Math.random() * 900000)}</p>
                       </div>
@@ -174,7 +237,9 @@ const Payments = () => {
                   <CreditCard size={18} className="text-primary" /> 
                   Current Fees
                 </CardTitle>
-                <CardDescription>Outstanding balance for {user?.currentSeasonName || selectedSession}</CardDescription>
+                <CardDescription>
+                  Outstanding balance for {user?.currentSeasonName || selectedSession}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -200,6 +265,7 @@ const Payments = () => {
                       size="sm"
                       className="text-red-600 border-red-300 hover:bg-red-100"
                     >
+                      <RefreshCw size={14} className="mr-1" />
                       Retry
                     </Button>
                   </div>
@@ -211,6 +277,9 @@ const Payments = () => {
                     </div>
                     <p className="text-sm text-gray-500">
                       {user?.currentSemesterName || selectedSemester} Semester, {user?.currentSeasonName || selectedSession} Session
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Level: {user?.currentLevelName || 'N/A'}
                     </p>
                   </div>
                 )}
