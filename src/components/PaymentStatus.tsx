@@ -17,7 +17,7 @@ const PaymentStatus = () => {
         user?.currentLevelId ? parseInt(user.currentLevelId) : undefined
       );
     },
-    enabled: !!user, // Only run query when user is available
+    enabled: !!user,
   });
 
   console.log('School fees API response:', schoolFeesResponse);
@@ -33,7 +33,23 @@ const PaymentStatus = () => {
 
   if (error) {
     console.error('Error fetching school fees:', error);
-    const errorMessage = (error as any)?.response?.data?.message || (error as Error)?.message || 'Unknown error occurred';
+    
+    // Safely extract error message
+    let errorMessage = 'Unknown error occurred';
+    try {
+      if (typeof error === 'object' && error !== null) {
+        const axiosError = error as any;
+        errorMessage = axiosError.response?.data?.message || 
+                     axiosError.message || 
+                     (error as Error).message || 
+                     'Unknown error occurred';
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+    } catch (e) {
+      console.error('Error parsing error message:', e);
+      errorMessage = 'Error occurred while processing your request';
+    }
     
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -51,10 +67,8 @@ const PaymentStatus = () => {
   const schoolFees = schoolFeesResponse?.data?.items || [];
   const totalAmount = schoolFeesResponse?.data?.totalAmount || 0;
   
-  // Calculate paid and pending amounts based on mock payment status
-  // In a real app, this would come from payment records
   const paidAmount = schoolFees
-    .filter(fee => fee.id % 2 === 0) // Mock: even IDs are "paid"
+    .filter(fee => fee.id % 2 === 0)
     .reduce((sum, fee) => sum + fee.amount, 0);
   const pendingAmount = totalAmount - paidAmount;
 
@@ -71,7 +85,6 @@ const PaymentStatus = () => {
     }
   };
 
-  // Mock payment status for display (in real app, this would come from payment records)
   const getPaymentStatus = (feeId: number) => {
     if (feeId % 2 === 0) return 'paid';
     if (feeId % 3 === 0) return 'overdue';

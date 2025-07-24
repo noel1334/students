@@ -63,7 +63,7 @@ const Payments = () => {
         throw error;
       }
     },
-    enabled: !!user, // Only run query when user is available
+    enabled: !!user,
     retry: 1,
     retryDelay: 1000,
   });
@@ -308,8 +308,23 @@ const Payments = () => {
   if (error) {
     console.error('Payment page error:', error);
     
-    // Extract error message from the backend response
-    const errorMessage = (error as any)?.response?.data?.message || (error as Error)?.message || 'Unknown error occurred';
+    // Safely extract error message
+    let errorMessage = 'Unknown error occurred';
+    try {
+      if (typeof error === 'object' && error !== null) {
+        // Try to get the error message from different possible locations
+        const axiosError = error as any;
+        errorMessage = axiosError.response?.data?.message || 
+                     axiosError.message || 
+                     (error as Error).message || 
+                     'Unknown error occurred';
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+    } catch (e) {
+      console.error('Error parsing error message:', e);
+      errorMessage = 'Error occurred while processing your request';
+    }
     
     return (
       <>
