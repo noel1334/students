@@ -1,23 +1,14 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentSchoolFees } from '@/services/schoolFeeApiService';
-import { useAuth } from '@/contexts/AuthContext';
 
 const PaymentStatus = () => {
-  const { user } = useAuth();
-  
   const { data: schoolFeesResponse, isLoading, error } = useQuery({
-    queryKey: ['current-school-fees', user?.currentSeasonId, user?.currentSemesterId, user?.currentLevelId],
-    queryFn: async () => {
-      return await getCurrentSchoolFees(
-        user?.currentSeasonId ? parseInt(user.currentSeasonId) : undefined,
-        user?.currentSemesterId ? parseInt(user.currentSemesterId) : undefined,
-        user?.currentLevelId ? parseInt(user.currentLevelId) : undefined
-      );
-    },
-    enabled: !!user,
+    queryKey: ['current-school-fees'],
+    queryFn: getCurrentSchoolFees,
   });
 
   console.log('School fees API response:', schoolFeesResponse);
@@ -33,33 +24,9 @@ const PaymentStatus = () => {
 
   if (error) {
     console.error('Error fetching school fees:', error);
-    
-    // Safely extract error message
-    let errorMessage = 'Unknown error occurred';
-    try {
-      if (typeof error === 'object' && error !== null) {
-        const axiosError = error as any;
-        errorMessage = axiosError.response?.data?.message || 
-                     axiosError.message || 
-                     (error as Error).message || 
-                     'Unknown error occurred';
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-    } catch (e) {
-      console.error('Error parsing error message:', e);
-      errorMessage = 'Error occurred while processing your request';
-    }
-    
     return (
       <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700 font-semibold">Failed to load school fees</p>
-        <p className="text-red-600 text-sm mt-1">Backend Error: {errorMessage}</p>
-        {errorMessage.includes('Season ID is required') && (
-          <p className="text-red-600 text-sm mt-2">
-            Please ensure your current academic season is set in your profile.
-          </p>
-        )}
+        <p className="text-red-700">Failed to load school fees. Please try again later.</p>
       </div>
     );
   }
@@ -67,8 +34,10 @@ const PaymentStatus = () => {
   const schoolFees = schoolFeesResponse?.data?.items || [];
   const totalAmount = schoolFeesResponse?.data?.totalAmount || 0;
   
+  // Calculate paid and pending amounts based on mock payment status
+  // In a real app, this would come from payment records
   const paidAmount = schoolFees
-    .filter(fee => fee.id % 2 === 0)
+    .filter(fee => fee.id % 2 === 0) // Mock: even IDs are "paid"
     .reduce((sum, fee) => sum + fee.amount, 0);
   const pendingAmount = totalAmount - paidAmount;
 
@@ -85,6 +54,7 @@ const PaymentStatus = () => {
     }
   };
 
+  // Mock payment status for display (in real app, this would come from payment records)
   const getPaymentStatus = (feeId: number) => {
     if (feeId % 2 === 0) return 'paid';
     if (feeId % 3 === 0) return 'overdue';

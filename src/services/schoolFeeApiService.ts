@@ -94,32 +94,12 @@ export const getApplicableSchoolFees = async (
 
 /**
  * Fetches school fees for the student's current academic period
- * Now requires seasonId to be passed explicitly since backend requires it
- * @param seasonId The current season ID from user profile
- * @param semesterId Optional semester ID from user profile
- * @param levelId Optional level ID from user profile
+ * Uses the student's current season, semester, and level from their profile
  * @returns A promise that resolves to an ApiResponse containing current school fee data
  */
-export const getCurrentSchoolFees = async (
-  seasonId?: number,
-  semesterId?: number,
-  levelId?: number
-): Promise<ApiResponse<SchoolFeeListResponse>> => {
-  const params: any = {};
-
-  if (seasonId) {
-    params.seasonId = seasonId;
-  }
-
-  if (semesterId) {
-    params.semesterId = semesterId;
-  }
-
-  if (levelId) {
-    params.levelId = levelId;
-  }
-
-  const response = await api.get('/school-fee-lists', { params });
+export const getCurrentSchoolFees = async (): Promise<ApiResponse<SchoolFeeListResponse>> => {
+  // This will use the backend logic to automatically determine the student's current academic period
+  const response = await api.get('/school-fee-lists');
   return response.data;
 };
 
