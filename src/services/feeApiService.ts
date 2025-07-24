@@ -1,5 +1,4 @@
 // src/services/feeApiService.ts
-
 import api from '@/config/api';
 
 // Define a common ApiResponse interface if it's not global
@@ -26,7 +25,7 @@ export interface SchoolFeeListItem {
     id: number;
     name: string;
   } | null;
-  faculty?: {
+  faculty?: { //  Include faculty here too.
     id: number;
     name: string;
   } | null;
@@ -42,10 +41,33 @@ export interface SchoolFeeListItem {
 // Interface for the API response when fetching applicable school fees
 export interface ApplicableSchoolFeesResponseData {
   items: SchoolFeeListItem[];
+  totalAmount: number;
   totalPages: number;
   currentPage: number;
   limit: number;
   totalItems: number;
+  student?: {
+    id: number;
+    name: string;
+    regNo: string;
+    level: string;
+    program: string;
+    department: string;
+  };
+  academicPeriod?: {
+    season: {
+      id: number;
+      name: string;
+    };
+    semester?: {
+      id: number;
+      name: string;
+    };
+    level: {
+      id: number;
+      name: string;
+    };
+  };
 }
 
 /**
@@ -65,7 +87,7 @@ export const getApplicableSchoolFeesForStudent = async (
         seasonId: seasonId,
       },
     });
-    console.log(response.data); 
+    console.log(response.data);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching applicable school fees:', error);
@@ -75,31 +97,3 @@ export const getApplicableSchoolFeesForStudent = async (
     };
   }
 };
-
-// Interface for a single School Fee bill
-export interface SchoolFeeBill {
-  id: number;
-  studentId: number;
-  seasonId: number;
-  semesterId?: number | null;
-  amount: number;
-  amountPaid: number;
-  paymentStatus: 'PENDING' | 'PAID' | 'PARTIAL' | 'WAIVED' | 'OVERDUE' | 'CANCELLED';
-  dueDate?: string | null;
-  description?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  departmentId?: number | null;
-  programId?: number | null;
-  Department?: {
-    id: number;
-    name: string;
-  } | null;
-  Program?: {
-    id: number;
-    name: string;
-  } | null;
-  payments?: any[]; // Adjust type if needed
-}
-
-
