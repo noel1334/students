@@ -1,112 +1,67 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, AlertTriangle, RefreshCw } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { getApplicableSchoolFeesForStudent, SchoolFeeListItem } from '@/services/feeApiService';
-import { Button } from '@/components/ui/button';
+import { ChevronDown } from 'lucide-react';
+
+type Payment = {
+  id: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status: 'paid' | 'pending' | 'overdue';
+};
 
 const PaymentStatus = () => {
-  const { user, loading: authLoading } = useAuth();
-  const [schoolFees, setSchoolFees] = useState<SchoolFeeListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // This would come from an API in a real application
+  const payments: Payment[] = [
+    {
+      id: '1',
+      description: 'Tuition Fee (First Semester)',
+      amount: 120000,
+      dueDate: '2023-09-15',
+      status: 'paid',
+    },
+    {
+      id: '2',
+      description: 'Technology Fee',
+      amount: 25000,
+      dueDate: '2023-09-30',
+      status: 'paid',
+    },
+    {
+      id: '3',
+      description: 'Library Fee',
+      amount: 10000,
+      dueDate: '2023-10-15',
+      status: 'pending',
+    },
+    {
+      id: '4',
+      description: 'Tuition Fee (Second Semester)',
+      amount: 120000,
+      dueDate: '2024-01-15',
+      status: 'overdue',
+    },
+  ];
 
-  const fetchSchoolFees = async () => {
-    console.log('PaymentStatus: Fetching school fees...');
-    console.log('PaymentStatus: User data:', user);
-    
-    if (authLoading) {
-      console.log('PaymentStatus: Auth still loading...');
-      return;
-    }
-    
-    if (!user) {
-      setError('User not authenticated');
-      setLoading(false);
-      return;
-    }
-
-    if (!user.currentSeasonId) {
-      setError('Current season information not available');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('PaymentStatus: Fetching school fees for season ID:', user.currentSeasonId);
-      
-      const response = await getApplicableSchoolFeesForStudent(parseInt(user.currentSeasonId));
-      console.log('PaymentStatus: School fees response:', response);
-      
-      if (response.status === 'success' && response.data) {
-        setSchoolFees(response.data.items);
-        console.log('PaymentStatus: School fees set:', response.data.items);
-      } else {
-        const errorMessage = response.message || 'Failed to fetch school fees';
-        console.error('PaymentStatus: API error:', errorMessage);
-        setError(errorMessage);
-      }
-    } catch (err: any) {
-      console.error('PaymentStatus: Error fetching school fees:', err);
-      const errorMessage = err.response?.data?.message || err.message || 'An error occurred while fetching school fees';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
+  const getStatusColor = (status: string) => {
+    switch(status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'overdue':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  useEffect(() => {
-    if (!authLoading) {
-      fetchSchoolFees();
-    }
-  }, [user?.currentSeasonId, authLoading]);
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="p-4 bg-gray-100 rounded-lg animate-pulse">
-              <div className="h-4 bg-gray-200 rounded mb-2"></div>
-              <div className="h-6 bg-gray-200 rounded"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 p-4 border border-red-300 bg-red-50 rounded-md">
-          <AlertTriangle size={18} className="text-red-600 shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm text-red-700">{error}</p>
-            <p className="text-xs text-red-600 mt-1">
-              Please ensure you have a current academic season assigned or contact support.
-            </p>
-          </div>
-          <Button 
-            onClick={fetchSchoolFees}
-            variant="outline"
-            size="sm"
-            className="text-red-600 border-red-300 hover:bg-red-100"
-          >
-            <RefreshCw size={14} className="mr-1" />
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // Calculate total amounts from fetched school fees
-  const totalAmount = schoolFees.reduce((sum, fee) => sum + fee.amount, 0);
-  const paidAmount = 0; // This will be implemented later when payment tracking is added
+  // Calculate total amounts
+  const totalAmount = payments.reduce((sum, payment) => sum + payment.amount, 0);
+  const paidAmount = payments
+    .filter(payment => payment.status === 'paid')
+    .reduce((sum, payment) => sum + payment.amount, 0);
   const pendingAmount = totalAmount - paidAmount;
 
   return (
@@ -133,49 +88,33 @@ const PaymentStatus = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-gray-700 font-medium">Description</th>
                 <th className="px-4 py-3 text-right text-gray-700 font-medium">Amount</th>
-                <th className="px-4 py-3 text-center text-gray-700 font-medium">Level</th>
+                <th className="px-4 py-3 text-center text-gray-700 font-medium">Due Date</th>
                 <th className="px-4 py-3 text-center text-gray-700 font-medium">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {schoolFees.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
-                    No school fees found for the current session
+              {payments.map((payment) => (
+                <tr key={payment.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3 text-gray-800">{payment.description}</td>
+                  <td className="px-4 py-3 text-right font-medium text-gray-900">₦{payment.amount.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-center text-gray-700">{new Date(payment.dueDate).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-center">
+                      <Badge variant="outline" className={`px-2 py-1 capitalize ${getStatusColor(payment.status)}`}>
+                        {payment.status}
+                      </Badge>
+                    </div>
                   </td>
                 </tr>
-              ) : (
-                schoolFees.map((fee) => (
-                  <tr key={fee.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-gray-800">
-                      {fee.description || 'School Fee'}
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-gray-900">
-                      ₦{fee.amount.toLocaleString()}
-                    </td>
-                    <td className="px-4 py-3 text-center text-gray-700">
-                      {fee.level.name}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-center">
-                        <Badge variant="outline" className="px-2 py-1 capitalize bg-yellow-100 text-yellow-800 border-yellow-200">
-                          pending
-                        </Badge>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
-            {schoolFees.length > 0 && (
-              <tfoot className="bg-gray-50 print:bg-gray-100">
-                <tr>
-                  <td className="px-4 py-3 font-medium text-gray-700">Total</td>
-                  <td className="px-4 py-3 text-right font-bold text-gray-900">₦{totalAmount.toLocaleString()}</td>
-                  <td colSpan={2}></td>
-                </tr>
-              </tfoot>
-            )}
+            <tfoot className="bg-gray-50 print:bg-gray-100">
+              <tr>
+                <td className="px-4 py-3 font-medium text-gray-700">Total</td>
+                <td className="px-4 py-3 text-right font-bold text-gray-900">₦{totalAmount.toLocaleString()}</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </div>
