@@ -1,3 +1,5 @@
+// src/services/academicPeriodsApiService.ts
+
 import api from '@/config/api'; 
 
 // Define a common ApiResponse interface if it's not global
@@ -34,6 +36,18 @@ export interface Semester {
   updatedAt: string;
 }
 
+// --- ADD THIS LEVEL INTERFACE HERE ---
+export interface Level {
+  id: number;
+  name: string;
+  value: number;
+  description?: string;
+  order?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+// --- END ADDITION ---
+
 /**
  * Fetches all academic seasons from the backend.
  * @returns A promise that resolves to an ApiResponse containing an object with a 'seasons' array.
@@ -56,3 +70,15 @@ export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ 
   const response = await api.get('/semesters', { params });
   return response.data;
 };
+
+// --- ADD THIS FUNCTION HERE ---
+/**
+ * Fetches all levels from the backend.
+ * @returns A promise that resolves to an ApiResponse containing an array of Level objects.
+ */
+export const getAllLevels = async (): Promise<ApiResponse<{ items: Level[] }>> => {
+  const response = await api.get('/levels'); // Assuming your backend route for levels is /levels
+  console.log(response.data);
+  return response.data;
+};
+// --- END ADDITION ---
