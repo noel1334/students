@@ -36,9 +36,6 @@ interface User {
   isGraduated?: boolean;
   yearOfAdmission?: number;
   entryMode?: string;
-  bioData?: { // Changed from studentDetails?: any;
-      nationality?: string;
-    };
 }
 
 interface AuthContextType {
@@ -90,34 +87,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.status === 'success' && response.data && response.data.student) { // <-- Access response.data.student
         const profileData = response.data.student; // <-- This is the actual student object now!
 
-         const transformedProfile: User = {
-      id: profileData.id,
-      regNo: profileData.regNo,
-      jambRegNo: profileData.jambRegNo,
-      name: profileData.name,
-      email: profileData.email,
-      profileImage: profileData.profileImg,
-      avatarLetter: profileData.avatarLetter,
-      departmentName: profileData.department?.name,
-      programName: profileData.program?.name,
-      studyMode: profileData.program?.modeOfStudy,
-      currentLevelName: profileData.currentLevel?.name,
-      currentLevelValue: profileData.currentLevel?.value,
-      currentLevelId: profileData.currentLevel?.id?.toString(), // Convert to string
-      currentSeasonName: profileData.currentSeason?.name,
-      currentSeasonId: profileData.currentSeason?.id?.toString(), // Convert to string
-      currentSemesterName: profileData.currentSemester?.name,
-      currentSemesterId: profileData.currentSemester?.id?.toString(), // Convert to string
-      currentSemesterType: profileData.currentSemester?.type,
+        const transformedProfile: User = {
+          id: profileData.id,
+          regNo: profileData.regNo,
+          jambRegNo: profileData.jambRegNo,
+          name: profileData.name,
+          email: profileData.email,
+          profileImage: profileData.profileImg,
+          avatarLetter: profileData.avatarLetter,
+          
+          // Now these properties are correctly accessed directly from profileData
+          departmentName: profileData.department?.name,
+          programName: profileData.program?.name,
+          studyMode: profileData.program?.modeOfStudy,
+          currentLevelName: profileData.currentLevel?.name,
+          currentLevelValue: profileData.currentLevel?.value,
+          currentLevelId: profileData.currentLevel?.id?.toString(), // Convert to string
+          currentSeasonName: profileData.currentSeason?.name,
+          currentSeasonId: profileData.currentSeason?.id?.toString(), // Convert to string
+          currentSemesterName: profileData.currentSemester?.name,
+          currentSemesterId: profileData.currentSemester?.id?.toString(), // Convert to string
+          currentSemesterType: profileData.currentSemester?.type,
 
-      isActive: profileData.isActive,
-      isGraduated: profileData.isGraduated,
-      yearOfAdmission: profileData.yearOfAdmission,
-      entryMode: profileData.entryMode,
-      nationality: profileData.bioData?.nationality || null, // <<--- Verify the nationality property
-  };
-  console.log('Transformed Profile in AuthContext:', transformedProfile); // Add this
-  setUser(transformedProfile);
+          isActive: profileData.isActive,
+          isGraduated: profileData.isGraduated,
+          yearOfAdmission: profileData.yearOfAdmission,
+          entryMode: profileData.entryMode,
+        };
+
+        setUser(transformedProfile);
         localStorage.setItem('currentUser', JSON.stringify(transformedProfile));
       } else {
         console.warn('API returned success but no valid student profile data. Clearing user session.', response);
