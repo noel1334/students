@@ -21,6 +21,7 @@ import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Sidebar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import PaymentStatusPage from './pages/PaymentStatusPage';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -83,6 +84,13 @@ const App = () => {
                 <ProtectedRoute>
                   <Layout>
                     <Payments />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/payment-status" element={
+                <ProtectedRoute>
+                  <Layout>
+                     <PaymentStatusPage />
                   </Layout>
                 </ProtectedRoute>
               } />
