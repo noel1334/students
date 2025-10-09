@@ -251,6 +251,17 @@ const Payments = () => {
             .sort((a, b) => new Date(b.payments[0].paymentDate).getTime() - new Date(a.payments[0].paymentDate).getTime())[0];
     }, [paymentRecords]);
 
+    // Check if the current season has been fully paid
+    const hasCurrentSeasonBeenPaid = useMemo(() => {
+        if (!user?.currentSeasonId || !paymentRecords.length) return false;
+        
+        const currentSeasonRecord = paymentRecords.find(
+            record => record.season.id.toString() === user.currentSeasonId
+        );
+        
+        return currentSeasonRecord?.paymentStatus === 'PAID';
+    }, [paymentRecords, user?.currentSeasonId]);
+
     const handlePrint = useReactToPrint({
         content: () => receiptRef.current,
         documentTitle: `Payment_Receipt_${latestPaidRecord?.season?.name || 'current'}`,
@@ -336,11 +347,10 @@ const Payments = () => {
         return handlePaymentFailure("User details or academic session are missing.", "Stripe");
     }
     try {
-        // --- THIS IS THE FIX ---
         const stripeData = await createStripeSession(
-            user.id,
+            parseInt(user.id),
             parseInt(seasonId, 10),
-            1, // Using semester 1, consistent with Paystack/Flutterwave
+            1,
             currentBalance,
             'STRIPE',
             `School fees for ${selectedSession}`,
@@ -409,11 +419,13 @@ const Payments = () => {
         payment_options: 'card,banktransfer,ussd',
         customer: {
             email: user?.email || '',
+            phone_number: '0000000000',
             name: user?.name || '',
         },
         customizations: {
             title: 'University School Fees',
             description: `Payment for ${selectedSession} session`,
+            logo: '',
         },
     };
 
@@ -485,7 +497,15 @@ const Payments = () => {
                                     ) : (
                                         <>
                                             <div className="bg-primary/5 p-4 rounded-lg text-center"><p className="text-sm text-gray-600">Amount Due</p><p className="text-3xl font-bold text-gray-900">₦{currentBalance.toLocaleString()}</p></div>
-                                            <Button className="w-full mt-4" disabled={loading || currentBalance === 0} onClick={openPaymentMethodModal}><CreditCard size={18} className="mr-2" />Make Payment</Button>
+                                            {!hasCurrentSeasonBeenPaid && (
+                                                <Button className="w-full mt-4" disabled={loading || currentBalance === 0} onClick={openPaymentMethodModal}><CreditCard size={18} className="mr-2" />Make Payment</Button>
+                                            )}
+                                            {hasCurrentSeasonBeenPaid && (
+                                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                                                    <p className="text-sm text-green-700 font-medium">✓ Payment Complete</p>
+                                                    <p className="text-xs text-green-600 mt-1">You have paid for this session</p>
+                                                </div>
+                                            )}
                                         </>
                                     )}
                                 </CardContent>

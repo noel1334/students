@@ -114,7 +114,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGraduated: profileData.isGraduated,
       yearOfAdmission: profileData.yearOfAdmission,
       entryMode: profileData.entryMode,
-      nationality: profileData.bioData?.nationality || null, // <<--- Verify the nationality property
+      bioData: {
+        nationality: profileData.studentDetails?.bioData?.nationality || null,
+      },
   };
   console.log('Transformed Profile in AuthContext:', transformedProfile); // Add this
   setUser(transformedProfile);
