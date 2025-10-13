@@ -75,7 +75,8 @@ const Courses = () => {
 
   // Check if the current season has been fully paid
   const hasCurrentSeasonBeenPaid = useMemo(() => {
-    if (!user?.currentSeasonId || !paymentRecords.length) return false;
+    if (!user?.currentSeasonId) return false;
+    if (paymentRecords.length === 0) return false; // No payment history = not paid
     
     const currentSeasonRecord = paymentRecords.find(
       record => record.season.id.toString() === user.currentSeasonId
@@ -86,7 +87,7 @@ const Courses = () => {
 
   // Redirect to payment page if not paid
   useEffect(() => {
-    if (user?.currentSeasonId && paymentRecords.length > 0 && !hasCurrentSeasonBeenPaid) {
+    if (user?.currentSeasonId && paymentData && !hasCurrentSeasonBeenPaid) {
       toast({
         title: "Payment Required",
         description: "Please complete your school fees payment to access course registration.",
@@ -94,7 +95,7 @@ const Courses = () => {
       });
       navigate('/payments');
     }
-  }, [hasCurrentSeasonBeenPaid, user?.currentSeasonId, paymentRecords.length, navigate, toast]);
+  }, [hasCurrentSeasonBeenPaid, user?.currentSeasonId, paymentData, navigate, toast]);
 
   useEffect(() => {
     if (user && !selectedSeasonId && user.currentSeasonId) {
