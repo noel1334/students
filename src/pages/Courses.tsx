@@ -1,7 +1,8 @@
 // src/pages/Courses.tsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import DashboardHeader from '@/components/DashboardHeader';
 import {
   Dialog,
@@ -29,6 +30,7 @@ import {
   type DisplayCourse, // IMPORT NEW DisplayCourse interface
 } from '@/services/courseApiService';
 import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
+import { getMySchoolFeeRecords } from '@/services/feeApiService';
 
 
 // Import refactored components
@@ -43,6 +45,7 @@ const Courses = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
     user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
@@ -61,6 +64,37 @@ const Courses = () => {
   const [selectedRegisteredCourseIds, setSelectedRegisteredCourseIds] = useState<number[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Fetch payment records to check if student has paid
+  const { data: paymentData } = useQuery({
+    queryKey: ['paymentRecords', user?.id],
+    queryFn: getMySchoolFeeRecords,
+    enabled: !!user?.id,
+  });
+
+  const paymentRecords = Array.isArray(paymentData?.data?.records) ? paymentData.data.records : [];
+
+  // Check if the current season has been fully paid
+  const hasCurrentSeasonBeenPaid = useMemo(() => {
+    if (!user?.currentSeasonId || !paymentRecords.length) return false;
+    
+    const currentSeasonRecord = paymentRecords.find(
+      record => record.season.id.toString() === user.currentSeasonId
+    );
+    
+    return currentSeasonRecord?.paymentStatus === 'PAID';
+  }, [paymentRecords, user?.currentSeasonId]);
+
+  // Redirect to payment page if not paid
+  useEffect(() => {
+    if (user?.currentSeasonId && paymentRecords.length > 0 && !hasCurrentSeasonBeenPaid) {
+      toast({
+        title: "Payment Required",
+        description: "Please complete your school fees payment to access course registration.",
+        variant: "destructive",
+      });
+      navigate('/payments');
+    }
+  }, [hasCurrentSeasonBeenPaid, user?.currentSeasonId, paymentRecords.length, navigate, toast]);
 
   useEffect(() => {
     if (user && !selectedSeasonId && user.currentSeasonId) {
