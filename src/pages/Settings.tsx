@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import DashboardHeader from "@/components/DashboardHeader";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -62,10 +61,8 @@ const Settings = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <DashboardHeader />
-      
-      <div className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full">
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2 mb-6">
           <SettingsIcon className="text-[#1a4aa6]" size={24} />
           <h1 className="text-2xl font-bold text-gray-800">Settings</h1>

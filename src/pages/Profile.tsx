@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import DashboardHeader from '@/components/DashboardHeader';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileForm from '@/components/profile/ProfileForm';
 
@@ -20,11 +19,9 @@ const Profile = () => {
   };
 
   return (
-    <>
-      <DashboardHeader />
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <ProfileHeader 
+    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+      <div className="max-w-4xl mx-auto">
+        <ProfileHeader
             studentInfo={studentInfo}
             avatar={avatar}
             setAvatar={setAvatar}
@@ -34,7 +31,6 @@ const Profile = () => {
           <ProfileForm studentInfo={studentInfo} />
         </div>
       </div>
-    </>
   );
 };
 

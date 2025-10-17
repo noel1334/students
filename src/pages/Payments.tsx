@@ -3,7 +3,6 @@ import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import DashboardHeader from '@/components/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
     getApplicableSchoolFeesForStudent, 
@@ -463,11 +462,9 @@ const Payments = () => {
 
 
     return (
-        <>
-            <DashboardHeader />
-            <div className="flex-1 p-4 md:p-6 overflow-auto bg-gray-50">
-                <div className="max-w-5xl mx-auto">
-                    <h1 className="text-2xl font-bold mb-6 text-gray-800">Payment Dashboard</h1>
+        <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+            <div className="max-w-5xl mx-auto">
+                <h1 className="text-2xl font-bold mb-6">Payment Dashboard</h1>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         <Card className="col-span-1 lg:col-span-2 shadow-sm">
                             <CardHeader>
@@ -505,38 +502,37 @@ const Payments = () => {
                                                     <p className="text-sm text-green-700 font-medium">✓ Payment Complete</p>
                                                     <p className="text-xs text-green-600 mt-1">You have paid for this session</p>
                                                 </div>
-                                            )}
-                                        </>
-                                    )}
-                                </CardContent>
-                            </Card>
-                        </div>
+                                        )}
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
-            </div>
 
-            {/* This div holds the receipt component but is positioned off-screen */}
-            <div className="absolute -left-full top-0">
-                <ReceiptComponent ref={receiptRef} record={latestPaidRecord} user={user} />
-            </div>
+                {/* This div holds the receipt component but is positioned off-screen */}
+                <div className="absolute -left-full top-0">
+                    <ReceiptComponent ref={receiptRef} record={latestPaidRecord} user={user} />
+                </div>
 
-            <AlertDialog open={paymentMethodModalOpen} onOpenChange={setPaymentMethodModalOpen}>
-                <AlertDialogContent className="max-w-md">
-                    <AlertDialogHeader><AlertDialogTitle>Complete Your Payment</AlertDialogTitle><AlertDialogDescription>Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
-                    <div className="py-2 space-y-1">
-                        <div className="flex justify-between text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
-                        <div className="flex justify-between text-lg"><span className="text-gray-600">Amount:</span><span className="font-bold text-gray-900">₦{currentBalance.toLocaleString()}</span></div>
-                    </div>
-                    <GatewaySelector gateways={['paystack', 'flutterwave', 'stripe']} selectedGateway={selectedPaymentMethod} onSelectGateway={(method) => setSelectedPaymentMethod(method as GatewayKey)} isProcessing={isProcessing}/>
-                    <AlertDialogFooter className="mt-4">
-                        <AlertDialogCancel onClick={closePaymentMethodModal} disabled={isProcessing}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleProceedToPayment} disabled={!selectedPaymentMethod || isProcessing}>
-                            {isProcessing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>) : (`Pay with ${selectedPaymentMethod || '...'}`)}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
+                <AlertDialog open={paymentMethodModalOpen} onOpenChange={setPaymentMethodModalOpen}>
+                    <AlertDialogContent className="max-w-md">
+                        <AlertDialogHeader><AlertDialogTitle>Complete Your Payment</AlertDialogTitle><AlertDialogDescription>Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
+                        <div className="py-2 space-y-1">
+                            <div className="flex justify-between text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
+                            <div className="flex justify-between text-lg"><span className="text-gray-600">Amount:</span><span className="font-bold text-gray-900">₦{currentBalance.toLocaleString()}</span></div>
+                        </div>
+                        <GatewaySelector gateways={['paystack', 'flutterwave', 'stripe']} selectedGateway={selectedPaymentMethod} onSelectGateway={(method) => setSelectedPaymentMethod(method as GatewayKey)} isProcessing={isProcessing}/>
+                        <AlertDialogFooter className="mt-4">
+                            <AlertDialogCancel onClick={closePaymentMethodModal} disabled={isProcessing}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleProceedToPayment} disabled={!selectedPaymentMethod || isProcessing}>
+                                {isProcessing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>) : (`Pay with ${selectedPaymentMethod || '...'}`)}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </div>
+        </div>
     );
 };
 

@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import DashboardHeader from '@/components/DashboardHeader';
 import {
   Dialog,
   DialogContent,
@@ -402,23 +401,18 @@ const Courses = () => {
       deleteIndividualMutation.isPending || deleteBatchMutation.isPending ||
       updateRegistrationMutation.isPending || registerMutation.isPending) {
     return (
-      <>
-        <DashboardHeader />
-        <div className="flex-1 p-4 md:p-6 overflow-auto">
-          <div className="max-w-6xl mx-auto">
-            <div className="text-center py-8">Loading courses...</div>
-          </div>
+      <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center py-8">Loading courses...</div>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <DashboardHeader />
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-6xl mx-auto">
-          <CoursesHeader
+    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+      <div className="max-w-6xl mx-auto">
+        <CoursesHeader
             selectedSeason={selectedSeason}
             selectedSemester={selectedSemester}
             selectedLevel={selectedLevel}
@@ -596,7 +590,6 @@ const Courses = () => {
 
         </div>
       </div>
-    </>
   );
 };
 

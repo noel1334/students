@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import DashboardHeader from '@/components/DashboardHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,11 +28,9 @@ const SupportPage = () => {
   };
   
   return (
-    <>
-      <DashboardHeader />
-      <div className="flex-1 p-4 md:p-6 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
+    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Support Center</h1>
             <p className="text-gray-600">Get help with any issue you're facing</p>
           </div>
@@ -273,7 +270,6 @@ const SupportPage = () => {
           </Tabs>
         </div>
       </div>
-    </>
   );
 };
 

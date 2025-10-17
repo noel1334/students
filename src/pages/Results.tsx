@@ -24,7 +24,6 @@ import {
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import DashboardHeader from '@/components/DashboardHeader';
 import AcademicPerformance from '@/components/AcademicPerformance';
 import { Download, Printer, FileText, ChevronLeft } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
@@ -125,11 +124,9 @@ const Results = () => {
   };
 
   return (
-    <>
-      <DashboardHeader />
-      <div className="flex-1 p-6 overflow-auto">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">My Results</h1>
+    <div className="flex-1 p-6 overflow-auto bg-background">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6">My Results</h1>
           
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -298,7 +295,6 @@ const Results = () => {
           </div>
         </div>
       </div>
-    </>
   );
 };
 
