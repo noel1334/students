@@ -19,6 +19,7 @@ import Support from "./pages/Support";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Sidebar from "./components/Sidebar";
+import TopBar from "./components/TopBar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PaymentStatusPage from './pages/PaymentStatusPage';
@@ -29,9 +30,10 @@ const queryClient = new QueryClient();
 // Layout component to conditionally render the sidebar
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen w-full bg-background">
       <Sidebar />
       <div className="flex-1 flex flex-col">
+        <TopBar />
         {children}
       </div>
     </div>

@@ -142,52 +142,6 @@ const Sidebar = () => {
             <X size={20} />
           </button>
         </div>
-
-        {/* User Profile Section */}
-        <div className="p-4 border-b border-border bg-accent/30">
-          <DropdownMenu>
-            <DropdownMenuTrigger className="w-full outline-none">
-              <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-                <UserAvatar 
-                  user={{ 
-                    profileImage: user?.profileImage, 
-                    name: user?.name
-                  }} 
-                  size="md"
-                />
-                <div className="flex-1 text-left">
-                  <p className="font-semibold text-sm text-foreground truncate">
-                    {user?.name || "Student Name"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {user?.departmentName || "Department"}
-                  </p>
-                </div>
-                <ChevronRight size={16} className="text-muted-foreground" />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <div className="px-2 py-1.5 text-sm">
-                <div className="font-medium">{user?.name || "Student"}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">
-                  {user?.currentSeasonName || "N/A Session"}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {user?.currentSemesterName || "N/A Semester"} • {user?.currentLevelName || "N/A Level"}
-                </div>
-              </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
-                <User size={16} className="mr-2" />
-                View Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                <LogOut size={16} className="mr-2" />
-                Sign Out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
         
         {/* Navigation */}
         <div className="flex-1 py-4 overflow-y-auto">
