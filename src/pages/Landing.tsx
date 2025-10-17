@@ -1,5 +1,5 @@
 
-// src/components/Landing.tsx
+// src/pages/Landing.tsx
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
