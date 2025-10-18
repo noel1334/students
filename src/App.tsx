@@ -32,9 +32,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen w-full bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col md:ml-64">
         <TopBar />
-        {children}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
       </div>
     </div>
   );

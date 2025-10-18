@@ -462,9 +462,9 @@ const Payments = () => {
 
 
     return (
-        <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+        <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
             <div className="max-w-5xl mx-auto">
-                <h1 className="text-2xl font-bold mb-6">Payment Dashboard</h1>
+                <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Payment Dashboard</h1>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         <Card className="col-span-1 lg:col-span-2 shadow-sm">
                             <CardHeader>

@@ -18,12 +18,12 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-6xl mx-auto">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-6 mb-6 border border-primary/20">
-          <h2 className="text-2xl font-bold text-foreground mb-1">Hi {studentInfo.name},</h2>
-          <p className="text-muted-foreground">Welcome to your dashboard</p>
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 border border-primary/20">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-1">Hi {studentInfo.name},</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Welcome to your dashboard</p>
         </div>
         
         {/* Overview Section */}

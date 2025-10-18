@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -10,7 +9,6 @@ import {
 import { 
   Table, 
   TableBody, 
-  TableCaption, 
   TableCell, 
   TableHead, 
   TableHeader, 
@@ -18,154 +16,133 @@ import {
 } from '@/components/ui/table';
 import { 
   Card, 
-  CardContent, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import AcademicPerformance from '@/components/AcademicPerformance';
-import { Download, Printer, FileText, ChevronLeft } from 'lucide-react';
+import { Download, Printer, FileText, Loader2 } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import { useAuth } from '@/contexts/AuthContext';
+import { getStudentResultHistory, getResultById, ResultMinimal, ResultDetail } from '@/services/resultApiService';
+import { toast } from 'sonner';
 
 const Results = () => {
-  const [season, setSeason] = useState('2023/2024');
-  const [semester, setSemester] = useState('First');
+  const { user } = useAuth();
+  const [availableResults, setAvailableResults] = useState<ResultMinimal[]>([]);
+  const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
+  const [resultDetail, setResultDetail] = useState<ResultDetail | null>(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const printableRef = useRef(null);
   
-  // Student information
-  const studentInfo = {
-    name: "Victor NOEL",
-    regNo: "18/50770D/6",
-    department: "Science Education",
-    program: "Full Time",
-    level: "600 Level",
-  };
+  // Fetch available results on mount
+  useEffect(() => {
+    const fetchResultHistory = async () => {
+      try {
+        setIsLoadingHistory(true);
+        const response = await getStudentResultHistory();
+        if (response.status === 'success' && response.data) {
+          setAvailableResults(response.data);
+          // Auto-select the most recent result
+          if (response.data.length > 0) {
+            setSelectedResultId(response.data[0].id);
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching result history:', error);
+        toast.error(error.response?.data?.message || 'Failed to load result history');
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
 
-  // Mock data for different semesters and seasons
-  const resultsData = {
-    '2023/2024': {
-      'First': [
-        { courseCode: 'CS511', courseTitle: 'Design And Analysis Of Algorithm', creditUnit: 3, grade: 'C', gradePoint: 3.0 },
-        { courseCode: 'CS512', courseTitle: 'Compiler Construction', creditUnit: 3, grade: 'C', gradePoint: 3.0 },
-        { courseCode: 'CS513', courseTitle: 'Fundamentals Of Software Engineering', creditUnit: 3, grade: 'C', gradePoint: 3.0 },
-        { courseCode: 'CS515', courseTitle: 'Advanced Computer Programming', creditUnit: 3, grade: 'C', gradePoint: 3.0 },
-        { courseCode: 'EDU571', courseTitle: 'Educational Administration And Planning', creditUnit: 3, grade: 'B', gradePoint: 4.0 },
-        { courseCode: 'EDU581', courseTitle: 'Measurement And Evaluation', creditUnit: 3, grade: 'C', gradePoint: 3.0 },
-        { courseCode: 'SIWES', courseTitle: 'Students Industrial Work Experience Scheme', creditUnit: 8, grade: 'A', gradePoint: 5.0 },
-      ],
-      'Second': [
-        { courseCode: 'CSC102', courseTitle: 'Introduction to Problem Solving', creditUnit: 3, grade: 'A', gradePoint: 5 * 3 },
-        { courseCode: 'MTH102', courseTitle: 'Elementary Mathematics II', creditUnit: 3, grade: 'B', gradePoint: 4 * 3 },
-        { courseCode: 'PHY102', courseTitle: 'General Physics II', creditUnit: 3, grade: 'B', gradePoint: 4 * 3 },
-        { courseCode: 'CHM102', courseTitle: 'General Chemistry II', creditUnit: 3, grade: 'A', gradePoint: 5 * 3 },
-        { courseCode: 'GST102', courseTitle: 'Use of Library', creditUnit: 2, grade: 'A', gradePoint: 5 * 2 },
-      ]
-    },
-    '2022/2023': {
-      'First': [
-        { courseCode: 'CSC201', courseTitle: 'Computer Programming I', creditUnit: 3, grade: 'B', gradePoint: 4 * 3 },
-        { courseCode: 'MTH201', courseTitle: 'Mathematical Methods', creditUnit: 3, grade: 'C', gradePoint: 3 * 3 },
-        { courseCode: 'STA201', courseTitle: 'Statistics for Sciences', creditUnit: 3, grade: 'B', gradePoint: 4 * 3 },
-        { courseCode: 'GST201', courseTitle: 'Philosophy and Logic', creditUnit: 2, grade: 'A', gradePoint: 5 * 2 },
-      ],
-      'Second': [
-        { courseCode: 'CSC202', courseTitle: 'Computer Programming II', creditUnit: 3, grade: 'A', gradePoint: 5 * 3 },
-        { courseCode: 'MTH202', courseTitle: 'Linear Algebra', creditUnit: 3, grade: 'B', gradePoint: 4 * 3 },
-        { courseCode: 'STA202', courseTitle: 'Probability Theory', creditUnit: 3, grade: 'A', gradePoint: 5 * 3 },
-        { courseCode: 'GST202', courseTitle: 'Nigerian Peoples and Culture', creditUnit: 2, grade: 'B', gradePoint: 4 * 2 },
-      ]
-    }
-  };
+    fetchResultHistory();
+  }, []);
 
-  // Calculate metrics
-  const currentResults = resultsData[season]?.[semester] || [];
-  const totalCreditUnits = currentResults.reduce((total, course) => total + course.creditUnit, 0);
-  const totalGradePoints = currentResults.reduce((total, course) => total + course.gradePoint, 0);
-  const gpa = totalCreditUnits > 0 ? (totalGradePoints / totalCreditUnits).toFixed(2) : '0.00';
+  // Fetch result detail when selection changes
+  useEffect(() => {
+    if (selectedResultId === null) return;
 
-  // Summary metrics (like in the image)
-  const summaryMetrics = {
-    current: {
-      CUR: 26,
-      CUE: 26,
-      WGP: 97,
-      GPA: 3.73
-    },
-    previous: {
-      TCUR: 90,
-      TCUE: 90,
-      TWGP: 342,
-      TCGPA: 3.8
-    },
-    cumulative: {
-      TCUR: 116,
-      TCUE: 116,
-      TWGP: 439,
-      TCGPA: 3.78
-    }
-  };
+    const fetchResultDetail = async () => {
+      try {
+        setIsLoadingDetail(true);
+        const response = await getResultById(selectedResultId);
+        if (response.status === 'success' && response.data) {
+          setResultDetail(response.data);
+        }
+      } catch (error: any) {
+        console.error('Error fetching result detail:', error);
+        toast.error(error.response?.data?.message || 'Failed to load result details');
+      } finally {
+        setIsLoadingDetail(false);
+      }
+    };
+
+    fetchResultDetail();
+  }, [selectedResultId]);
 
   // Function to handle PDF download
   const handlePrint = useReactToPrint({
     content: () => printableRef.current,
-    documentTitle: `Results_${studentInfo.regNo}_${season}_${semester}`,
+    documentTitle: `Results_${resultDetail?.student.regNo}_${resultDetail?.season.name}_${resultDetail?.semester.name}`,
   });
 
-  // Function to determine honors classification based on GPA
-  const getHonorsClass = (gpaValue) => {
-    const numGpa = parseFloat(gpaValue);
-    if (numGpa >= 4.50) return 'First Class Honors';
-    if (numGpa >= 3.50) return 'Second Class Honors (Upper Division)';
-    if (numGpa >= 2.40) return 'Second Class Honors (Lower Division)';
-    if (numGpa >= 1.50) return 'Third Class Honors';
-    if (numGpa >= 1.00) return 'Pass';
-    return 'Fail';
-  };
-
   return (
-    <div className="flex-1 p-6 overflow-auto bg-background">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">My Results</h1>
+    <div className="flex-1 p-4 sm:p-6 overflow-auto bg-background">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">My Results</h1>
           
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div className="mb-4 sm:mb-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Academic Session</label>
-              <Select value={season} onValueChange={setSeason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Session" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2023/2024">2023/2024</SelectItem>
-                  <SelectItem value="2022/2023">2022/2023</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Semester</label>
-              <Select value={semester} onValueChange={setSemester}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Semester" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="First">First Semester</SelectItem>
-                  <SelectItem value="Second">Second Semester</SelectItem>
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium">Select Result</label>
+              {isLoadingHistory ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <Select 
+                  value={selectedResultId?.toString() || ''} 
+                  onValueChange={(value) => setSelectedResultId(Number(value))}
+                  disabled={availableResults.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a semester result" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableResults.map((result) => (
+                      <SelectItem key={result.id} value={result.id.toString()}>
+                        {result.seasonName} - {result.semesterName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
           </div>
           
           {/* Results Card */}
           <Card className="mb-6 print:shadow-none">
-            <CardHeader className="bg-gray-50 border-b print:hidden">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-                <CardTitle>Results for {semester} Semester, {season} Session</CardTitle>
-                <div className="flex items-center space-x-2 mt-2 md:mt-0">
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
+            <CardHeader className="bg-muted/50 border-b print:hidden">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <CardTitle className="text-base sm:text-lg">
+                  {resultDetail ? `${resultDetail.season.name} - ${resultDetail.semester.name}` : 'Result Details'}
+                </CardTitle>
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handlePrint}
+                    disabled={!resultDetail || isLoadingDetail}
+                  >
                     <Printer className="mr-1 h-4 w-4" /> Print
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handlePrint}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handlePrint}
+                    disabled={!resultDetail || isLoadingDetail}
+                  >
                     <Download className="mr-1 h-4 w-4" /> Download
                   </Button>
                 </div>
@@ -173,117 +150,149 @@ const Results = () => {
             </CardHeader>
             
             {/* Printable Content */}
-            <div ref={printableRef} className="p-4">
-              {/* Student Information - Only visible when printing */}
-              <div className="hidden print:block mb-6 border-b pb-4">
-                <div className="text-center mb-4">
-                  <h1 className="text-xl font-bold">STUDENT RESULT STATEMENT</h1>
-                  <h2 className="font-semibold">{semester} Semester, {season} Academic Session</h2>
+            <div ref={printableRef} className="p-4 sm:p-6">
+              {isLoadingDetail ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-32 w-full" />
+                  <Skeleton className="h-64 w-full" />
                 </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p><span className="font-semibold">Student Name:</span> {studentInfo.name}</p>
-                    <p><span className="font-semibold">Registration No:</span> {studentInfo.regNo}</p>
-                    <p><span className="font-semibold">Department:</span> {studentInfo.department}</p>
-                  </div>
-                  <div>
-                    <p><span className="font-semibold">Programme:</span> {studentInfo.program}</p>
-                    <p><span className="font-semibold">Level:</span> {studentInfo.level}</p>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Summary Statistics */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="font-bold text-lg">Courses offered</h3>
-                    <p className="text-3xl font-bold">{currentResults.length}</p>
-                  </div>
-                  <div className="text-right">
-                    <h3 className="font-bold text-lg">G.P.A</h3>
-                    <p className="text-3xl font-bold">{gpa}</p>
-                  </div>
-                </div>
-              </div>
-    
-              {currentResults.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table className="border border-collapse">
-                    <TableHeader>
-                      <TableRow className="bg-gray-50">
-                        <TableHead className="text-left">Course Code & Title</TableHead>
-                        <TableHead className="text-center w-20">Credit</TableHead>
-                        <TableHead className="text-center w-20">Grade</TableHead>
-                        <TableHead className="text-center w-20">GP</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentResults.map((course, index) => (
-                        <TableRow key={index} className="border-b">
-                          <TableCell>
-                            <div className="font-medium">{course.courseCode}</div>
-                            <div className="text-gray-600">{course.courseTitle}</div>
-                          </TableCell>
-                          <TableCell className="text-center">{course.creditUnit}</TableCell>
-                          <TableCell className={`text-center font-medium ${
-                            course.grade === 'A' ? 'text-green-600' : 
-                            course.grade === 'F' ? 'text-red-600' : ''
-                          }`}>
-                            {course.grade}
-                          </TableCell>
-                          <TableCell className="text-center">{course.gradePoint.toFixed(1)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                  
-                  {/* Remarks and Summary */}
-                  <div className="mt-8">
-                    <p className="mb-4"><span className="font-bold">Remarks:</span> {parseFloat(gpa) >= 1.0 ? 'Pass' : 'Fail'}</p>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-sm">
-                      <div>
-                        <h4 className="font-bold mb-2">Current</h4>
-                        <p>CUR: {summaryMetrics.current.CUR}</p>
-                        <p>CUE: {summaryMetrics.current.CUE}</p>
-                        <p>WGP: {summaryMetrics.current.WGP}</p>
-                        <p>GPA: {summaryMetrics.current.GPA}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-bold mb-2">Previous</h4>
-                        <p>TCUR: {summaryMetrics.previous.TCUR}</p>
-                        <p>TCUE: {summaryMetrics.previous.TCUE}</p>
-                        <p>TWGP: {summaryMetrics.previous.TWGP}</p>
-                        <p>TCGPA: {summaryMetrics.previous.TCGPA}</p>
-                      </div>
-                      <div>
-                        <h4 className="font-bold mb-2">Cumulative</h4>
-                        <p>TCUR: {summaryMetrics.cumulative.TCUR}</p>
-                        <p>TCUE: {summaryMetrics.cumulative.TCUE}</p>
-                        <p>TWGP: {summaryMetrics.cumulative.TWGP}</p>
-                        <p>TCGPA: {summaryMetrics.cumulative.TCGPA}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="print:flex print:justify-between mt-8 print:pt-4 print:border-t hidden">
-                      <Button variant="outline" size="sm" className="print:visible">
-                        <ChevronLeft className="mr-1 h-4 w-4" /> Back
-                      </Button>
-                      <Button size="sm" className="print:visible">
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
+              ) : !resultDetail ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FileText className="h-16 w-16 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700">No Results Available</h3>
-                  <p className="text-gray-500 mt-2">
-                    There are no results available for the selected semester and session.
+                  <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold">No Result Selected</h3>
+                  <p className="text-muted-foreground mt-2">
+                    {availableResults.length === 0 
+                      ? 'No results available yet. Check back later.'
+                      : 'Select a semester from the dropdown above to view results.'}
                   </p>
                 </div>
+              ) : (
+                <>
+                  {/* Student Information - Only visible when printing */}
+                  <div className="hidden print:block mb-6 border-b pb-4">
+                    <div className="text-center mb-4">
+                      <h1 className="text-xl font-bold">STUDENT RESULT STATEMENT</h1>
+                      <h2 className="font-semibold">{resultDetail.season.name} - {resultDetail.semester.name}</h2>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <p><span className="font-semibold">Student Name:</span> {resultDetail.student.name}</p>
+                        <p><span className="font-semibold">Registration No:</span> {resultDetail.student.regNo}</p>
+                        <p><span className="font-semibold">Department:</span> {resultDetail.department?.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p><span className="font-semibold">Programme:</span> {resultDetail.program?.name || 'N/A'}</p>
+                        <p><span className="font-semibold">Level:</span> {resultDetail.level?.name || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Summary Statistics */}
+                  <div className="bg-muted/50 p-4 rounded-lg mb-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      <div>
+                        <h3 className="font-semibold text-sm text-muted-foreground">Courses</h3>
+                        <p className="text-2xl sm:text-3xl font-bold">{resultDetail.courseScores.length}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-sm text-muted-foreground">G.P.A</h3>
+                        <p className="text-2xl sm:text-3xl font-bold">{resultDetail.gpa.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-sm text-muted-foreground">C.G.P.A</h3>
+                        <p className="text-2xl sm:text-3xl font-bold">{resultDetail.cgpa.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-sm text-muted-foreground">Status</h3>
+                        <p className="text-xl sm:text-2xl font-bold capitalize">{resultDetail.remarks}</p>
+                      </div>
+                    </div>
+                  </div>
+    
+                  {resultDetail.courseScores.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <Table className="border border-collapse">
+                        <TableHeader>
+                          <TableRow className="bg-muted/50">
+                            <TableHead className="text-left">Course</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20">Credit</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20 hidden sm:table-cell">CA</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20 hidden sm:table-cell">Exam</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20">Total</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20">Grade</TableHead>
+                            <TableHead className="text-center w-16 sm:w-20 hidden md:table-cell">GP</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {resultDetail.courseScores.map((course, index) => (
+                            <TableRow key={index} className="border-b">
+                              <TableCell>
+                                <div className="font-medium text-sm">{course.courseCode}</div>
+                                <div className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-none">
+                                  {course.courseTitle}
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-center">{course.credit}</TableCell>
+                              <TableCell className="text-center hidden sm:table-cell">{course.CA}</TableCell>
+                              <TableCell className="text-center hidden sm:table-cell">{course.exam}</TableCell>
+                              <TableCell className="text-center">{course.total}</TableCell>
+                              <TableCell className={`text-center font-medium ${
+                                course.grade === 'A' ? 'text-green-600' : 
+                                course.grade === 'F' ? 'text-destructive' : ''
+                              }`}>
+                                {course.grade}
+                              </TableCell>
+                              <TableCell className="text-center hidden md:table-cell">
+                                {course.gradePoint.toFixed(1)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                      
+                      {/* Detailed Summary */}
+                      <div className="mt-6 sm:mt-8">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                          <div className="p-4 bg-muted/30 rounded-lg">
+                            <h4 className="font-bold mb-2">Current Semester</h4>
+                            <div className="space-y-1">
+                              <p>Credit Units Registered: <span className="font-semibold">{resultDetail.cuAttempted}</span></p>
+                              <p>Credit Units Earned: <span className="font-semibold">{resultDetail.cuPassed}</span></p>
+                              <p>GPA: <span className="font-semibold">{resultDetail.gpa.toFixed(2)}</span></p>
+                            </div>
+                          </div>
+                          <div className="p-4 bg-muted/30 rounded-lg">
+                            <h4 className="font-bold mb-2">Cumulative</h4>
+                            <div className="space-y-1">
+                              <p>Total Credit Units: <span className="font-semibold">{resultDetail.cuTotal}</span></p>
+                              <p>CGPA: <span className="font-semibold">{resultDetail.cgpa.toFixed(2)}</span></p>
+                              <p>Remark: <span className="font-semibold capitalize">{resultDetail.remarks}</span></p>
+                            </div>
+                          </div>
+                          <div className="p-4 bg-muted/30 rounded-lg sm:col-span-2 lg:col-span-1">
+                            <h4 className="font-bold mb-2">Classification</h4>
+                            <div className="space-y-1">
+                              <p className="text-base font-semibold">
+                                {resultDetail.cgpa >= 4.5 ? 'First Class' :
+                                 resultDetail.cgpa >= 3.5 ? 'Second Class Upper' :
+                                 resultDetail.cgpa >= 2.4 ? 'Second Class Lower' :
+                                 resultDetail.cgpa >= 1.5 ? 'Third Class' : 'Pass'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                      <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                      <h3 className="text-lg font-semibold">No Course Scores</h3>
+                      <p className="text-muted-foreground mt-2">
+                        No course scores found for this result.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </Card>

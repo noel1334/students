@@ -62,13 +62,13 @@ const Settings = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <div className="flex-1 p-4 md:p-8 max-w-6xl mx-auto w-full">
-        <div className="flex items-center gap-2 mb-6">
+      <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full">
+        <div className="flex items-center gap-2 mb-4 sm:mb-6">
           <SettingsIcon className="text-[#1a4aa6]" size={24} />
-          <h1 className="text-2xl font-bold text-gray-800">Settings</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Settings</h1>
         </div>
 
-        <div className="grid md:grid-cols-[250px_1fr] gap-6">
+        <div className="grid md:grid-cols-[250px_1fr] gap-4 sm:gap-6">
           {/* Sidebar */}
           <div className="bg-white rounded-lg border shadow-sm p-4">
             <nav className="space-y-1">

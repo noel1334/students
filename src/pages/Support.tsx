@@ -28,11 +28,11 @@ const SupportPage = () => {
   };
   
   return (
-    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Support Center</h1>
-            <p className="text-gray-600">Get help with any issue you're facing</p>
+        <div className="mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Support Center</h1>
+            <p className="text-sm sm:text-base text-gray-600">Get help with any issue you're facing</p>
           </div>
           
           <Tabs defaultValue="contact">

@@ -125,7 +125,7 @@ const Sidebar = () => {
       <div 
         id="sidebar"
         className={cn(
-          "h-screen bg-card border-r border-border fixed md:sticky top-0 left-0 z-50 transition-all duration-300 flex flex-col",
+          "h-screen bg-card border-r border-border fixed top-0 left-0 z-50 transition-all duration-300 flex flex-col",
           isOpen ? "w-72 translate-x-0" : "w-72 -translate-x-full md:translate-x-0 md:w-64"
         )}
       >

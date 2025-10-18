@@ -24,9 +24,9 @@ const Hostel = () => {
   const [activeTab, setActiveTab] = useState("status");
   
   return (
-    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Hostel Accommodation</h1>
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Hostel Accommodation</h1>
           
           <Tabs defaultValue="status" onValueChange={setActiveTab} value={activeTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">

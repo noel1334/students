@@ -401,7 +401,7 @@ const Courses = () => {
       deleteIndividualMutation.isPending || deleteBatchMutation.isPending ||
       updateRegistrationMutation.isPending || registerMutation.isPending) {
     return (
-      <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+      <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
         <div className="max-w-6xl mx-auto">
           <div className="text-center py-8">Loading courses...</div>
         </div>
@@ -410,7 +410,7 @@ const Courses = () => {
   }
 
   return (
-    <div className="flex-1 p-4 md:p-8 overflow-auto bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-6xl mx-auto">
         <CoursesHeader
             selectedSeason={selectedSeason}
