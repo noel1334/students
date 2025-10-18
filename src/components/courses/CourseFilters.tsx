@@ -49,14 +49,14 @@ const CourseFilters = ({
   semestersLoading
 }: CourseFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4">
-      <div>
-        <label className="block text-sm font-medium mb-1">Season</label>
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="flex-1 min-w-0">
+        <label className="block text-sm font-medium mb-1.5">Season</label>
         <Select 
           value={selectedSeasonId?.toString() || ''} 
           onValueChange={(value) => onSeasonChange(parseInt(value))}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select season" />
           </SelectTrigger>
           <SelectContent>
@@ -69,14 +69,14 @@ const CourseFilters = ({
         </Select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Semester</label>
+      <div className="flex-1 min-w-0">
+        <label className="block text-sm font-medium mb-1.5">Semester</label>
         <Select 
           value={selectedSemesterId?.toString() || ''} 
           onValueChange={(value) => onSemesterChange(parseInt(value))}
           disabled={!selectedSeasonId || semestersLoading}
         >
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select semester" />
           </SelectTrigger>
           <SelectContent>
@@ -89,13 +89,13 @@ const CourseFilters = ({
         </Select>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-1">Level</label>
+      <div className="flex-1 min-w-0">
+        <label className="block text-sm font-medium mb-1.5">Level</label>
         <Select 
           value={selectedLevelId?.toString() || ''} 
           onValueChange={(value) => onLevelChange(parseInt(value))}
         >
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full">
             <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent>

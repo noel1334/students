@@ -421,9 +421,9 @@ const Courses = () => {
             userCurrentLevelName={user?.currentLevelName}
           />
 
-          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 mb-4 sm:mb-6">
             {/* Top Actions */}
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-6">
+            <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
               <CourseActions
                 isRegistered={isRegistered}
                 isEditing={isEditing}
@@ -435,7 +435,7 @@ const Courses = () => {
 
             {/* Filters for Registered Courses (only visible when not editing) */}
             {isRegistered && !isEditing && (
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <CourseFilters
                   seasons={currentFilterSeasons}
                   semesters={currentFilterSemesters}
