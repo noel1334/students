@@ -51,9 +51,7 @@ const Results = () => {
         console.log('Result history response:', response);
 
         if (response.status === 'success') {
-          // CORRECTLY ACCESS THE NESTED 'history' ARRAY
-          const resultsArray = response.data?.history || [];
-
+          const resultsArray = response.data || [];
           setAvailableResults(resultsArray);
 
           // Auto-select the most recent result
@@ -86,8 +84,7 @@ useEffect(() => {
         // Let's assume your getResultById service returns the full API response.
         // If your service returns response.data, then you might need apiResponse.result
         if (apiResponse.status === 'success' && apiResponse.data) {
-          // The key is to access the 'result' property inside 'data'
-          setResultDetail(apiResponse.data.result); 
+          setResultDetail(apiResponse.data); 
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
@@ -147,7 +144,7 @@ useEffect(() => {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem disabled>No results available</SelectItem>
+                    <SelectItem value="none" disabled>No results available</SelectItem>
                   )}
                 </SelectContent>
               </Select>

@@ -1,4 +1,4 @@
-// src/pages/Courses.tsx
+// src/pages/Courses.refactored.tsx - Modern mobile-first redesign
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -12,8 +12,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { Printer, Edit, FileText, Loader2, Trash2 } from 'lucide-react';
 import {
   getRegistrableCourses,
   registerForCourses,
@@ -22,23 +27,15 @@ import {
   deleteBatchRegistrations,
   updateStudentRegistrations,
   type RegistrableCourse,
-  type Level,
   type CourseRegistration,
-  type Season,
-  type Semester,
-  type DisplayCourse, // IMPORT NEW DisplayCourse interface
+  type DisplayCourse,
 } from '@/services/courseApiService';
 import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 import { getMySchoolFeeRecords } from '@/services/feeApiService';
-
-
-// Import refactored components
-import CoursesHeader from '@/components/courses/CoursesHeader';
 import CourseFilters from '@/components/courses/CourseFilters';
-import CourseActions from '@/components/courses/CourseActions';
-import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
-import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
 import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
+import CoursesSummary from '@/components/courses/CoursesSummary';
+import MobileCourseCard from '@/components/courses/MobileCourseCard';
 
 const Courses = () => {
   const { user } = useAuth();
@@ -59,11 +56,10 @@ const Courses = () => {
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-
   const [selectedRegisteredCourseIds, setSelectedRegisteredCourseIds] = useState<number[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Fetch payment records to check if student has paid
+  // Fetch payment records
   const { data: paymentData } = useQuery({
     queryKey: ['paymentRecords', user?.id],
     queryFn: getMySchoolFeeRecords,
@@ -72,19 +68,15 @@ const Courses = () => {
 
   const paymentRecords = Array.isArray(paymentData?.data?.records) ? paymentData.data.records : [];
 
-  // Check if the current season has been fully paid
   const hasCurrentSeasonBeenPaid = useMemo(() => {
     if (!user?.currentSeasonId) return false;
-    if (paymentRecords.length === 0) return false; // No payment history = not paid
-    
+    if (paymentRecords.length === 0) return false;
     const currentSeasonRecord = paymentRecords.find(
       record => record.season.id.toString() === user.currentSeasonId
     );
-    
     return currentSeasonRecord?.paymentStatus === 'PAID';
   }, [paymentRecords, user?.currentSeasonId]);
 
-  // Redirect to payment page if not paid
   useEffect(() => {
     if (user?.currentSeasonId && paymentData && !hasCurrentSeasonBeenPaid) {
       toast({
@@ -108,7 +100,6 @@ const Courses = () => {
     }
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
-
   const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
     queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
     queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
@@ -118,32 +109,26 @@ const Courses = () => {
   const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
   const isRegistered = registrations.length > 0;
   const currentlyRegisteredCourseIds = registrations?.map(reg => reg.course.id) || [];
-  const currentlyRegisteredCoursesMap = new Map(registrations.map(reg => [reg.course.id, reg]));
 
-
-  const { data: allSeasonsData, isLoading: allSeasonsLoading } = useQuery({
+  const { data: allSeasonsData } = useQuery({
     queryKey: ['allSeasons'],
     queryFn: getAllSeasons,
     enabled: !isRegistered
   });
 
-  const { data: allSemestersData, isLoading: allSemestersLoading } = useQuery({
+  const { data: allSemestersData } = useQuery({
     queryKey: ['allSemesters', selectedSeasonId],
     queryFn: () => getAllSemesters(selectedSeasonId || undefined),
     enabled: !isRegistered && !!selectedSeasonId
   });
 
-  const { data: allLevelsData, isLoading: allLevelsLoading } = useQuery({
+  const { data: allLevelsData } = useQuery({
     queryKey: ['allLevels'],
     queryFn: getAllLevels,
     enabled: !isRegistered
   });
 
-  const {
-    data: coursesData,
-    isLoading: coursesLoading,
-    error: coursesError
-  } = useQuery({
+  const { data: coursesData, isLoading: coursesLoading } = useQuery({
     queryKey: ['registrable-courses', selectedSeasonId, selectedSemesterId, selectedLevelId],
     queryFn: () => getRegistrableCourses(selectedSeasonId!, selectedSemesterId!, selectedLevelId!),
     enabled: !!selectedSeasonId && !!selectedSemesterId && !!selectedLevelId,
@@ -153,7 +138,7 @@ const Courses = () => {
     mutationFn: updateStudentRegistrations,
     onSuccess: (data) => {
       toast({
-        title: "Registration update successful",
+        title: "Registration updated",
         description: data.message || "Your course registrations have been updated.",
       });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
@@ -162,13 +147,9 @@ const Courses = () => {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      // MORE ROBUST ERROR MESSAGE EXTRACTION
-      const errorMessage = error.response?.data?.message ||
-                           error.message ||
-                           "An unexpected error occurred.";
       toast({
-        title: "Registration update failed",
-        description: errorMessage,
+        title: "Update failed",
+        description: error.response?.data?.message || error.message || "An error occurred.",
         variant: "destructive",
       });
     },
@@ -184,31 +165,21 @@ const Courses = () => {
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
       setShowRegistrationConfirm(false);
       setSelectedCourses([]);
-      setIsEditing(false);
     },
     onError: (error: any) => {
-      // Apply same robust error message extraction here too
-      const errorMessage = error.response?.data?.message ||
-                           error.message ||
-                           "An unexpected error occurred.";
       toast({
         title: "Registration failed",
-        description: errorMessage,
+        description: error.response?.data?.message || error.message || "An error occurred.",
         variant: "destructive",
       });
     },
   });
 
-
   const deleteIndividualMutation = useMutation({
     mutationFn: deleteIndividualRegistration,
     onSuccess: () => {
-      toast({
-        title: "Course deleted",
-        description: "The course registration has been removed.",
-      });
+      toast({ title: "Course removed" });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
-      setSelectedRegisteredCourseIds([]);
     },
     onError: (error: any) => {
       toast({
@@ -222,22 +193,18 @@ const Courses = () => {
   const deleteBatchMutation = useMutation({
     mutationFn: deleteBatchRegistrations,
     onSuccess: (data) => {
-      toast({
-        title: "Courses deleted",
-        description: data.message || "Selected courses have been removed.",
-      });
+      toast({ title: "Courses removed", description: data.message });
       queryClient.invalidateQueries({ queryKey: ['my-registrations'] });
       setSelectedRegisteredCourseIds([]);
     },
     onError: (error: any) => {
       toast({
-        title: "Batch deletion failed",
-        description: error.response?.data?.message || "Failed to delete selected courses.",
+        title: "Deletion failed",
+        description: error.response?.data?.message || "Failed to delete courses.",
         variant: "destructive",
       });
     },
   });
-
 
   const currentFilterSeasons = isRegistered && !isEditing
     ? (Array.isArray(registrationsData?.data?.filterOptions?.seasons) ? registrationsData.data.filterOptions.seasons : [])
@@ -253,21 +220,14 @@ const Courses = () => {
 
   const availableCourses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
 
-  // Create a combined list of courses for editing mode
   const combinedCoursesForEditing = React.useMemo(() => {
-    // This Map should be of type Map<number, DisplayCourse>
     const courseMap = new Map<number, DisplayCourse>();
-
-    // Add all available courses first
     availableCourses.forEach(course => {
-      courseMap.set(course.id, { ...course, isAlreadyRegistered: false }); // Explicitly mark as not registered yet
+      courseMap.set(course.id, { ...course, isAlreadyRegistered: false });
     });
-
-    // Overlay with currently registered courses, marking them as registered
     registrations.forEach(reg => {
       const existingCourse = courseMap.get(reg.course.id);
       if (existingCourse) {
-        // If the course is already in availableCourses, just update its status
         courseMap.set(reg.course.id, { ...existingCourse, isAlreadyRegistered: true });
       } else {
         courseMap.set(reg.course.id, {
@@ -275,36 +235,28 @@ const Courses = () => {
           code: reg.course.code,
           title: reg.course.title,
           creditUnit: reg.course.creditUnit,
-          courseType: reg.course.courseType || 'CORE', 
-          isElective: false, 
+          courseType: reg.course.courseType || 'CORE',
+          isElective: false,
           preferredSemesterType: reg.course.preferredSemesterType || null,
-          isAlreadyRegistered: true, 
+          isAlreadyRegistered: true,
         });
       }
     });
-
-    // Sort the combined list for consistent display
     return Array.from(courseMap.values()).sort((a, b) => a.code.localeCompare(b.code));
   }, [availableCourses, registrations]);
-
 
   const selectedSeason = currentFilterSeasons.find(s => s.id === selectedSeasonId);
   const selectedSemester = currentFilterSemesters.find(s => s.id === selectedSemesterId);
   const selectedLevel = currentFilterLevels.find(l => l.id === selectedLevelId);
 
+  const totalUnits = useMemo(() => {
+    return registrations.reduce((sum, reg) => sum + reg.course.creditUnit, 0);
+  }, [registrations]);
 
   const handleCourseSelect = (courseId: number) => {
-    setSelectedCourses(prev => {
-      if (prev.includes(courseId)) {
-        return prev.filter(id => id !== courseId);
-      } else {
-        return [...prev, courseId];
-      }
-    });
-  };
-
-  const handleRegister = () => {
-    setShowRegistrationConfirm(true);
+    setSelectedCourses(prev =>
+      prev.includes(courseId) ? prev.filter(id => id !== courseId) : [...prev, courseId]
+    );
   };
 
   const handleConfirmRegistration = () => {
@@ -317,9 +269,7 @@ const Courses = () => {
       return;
     }
 
-    const coursesToSubmit = selectedCourses.map(courseId => {
-      return { courseId }; // Only send courseId
-    });
+    const coursesToSubmit = selectedCourses.map(courseId => ({ courseId }));
 
     if (isEditing) {
       updateRegistrationMutation.mutate({
@@ -330,7 +280,7 @@ const Courses = () => {
       });
     } else {
       registerMutation.mutate(coursesToSubmit.map(c => ({
-        ...c, // Spread courseId
+        ...c,
         seasonId: selectedSeasonId!,
         semesterId: selectedSemesterId!,
         levelId: selectedLevelId!,
@@ -347,63 +297,26 @@ const Courses = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setSelectedCourses([]);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleSeasonChange = (seasonId: number) => {
-    setSelectedSeasonId(seasonId);
-    setSelectedSemesterId(null);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleSemesterChange = (semesterId: number) => {
-    setSelectedSemesterId(semesterId);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleLevelChange = (levelId: number) => {
-    setSelectedLevelId(levelId);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleToggleRegisteredCourseSelection = (registrationId: number, isChecked: boolean) => {
-    setSelectedRegisteredCourseIds(prev => {
-      if (isChecked) {
-        return [...prev, registrationId];
-      } else {
-        return prev.filter(id => id !== registrationId);
-      }
-    });
   };
 
   const handleDeleteIndividual = (registrationId: number) => {
-    if (window.confirm("Are you sure you want to delete this course registration?")) {
+    if (window.confirm("Remove this course?")) {
       deleteIndividualMutation.mutate(registrationId);
     }
   };
 
-  const handleRemoveSelectedCourses = () => {
-    if (selectedRegisteredCourseIds.length === 0) {
-      toast({ title: "No courses selected", description: "Please select courses to remove.", variant: "destructive" });
-      return;
-    }
+  const handleRemoveSelected = () => {
+    if (selectedRegisteredCourseIds.length === 0) return;
     setShowDeleteConfirm(true);
   };
 
-  const handleConfirmDelete = () => {
-    deleteBatchMutation.mutate(selectedRegisteredCourseIds);
-    setShowDeleteConfirm(false);
-  };
-
-
-  if (coursesLoading || registrationsLoading ||
-      (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading)) ||
-      deleteIndividualMutation.isPending || deleteBatchMutation.isPending ||
-      updateRegistrationMutation.isPending || registerMutation.isPending) {
+  if (registrationsLoading || coursesLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center py-8">Loading courses...</div>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
         </div>
       </div>
     );
@@ -411,185 +324,263 @@ const Courses = () => {
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
-      <div className="max-w-6xl mx-auto">
-        <CoursesHeader
-            selectedSeason={selectedSeason}
-            selectedSemester={selectedSemester}
-            selectedLevel={selectedLevel}
-            userCurrentSeasonName={user?.currentSeasonName}
-            userCurrentSemesterName={user?.currentSemesterName}
-            userCurrentLevelName={user?.currentLevelName}
-          />
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Summary Card */}
+        <CoursesSummary
+          selectedSeason={selectedSeason}
+          selectedSemester={selectedSemester}
+          selectedLevel={selectedLevel}
+          totalCourses={registrations.length}
+          totalUnits={totalUnits}
+        />
 
-          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 mb-4 sm:mb-6">
-            {/* Top Actions */}
-            <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <CourseActions
-                isRegistered={isRegistered}
-                isEditing={isEditing}
-                onEditRegistration={handleEditRegistration}
-                onCancelEdit={handleCancelEdit}
-                registrations={registrations}
-              />
+        {/* Action Buttons for Registered Students */}
+        {isRegistered && !isEditing && (
+          <Card className="p-4">
+            <div className="flex flex-col gap-3">
+              <CourseFormDownloader registrations={registrations}>
+                <Button className="w-full sm:w-auto" size="lg">
+                  <Printer className="mr-2 h-4 w-4" />
+                  Download Course Form
+                </Button>
+              </CourseFormDownloader>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button variant="outline" className="flex-1" size="lg">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Exam Card
+                </Button>
+                <Button
+                  onClick={handleEditRegistration}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700"
+                  size="lg"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Modify Registration
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Cancel Edit Button */}
+        {isEditing && (
+          <Button onClick={handleCancelEdit} variant="outline" className="w-full" size="lg">
+            Cancel Editing
+          </Button>
+        )}
+
+        {/* Filters */}
+        {isRegistered && !isEditing && (
+          <Card className="p-4">
+            <CourseFilters
+              seasons={currentFilterSeasons}
+              semesters={currentFilterSemesters}
+              levels={currentFilterLevels}
+              selectedSeasonId={selectedSeasonId}
+              selectedSemesterId={selectedSemesterId}
+              selectedLevelId={selectedLevelId}
+              onSeasonChange={setSelectedSeasonId}
+              onSemesterChange={setSelectedSemesterId}
+              onLevelChange={setSelectedLevelId}
+              semestersLoading={false}
+            />
+          </Card>
+        )}
+
+        {/* Bulk Delete Button */}
+        {isRegistered && !isEditing && selectedRegisteredCourseIds.length > 0 && (
+          <Button
+            variant="destructive"
+            onClick={handleRemoveSelected}
+            className="w-full"
+            size="lg"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Remove Selected ({selectedRegisteredCourseIds.length})
+          </Button>
+        )}
+
+        {/* Registered Courses List */}
+        {isRegistered && !isEditing && registrations.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-lg font-semibold text-foreground">
+                Registered Courses ({registrations.length})
+              </h2>
             </div>
 
-            {/* Filters for Registered Courses (only visible when not editing) */}
-            {isRegistered && !isEditing && (
-              <div className="mb-4 sm:mb-6">
-                <CourseFilters
-                  seasons={currentFilterSeasons}
-                  semesters={currentFilterSemesters}
-                  levels={currentFilterLevels}
-                  selectedSeasonId={selectedSeasonId}
-                  selectedSemesterId={selectedSemesterId}
-                  selectedLevelId={selectedLevelId}
-                  onSeasonChange={handleSeasonChange}
-                  onSemesterChange={handleSemesterChange}
-                  onLevelChange={handleLevelChange}
-                  semestersLoading={registrationsLoading}
-                />
-              </div>
-            )}
+            {registrations.map(registration => (
+              <MobileCourseCard
+                key={registration.id}
+                registration={registration}
+                isSelected={selectedRegisteredCourseIds.includes(registration.id)}
+                onToggle={(id, checked) => {
+                  setSelectedRegisteredCourseIds(prev =>
+                    checked ? [...prev, id] : prev.filter(i => i !== id)
+                  );
+                }}
+                onDelete={handleDeleteIndividual}
+                showCheckbox={true}
+              />
+            ))}
+          </div>
+        )}
 
-            {/* Remove Selected Courses Button (only visible when NOT in edit mode) */}
-            {isRegistered && !isEditing && selectedRegisteredCourseIds.length > 0 && (
-              <div className="mb-4 flex justify-end">
-                <Button
-                  variant="destructive"
-                  onClick={handleRemoveSelectedCourses}
-                  disabled={deleteBatchMutation.isPending}
-                >
-                  Remove Selected Courses ({selectedRegisteredCourseIds.length})
-                </Button>
-              </div>
-            )}
+        {/* Available/Editable Courses */}
+        {(!isRegistered || isEditing) && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-lg font-semibold text-foreground">
+                {isEditing ? 'Modify Courses' : 'Available Courses'}
+              </h2>
+              <Badge variant="secondary">
+                {selectedCourses.length} selected
+              </Badge>
+            </div>
 
-
-            {/* Error message */}
-            {coursesError && (
-              <div className="text-red-600 mb-4">
-                Error loading courses. Please try again.
-              </div>
-            )}
-
-            {!selectedSeasonId || !selectedSemesterId || !selectedLevelId ? (
-              <div className="text-center py-8 text-gray-500">
-                Please select season, semester, and level to view available courses.
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {/* Registered Courses Section (only visible when NOT in edit mode) */}
-                {isRegistered && !isEditing && (
-                  <RegisteredCoursesList
-                    registrations={registrations}
-                    selectedRegisteredCourseIds={selectedRegisteredCourseIds}
-                    onToggleRegisteredCourseSelection={handleToggleRegisteredCourseSelection}
-                    onDeleteIndividual={handleDeleteIndividual}
+            {(isEditing ? combinedCoursesForEditing : availableCourses).map(course => (
+              <Card
+                key={course.id}
+                className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => handleCourseSelect(course.id)}
+              >
+                <div className="flex gap-3">
+                  <Checkbox
+                    checked={selectedCourses.includes(course.id)}
+                    onCheckedChange={() => handleCourseSelect(course.id)}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1"
                   />
-                )}
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="flex-1">
+                        <div className="font-semibold text-foreground text-sm flex items-center gap-2">
+                          {course.code}
+                          {isEditing && 'isAlreadyRegistered' in course && course.isAlreadyRegistered && (
+                            <Badge variant="default" className="text-xs">Registered</Badge>
+                          )}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {course.title}
+                        </div>
+                      </div>
+                    </div>
 
-                {/* Available Courses Section - Show when not registered OR when editing */}
-                {(!isRegistered || isEditing) && (
-                  <>
-                    {combinedCoursesForEditing.length > 0 && (
-                      <AvailableCoursesList
-                        courses={isEditing ? combinedCoursesForEditing : availableCourses}
-                        selectedCourses={selectedCourses}
-                        currentlyRegisteredCoursesMap={currentlyRegisteredCoursesMap}
-                        isEditing={isEditing}
-                        onCourseSelect={handleCourseSelect}
-                        onRegister={handleRegister}
-                        isRegistering={registerMutation.isPending || updateRegistrationMutation.isPending}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                      <Badge variant="outline" className="font-normal">
+                        {course.creditUnit} Units
+                      </Badge>
+                      <Badge 
+                        variant={course.courseType === 'CORE' ? 'default' : 'outline'}
+                        className="font-normal"
+                      >
+                        {course.courseType}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ))}
+
+            {selectedCourses.length > 0 && (
+              <Button
+                onClick={() => setShowRegistrationConfirm(true)}
+                className="w-full"
+                size="lg"
+                disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
+              >
+                {isEditing ? 'Update Registration' : 'Register Courses'} ({selectedCourses.length})
+              </Button>
             )}
           </div>
+        )}
 
-          {/* Registration confirmation dialog */}
-          <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {isEditing ? "Confirm Course Update" : "Confirm Course Registration"}
-                </DialogTitle>
-                <DialogDescription>
-                  You are about to {isEditing ? "update" : "register"} {selectedCourses.length} courses for {selectedSeason?.name} {selectedSemester?.name}.
-                  This action cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="my-4 max-h-[300px] overflow-y-auto">
-                {/* Use the correct source for courses in the confirmation dialog */}
-                {(isEditing ? combinedCoursesForEditing : availableCourses)
-                  .filter(course => selectedCourses.includes(course.id))
-                  .map(course => (
-                    <div key={course.id} className="mb-2 flex justify-between">
-                      <div>
-                        <p className="font-medium">{course.code}</p>
-                        <p className="text-sm text-gray-600">{course.title}</p>
-                      </div>
-                      <p className="text-sm">{course.creditUnit} units</p>
+        {/* Registration Confirmation Dialog */}
+        <Dialog open={showRegistrationConfirm} onOpenChange={setShowRegistrationConfirm}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {isEditing ? "Update Registration" : "Confirm Registration"}
+              </DialogTitle>
+              <DialogDescription>
+                You are about to {isEditing ? "update" : "register"} {selectedCourses.length} courses.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[300px] overflow-y-auto space-y-2">
+              {(isEditing ? combinedCoursesForEditing : availableCourses)
+                .filter(course => selectedCourses.includes(course.id))
+                .map(course => (
+                  <div key={course.id} className="flex justify-between text-sm p-2 bg-muted/50 rounded">
+                    <div>
+                      <div className="font-medium">{course.code}</div>
+                      <div className="text-xs text-muted-foreground">{course.title}</div>
                     </div>
-                  ))
-                }
-              </div>
-              <DialogFooter className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowRegistrationConfirm(false)}
-                  disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-blue-700 hover:bg-blue-800"
-                  onClick={handleConfirmRegistration}
-                  disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
-                >
-                  {(registerMutation.isPending || updateRegistrationMutation.isPending)
-                    ? 'Processing...'
-                    : isEditing
-                      ? 'Submit Course Update'
-                      : 'Register Selected Courses'
-                  }
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                    <div className="text-xs">{course.creditUnit} units</div>
+                  </div>
+                ))
+              }
+            </div>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowRegistrationConfirm(false)}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmRegistration}
+                disabled={registerMutation.isPending || updateRegistrationMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {(registerMutation.isPending || updateRegistrationMutation.isPending) ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  `Confirm ${isEditing ? 'Update' : 'Registration'}`
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-          {/* Delete Confirmation Dialog */}
-          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to remove the selected {selectedRegisteredCourseIds.length} course(s)?
-                  This action cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="flex justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleteBatchMutation.isPending}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleConfirmDelete}
-                  disabled={deleteBatchMutation.isPending}
-                >
-                  {deleteBatchMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-        </div>
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+              <DialogDescription>
+                Remove {selectedRegisteredCourseIds.length} course(s)? This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  deleteBatchMutation.mutate(selectedRegisteredCourseIds);
+                  setShowDeleteConfirm(false);
+                }}
+                disabled={deleteBatchMutation.isPending}
+                className="w-full sm:w-auto"
+              >
+                {deleteBatchMutation.isPending ? 'Deleting...' : 'Confirm Delete'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
+    </div>
   );
 };
 
