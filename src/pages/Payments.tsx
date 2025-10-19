@@ -15,10 +15,12 @@ const Payments = () => {
   const navigate = useNavigate();
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch, isError } = useQuery({
     queryKey: ['paymentRecords', user?.id],
     queryFn: getMySchoolFeeRecords,
     enabled: !!user?.id,
+    retry: 2,
+    staleTime: 30000, // 30 seconds
   });
 
   const records = Array.isArray(data?.data?.records) ? data.data.records : [];
@@ -52,6 +54,30 @@ const Payments = () => {
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-24 w-full" />
           <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Payments</h1>
+            <p className="text-sm text-muted-foreground">Manage your school fees and payment history</p>
+          </div>
+          <Card className="p-8 text-center">
+            <XCircle className="h-16 w-16 mx-auto text-destructive mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Failed to Load Payment Records</h3>
+            <p className="text-muted-foreground mb-4">
+              {(error as any)?.response?.data?.message || 'Unable to fetch your payment information. Please try again.'}
+            </p>
+            <Button onClick={() => refetch()} variant="default">
+              Try Again
+            </Button>
+          </Card>
         </div>
       </div>
     );

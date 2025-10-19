@@ -22,7 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import AcademicPerformance from '@/components/AcademicPerformance';
-import { Download, Printer, FileText } from 'lucide-react';
+import { Download, Printer, FileText, XCircle } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -40,13 +40,16 @@ const Results = () => {
   const [resultDetail, setResultDetail] = useState<ResultDetail | null>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [detailError, setDetailError] = useState<string | null>(null);
   const printableRef = useRef(null);
 
- // Fetch available results on mount
+  // Fetch available results on mount
   useEffect(() => {
     const fetchResultHistory = async () => {
       try {
         setIsLoadingHistory(true);
+        setHistoryError(null);
         const response = await getStudentResultHistory();
         console.log('Result history response:', response);
 
@@ -61,14 +64,18 @@ const Results = () => {
         }
       } catch (error: any) {
         console.error('Error fetching result history:', error);
-        toast.error(error.response?.data?.message || 'Failed to load result history');
+        const errorMsg = error.response?.data?.message || 'Failed to load result history';
+        setHistoryError(errorMsg);
+        toast.error(errorMsg);
       } finally {
         setIsLoadingHistory(false);
       }
     };
 
-    fetchResultHistory();
-  }, []);
+    if (user?.id) {
+      fetchResultHistory();
+    }
+  }, [user?.id]);
 
   // Fetch result detail when selection changes
 useEffect(() => {
@@ -77,19 +84,18 @@ useEffect(() => {
     const fetchResultDetail = async () => {
       try {
         setIsLoadingDetail(true);
-        // The API service already unwraps the first 'data' layer for you
+        setDetailError(null);
         const apiResponse = await getResultById(selectedResultId); 
         
-        // The controller wraps the actual data in another object, e.g., { data: { result: ... } }
-        // Let's assume your getResultById service returns the full API response.
-        // If your service returns response.data, then you might need apiResponse.result
         if (apiResponse.status === 'success' && apiResponse.data) {
           setResultDetail(apiResponse.data); 
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
-        toast.error(error.response?.data?.message || 'Failed to load result details');
-        setResultDetail(null); // Clear previous result on error
+        const errorMsg = error.response?.data?.message || 'Failed to load result details';
+        setDetailError(errorMsg);
+        toast.error(errorMsg);
+        setResultDetail(null);
       } finally {
         setIsLoadingDetail(false);
       }
@@ -127,6 +133,22 @@ useEffect(() => {
             <label className="text-sm font-medium">Select Result</label>
             {isLoadingHistory ? (
               <Skeleton className="h-10 w-full" />
+            ) : historyError ? (
+              <Card className="p-4 border-destructive/50 bg-destructive/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    <p className="text-sm text-destructive">{historyError}</p>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </Card>
             ) : (
               <Select
                 value={selectedResultId?.toString() || ''}
@@ -188,6 +210,15 @@ useEffect(() => {
               <div className="space-y-4">
                 <Skeleton className="h-32 w-full" />
                 <Skeleton className="h-64 w-full" />
+              </div>
+            ) : detailError ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <XCircle className="h-16 w-16 text-destructive mb-4" />
+                <h3 className="text-lg font-semibold">Error Loading Result</h3>
+                <p className="text-muted-foreground mt-2 mb-4">{detailError}</p>
+                <Button onClick={() => setSelectedResultId(selectedResultId)}>
+                  Try Again
+                </Button>
               </div>
             ) : !resultDetail ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">

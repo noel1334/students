@@ -73,9 +73,36 @@ export interface ApiResponse<T> {
 }
 
 // Fetch minimal result history for dropdowns
+// For students, this will automatically filter to their own results
 export const getStudentResultHistory = async (): Promise<ApiResponse<ResultMinimal[]>> => {
-  const response = await api.get('/results/student-history/me');
-  return response.data;
+  // Use the main /results endpoint which auto-filters for students
+  const response = await api.get('/results', { 
+    params: { 
+      page: 1, 
+      limit: 100 // Get all results
+    } 
+  });
+  
+  // Transform the full results data to minimal format for dropdowns
+  if (response.data?.status === 'success' && response.data?.data?.results) {
+    const minimal: ResultMinimal[] = response.data.data.results.map((result: ResultDetail) => ({
+      id: result.id,
+      seasonId: result.season.id,
+      semesterId: result.semester.id,
+      seasonName: result.season.name,
+      semesterName: result.semester.name,
+    }));
+    
+    return {
+      status: 'success',
+      data: minimal
+    };
+  }
+  
+  return {
+    status: 'success',
+    data: []
+  };
 };
 
 // Fetch specific result by ID
