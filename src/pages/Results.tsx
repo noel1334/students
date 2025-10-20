@@ -51,8 +51,8 @@ const Results = () => {
         console.log('Result history response:', response);
 
         if (response.status === 'success') {
-          // CORRECTLY ACCESS THE NESTED 'history' ARRAY
-          const resultsArray = response.data?.history || [];
+          // The API returns the array directly in response.data
+          const resultsArray = Array.isArray(response.data) ? response.data : [];
 
           setAvailableResults(resultsArray);
 
@@ -82,12 +82,9 @@ useEffect(() => {
         // The API service already unwraps the first 'data' layer for you
         const apiResponse = await getResultById(selectedResultId); 
         
-        // The controller wraps the actual data in another object, e.g., { data: { result: ... } }
-        // Let's assume your getResultById service returns the full API response.
-        // If your service returns response.data, then you might need apiResponse.result
+        // The API returns the result data directly
         if (apiResponse.status === 'success' && apiResponse.data) {
-          // The key is to access the 'result' property inside 'data'
-          setResultDetail(apiResponse.data.result); 
+          setResultDetail(apiResponse.data);
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
@@ -147,7 +144,7 @@ useEffect(() => {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem disabled>No results available</SelectItem>
+                    <SelectItem value="none" disabled>No results available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
