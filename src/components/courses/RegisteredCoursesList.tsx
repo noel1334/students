@@ -4,10 +4,9 @@ import React from 'react';
 import { CourseRegistration } from '@/services/courseApiService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
-import RegisteredCourseCard from './RegisteredCourseCard';
+import { Checkbox } from '@/components/ui/checkbox'; // NEW IMPORT
+import { Button } from '@/components/ui/button'; // NEW IMPORT
+import { Trash2 } from 'lucide-react'; // NEW IMPORT
 
 interface RegisteredCoursesListProps {
   registrations: CourseRegistration[];
@@ -37,39 +36,25 @@ const RegisteredCoursesList = ({
         <h3 className="text-lg font-semibold">Your Registered Courses ({registrations.length})</h3>
       </div>
 
-      {/* Mobile Card View */}
-      <div className="block md:hidden space-y-3">
-        {registrations.map((registration) => {
-          const isSelected = selectedRegisteredCourseIds.includes(registration.id);
-          return (
-            <RegisteredCourseCard
-              key={registration.id}
-              registration={registration}
-              isSelected={isSelected}
-              onToggleSelection={onToggleRegisteredCourseSelection}
-              onDelete={onDeleteIndividual}
-            />
-          );
-        })}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden md:block border rounded-lg">
+      <div className="border rounded-lg">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px] text-center"></TableHead>
+              <TableHead className="w-[50px] text-center">
+                {/* No master checkbox for simplicity, but could be added here */}
+              </TableHead>
               <TableHead>Course Code</TableHead>
               <TableHead>Course Title</TableHead>
               <TableHead>Units</TableHead>
               <TableHead>Level</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date Registered</TableHead>
-              <TableHead className="w-[80px] text-center">Actions</TableHead>
+              <TableHead className="w-[80px] text-center">Actions</TableHead> {/* NEW COLUMN */}
             </TableRow>
           </TableHeader>
           <TableBody>
             {registrations.map((registration) => {
+              // Determine if the course can be deleted based on both conditions
               const canDelete = !registration.isScoreRecorded && !registration.semester.areStudentEditsLocked;
               const isSelected = selectedRegisteredCourseIds.includes(registration.id);
 
@@ -80,7 +65,7 @@ const RegisteredCoursesList = ({
                       id={`reg-checkbox-${registration.id}`}
                       checked={isSelected}
                       onCheckedChange={(checked) => onToggleRegisteredCourseSelection(registration.id, checked === true)}
-                      disabled={!canDelete}
+                      disabled={!canDelete} // Disable checkbox if course cannot be deleted
                       className="data-[state=checked]:bg-blue-700"
                     />
                   </TableCell>
@@ -99,7 +84,7 @@ const RegisteredCoursesList = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onDeleteIndividual(registration.id)}
-                      disabled={!canDelete}
+                      disabled={!canDelete} // Disable button if course cannot be deleted
                       className="hover:bg-red-50 text-red-600 hover:text-red-700"
                       title={!canDelete ? (registration.isScoreRecorded ? "Cannot delete: Score recorded" : "Cannot delete: Registration period locked") : "Delete course"}
                     >

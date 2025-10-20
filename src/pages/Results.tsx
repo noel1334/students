@@ -51,7 +51,7 @@ const Results = () => {
         console.log('Result history response:', response);
 
         if (response.status === 'success') {
-          // The API returns data in response.data.history
+          // CORRECTLY ACCESS THE NESTED 'history' ARRAY
           const resultsArray = response.data?.history || [];
 
           setAvailableResults(resultsArray);
@@ -82,9 +82,12 @@ useEffect(() => {
         // The API service already unwraps the first 'data' layer for you
         const apiResponse = await getResultById(selectedResultId); 
         
-        // The API returns the result data directly
+        // The controller wraps the actual data in another object, e.g., { data: { result: ... } }
+        // Let's assume your getResultById service returns the full API response.
+        // If your service returns response.data, then you might need apiResponse.result
         if (apiResponse.status === 'success' && apiResponse.data) {
-          setResultDetail(apiResponse.data);
+          // The key is to access the 'result' property inside 'data'
+          setResultDetail(apiResponse.data.result); 
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
@@ -144,7 +147,7 @@ useEffect(() => {
                       </SelectItem>
                     ))
                   ) : (
-                    <SelectItem value="none" disabled>No results available</SelectItem>
+                    <SelectItem disabled>No results available</SelectItem>
                   )}
                 </SelectContent>
               </Select>
@@ -158,7 +161,7 @@ useEffect(() => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle className="text-base sm:text-lg">
                 {resultDetail
-                  ? `${resultDetail.season?.name || 'N/A'} - ${resultDetail.semester?.name || 'N/A'}`
+                  ? `${resultDetail.season.name} - ${resultDetail.semester.name}`
                   : 'Result Details'}
               </CardTitle>
               <div className="flex items-center space-x-2">
@@ -206,13 +209,13 @@ useEffect(() => {
                   <div className="text-center mb-4">
                     <h1 className="text-xl font-bold">STUDENT RESULT STATEMENT</h1>
                     <h2 className="font-semibold">
-                      {resultDetail.season?.name || 'N/A'} - {resultDetail.semester?.name || 'N/A'}
+                      {resultDetail.season.name} - {resultDetail.semester.name}
                     </h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p><span className="font-semibold">Student Name:</span> {resultDetail.student?.name || 'N/A'}</p>
-                      <p><span className="font-semibold">Registration No:</span> {resultDetail.student?.regNo || 'N/A'}</p>
+                      <p><span className="font-semibold">Student Name:</span> {resultDetail.student.name}</p>
+                      <p><span className="font-semibold">Registration No:</span> {resultDetail.student.regNo}</p>
                       <p><span className="font-semibold">Department:</span> {resultDetail.department?.name || 'N/A'}</p>
                     </div>
                     <div>
@@ -227,25 +230,25 @@ useEffect(() => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">Courses</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.courseScores?.length || 0}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.courseScores.length}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">G.P.A</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.gpa?.toFixed(2) || '0.00'}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.gpa.toFixed(2)}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">C.G.P.A</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.cgpa?.toFixed(2) || '0.00'}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.cgpa.toFixed(2)}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">Status</h3>
-                      <p className="text-xl sm:text-2xl font-bold capitalize">{resultDetail.remarks || 'N/A'}</p>
+                      <p className="text-xl sm:text-2xl font-bold capitalize">{resultDetail.remarks}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Course Table */}
-                {resultDetail.courseScores && resultDetail.courseScores.length > 0 ? (
+                {resultDetail.courseScores.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table className="border border-collapse">
                       <TableHeader>

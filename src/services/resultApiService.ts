@@ -73,7 +73,7 @@ export interface ApiResponse<T> {
 }
 
 // Fetch minimal result history for dropdowns
-export const getStudentResultHistory = async (): Promise<ApiResponse<{ history: ResultMinimal[] }>> => {
+export const getStudentResultHistory = async (): Promise<ApiResponse<ResultMinimal[]>> => {
   const response = await api.get('/results/student-history/me');
   return response.data;
 };

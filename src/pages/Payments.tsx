@@ -65,78 +65,67 @@ type GatewayKey = 'flutterwave' | 'paystack' | 'stripe';
 // ============================================================================
 const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | null, user: any }>(({ record, user }, ref) => {
     if (!record || !user) {
+        // Render an empty div with the ref if there's no record, so react-to-print doesn't error.
         return <div ref={ref}></div>;
     }
 
     const mostRecentPayment = record.payments?.[0];
 
     return (
-        <div ref={ref} className="p-6 sm:p-10 font-sans text-gray-800 bg-white max-w-4xl mx-auto">
-            <header className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ScholarHub University</h1>
-                        <p className="text-sm text-gray-600 mt-1">123 University Drive, Knowledge City</p>
-                    </div>
-                    <div className="sm:text-right">
-                        <h2 className="text-xl sm:text-2xl font-semibold text-blue-600">PAYMENT RECEIPT</h2>
-                    </div>
+        <div ref={ref} className="p-4 sm:p-10 font-sans text-gray-800 bg-white">
+            <header className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pb-4 border-b-2 border-gray-200">
+                <div>
+                    <h1 className="text-xl sm:text-3xl font-bold text-gray-900">ScholarHub University</h1>
+                    <p className="text-xs sm:text-sm">123 University Drive, Knowledge City</p>
                 </div>
+                <h2 className="text-lg sm:text-2xl font-semibold text-blue-600">PAYMENT RECEIPT</h2>
             </header>
 
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
-                <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Billed To</h3>
-                    <p className="font-bold text-lg">{user.name}</p>
-                    <p className="text-sm text-gray-600">{user.regNo || 'N/A'}</p>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    <p className="text-sm text-gray-600">{user.program?.name || 'N/A'}</p>
-                    <p className="text-sm text-gray-600">{user.department?.name || 'N/A'}</p>
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mt-6 sm:mt-8">
+                <div>
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Billed To</h3>
+                    <p className="font-bold text-base sm:text-lg">{user.name}</p>
+                    <p className="text-sm">{user.regNo || 'N/A'}</p>
+                    <p className="text-sm">{user.email}</p>
+                    <p className="text-sm">{user.program?.name || 'N/A'}</p>
+                    <p className="text-sm">{user.department?.name || 'N/A'}</p>
                 </div>
-                <div className="space-y-1 sm:text-right">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Receipt Details</h3>
-                    <p className="text-sm"><span className="font-semibold">Receipt No:</span> {mostRecentPayment?.reference || record.id}</p>
+                <div className="sm:text-right">
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Receipt Details</h3>
+                    <p className="text-sm break-all"><span className="font-semibold">Receipt No:</span> {mostRecentPayment?.reference || record.id}</p>
                     <p className="text-sm"><span className="font-semibold">Payment Date:</span> {mostRecentPayment ? new Date(mostRecentPayment.paymentDate).toLocaleDateString() : 'N/A'}</p>
                     <p className="text-sm"><span className="font-semibold">Payment Method:</span> {mostRecentPayment?.channel || 'N/A'}</p>
                 </div>
             </section>
 
-            <section className="mt-8">
-                <div className="border rounded-lg overflow-hidden">
-                    <div className="bg-gray-100 p-3 grid grid-cols-3 gap-2 text-sm font-semibold">
-                        <div>Description</div>
-                        <div>Session</div>
-                        <div className="text-right">Amount</div>
-                    </div>
-                    <div className="p-3 grid grid-cols-3 gap-2 text-sm">
-                        <div>{record.description || 'School Fees'}</div>
-                        <div>{record.season.name}</div>
-                        <div className="text-right font-semibold">₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
-                    </div>
+            <section className="mt-6 sm:mt-10 overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                    <thead className="bg-gray-100">
+                        <tr>
+                            <th className="p-2 sm:p-3 text-xs sm:text-sm font-semibold uppercase">Description</th>
+                            <th className="p-2 sm:p-3 text-xs sm:text-sm font-semibold uppercase">Session</th>
+                            <th className="p-2 sm:p-3 text-xs sm:text-sm font-semibold uppercase text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="border-b">
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">{record.description || 'School Fees'}</td>
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm">{record.season.name}</td>
+                            <td className="p-2 sm:p-3 text-xs sm:text-sm text-right">₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section className="flex justify-end mt-4 sm:mt-6">
+                <div className="w-full sm:max-w-xs space-y-2 text-sm">
+                    <div className="flex justify-between"><span className="font-semibold">Total Fee:</span><span>₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between"><span className="font-semibold">Amount Paid:</span><span>₦{record.amountPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
+                    <div className="flex justify-between text-base sm:text-lg font-bold p-2 bg-blue-50 rounded"><span>Balance Due:</span><span>₦{(record.amount - record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span></div>
                 </div>
             </section>
 
-            <section className="mt-6">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2 max-w-sm ml-auto">
-                    <div className="flex justify-between text-sm">
-                        <span className="font-semibold">Total Fee:</span>
-                        <span>₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="font-semibold">Amount Paid:</span>
-                        <span>₦{record.amountPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                        <span>Balance Due:</span>
-                        <span className="text-blue-600">₦{(record.amount - record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                </div>
-            </section>
-
-            <footer className="text-center text-sm text-gray-500 mt-12 pt-6 border-t">
-                <p>Thank you for your payment.</p>
-                <p className="mt-1">© {new Date().getFullYear()} ScholarHub University. All rights reserved.</p>
-            </footer>
+            <footer className="text-center text-xs sm:text-sm text-gray-500 mt-8 sm:mt-16 pt-4 border-t"><p>Thank you for your payment.</p><p>© {new Date().getFullYear()} ScholarHub University. All rights reserved.</p></footer>
         </div>
     );
 });
@@ -157,64 +146,32 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
     if (error) return <div className="flex items-center gap-2 p-4 border border-red-300 bg-red-50 rounded-md"><AlertCircle className="h-5 w-5 text-red-600" /><p className="text-red-700">{error}</p></div>;
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <SummaryCard title="Total Fee" amount={summary.totalFee} />
                 <SummaryCard title="Amount Paid" amount={summary.totalAmountPaid} variant="success" />
                 <SummaryCard title="Balance Due" amount={summary.balanceDue} variant="danger" />
             </div>
-            
-            {/* Mobile Card View */}
-            <div className="block sm:hidden space-y-3">
-                <h3 className="font-semibold text-base mb-3">Transaction History</h3>
-                {records.length > 0 ? (
-                    records.map((record) => (
-                        <Card key={record.id} className="overflow-hidden">
-                            <CardContent className="p-4">
-                                <div className="flex justify-between items-start mb-3">
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-sm">{record.description || 'School Fees'}</p>
-                                        <p className="text-xs text-gray-600 mt-1">{record.season.name}</p>
-                                    </div>
-                                    <StatusBadge status={record.paymentStatus} />
-                                </div>
-                                <div className="flex justify-between items-center pt-3 border-t">
-                                    <span className="text-sm text-gray-600">Amount:</span>
-                                    <span className="font-bold text-lg">₦{record.amount.toLocaleString()}</span>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                ) : (
-                    <Card>
-                        <CardContent className="p-6 text-center text-gray-500 text-sm">
-                            No payment history found.
-                        </CardContent>
-                    </Card>
-                )}
-            </div>
-
-            {/* Desktop Table View */}
-            <div className="hidden sm:block border rounded-lg overflow-hidden">
-                <div className="p-4 bg-gray-50/50 border-b"><h3 className="font-semibold text-base">Transaction History</h3></div>
+            <div className="border rounded-lg overflow-hidden">
+                <div className="p-3 sm:p-4 bg-gray-50/50 border-b"><h3 className="font-semibold text-sm sm:text-base">Transaction History</h3></div>
                 {records.length > 0 ? (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full text-sm">
+                        <table className="min-w-full text-xs sm:text-sm">
                             <thead className="bg-gray-50 text-left">
                                 <tr>
-                                    <th className="p-3 font-medium">Description</th>
-                                    <th className="p-3 font-medium">Amount</th>
-                                    <th className="p-3 font-medium">Season</th>
-                                    <th className="p-3 font-medium text-center">Status</th>
+                                    <th className="p-2 sm:p-3 font-medium">Description</th>
+                                    <th className="p-2 sm:p-3 font-medium">Amount</th>
+                                    <th className="p-2 sm:p-3 font-medium hidden sm:table-cell">Season</th>
+                                    <th className="p-2 sm:p-3 font-medium text-center">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {records.map((record) => (
                                     <tr key={record.id} className="border-b last:border-b-0 hover:bg-gray-50">
-                                        <td className="p-3">{record.description || 'School Fees'}</td>
-                                        <td className="p-3">₦{record.amount.toLocaleString()}</td>
-                                        <td className="p-3">{record.season.name}</td>
-                                        <td className="p-3 text-center"><StatusBadge status={record.paymentStatus} /></td>
+                                        <td className="p-2 sm:p-3">{record.description || 'School Fees'}</td>
+                                        <td className="p-2 sm:p-3">₦{record.amount.toLocaleString()}</td>
+                                        <td className="p-2 sm:p-3 hidden sm:table-cell">{record.season.name}</td>
+                                        <td className="p-2 sm:p-3 text-center"><StatusBadge status={record.paymentStatus} /></td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -233,14 +190,7 @@ const SummaryCard = ({ title, amount, variant = 'default' }: { title: string, am
         success: 'bg-green-100 text-green-800',
         danger: 'bg-red-100 text-red-800',
     };
-    return (
-        <Card className={`${colorClasses[variant]} border-none`}>
-            <CardContent className="p-4">
-                <p className="text-sm font-medium opacity-80 mb-1">{title}</p>
-                <p className="text-2xl font-bold">₦{amount.toLocaleString()}</p>
-            </CardContent>
-        </Card>
-    );
+    return <div className={`p-3 sm:p-4 rounded-lg ${colorClasses[variant]}`}><p className="text-xs sm:text-sm font-medium opacity-80">{title}</p><p className="text-lg sm:text-2xl font-bold">₦{amount.toLocaleString()}</p></div>;
 };
 
 const StatusBadge = ({ status }: { status: SchoolFeeRecord['paymentStatus'] }) => {
