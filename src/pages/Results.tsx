@@ -158,7 +158,7 @@ useEffect(() => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <CardTitle className="text-base sm:text-lg">
                 {resultDetail
-                  ? `${resultDetail.season.name} - ${resultDetail.semester.name}`
+                  ? `${resultDetail.season?.name || 'N/A'} - ${resultDetail.semester?.name || 'N/A'}`
                   : 'Result Details'}
               </CardTitle>
               <div className="flex items-center space-x-2">
@@ -206,13 +206,13 @@ useEffect(() => {
                   <div className="text-center mb-4">
                     <h1 className="text-xl font-bold">STUDENT RESULT STATEMENT</h1>
                     <h2 className="font-semibold">
-                      {resultDetail.season.name} - {resultDetail.semester.name}
+                      {resultDetail.season?.name || 'N/A'} - {resultDetail.semester?.name || 'N/A'}
                     </h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p><span className="font-semibold">Student Name:</span> {resultDetail.student.name}</p>
-                      <p><span className="font-semibold">Registration No:</span> {resultDetail.student.regNo}</p>
+                      <p><span className="font-semibold">Student Name:</span> {resultDetail.student?.name || 'N/A'}</p>
+                      <p><span className="font-semibold">Registration No:</span> {resultDetail.student?.regNo || 'N/A'}</p>
                       <p><span className="font-semibold">Department:</span> {resultDetail.department?.name || 'N/A'}</p>
                     </div>
                     <div>
@@ -227,25 +227,25 @@ useEffect(() => {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">Courses</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.courseScores.length}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.courseScores?.length || 0}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">G.P.A</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.gpa.toFixed(2)}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.gpa?.toFixed(2) || '0.00'}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">C.G.P.A</h3>
-                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.cgpa.toFixed(2)}</p>
+                      <p className="text-2xl sm:text-3xl font-bold">{resultDetail.cgpa?.toFixed(2) || '0.00'}</p>
                     </div>
                     <div>
                       <h3 className="font-semibold text-sm text-muted-foreground">Status</h3>
-                      <p className="text-xl sm:text-2xl font-bold capitalize">{resultDetail.remarks}</p>
+                      <p className="text-xl sm:text-2xl font-bold capitalize">{resultDetail.remarks || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Course Table */}
-                {resultDetail.courseScores.length > 0 ? (
+                {resultDetail.courseScores && resultDetail.courseScores.length > 0 ? (
                   <div className="overflow-x-auto">
                     <Table className="border border-collapse">
                       <TableHeader>
