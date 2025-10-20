@@ -51,8 +51,8 @@ const Results = () => {
         console.log('Result history response:', response);
 
         if (response.status === 'success') {
-          // The API returns the array directly in response.data
-          const resultsArray = Array.isArray(response.data) ? response.data : [];
+          // The API returns data in response.data.history
+          const resultsArray = response.data?.history || [];
 
           setAvailableResults(resultsArray);
 
