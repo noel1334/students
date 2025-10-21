@@ -57,7 +57,6 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
       }
 
       pdf.save(`${user.regNo || 'student'}_course_registration.pdf`);
-      console.log('PDF generation and download initiated successfully.');
 
     } catch (error) {
       console.error('Error generating PDF:', error);

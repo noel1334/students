@@ -82,10 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserProfile = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('Fetching user profile...');
       // This response.data is { student: {...} }
-      const response = await getStudentProfile(); 
-      console.log('Profile response data:', response.data);
+      const response = await getStudentProfile();
       
       if (response.status === 'success' && response.data && response.data.student) { // <-- Access response.data.student
         const profileData = response.data.student; // <-- This is the actual student object now!
@@ -118,7 +116,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         nationality: profileData.studentDetails?.bioData?.nationality || null,
       },
   };
-  console.log('Transformed Profile in AuthContext:', transformedProfile); // Add this
   setUser(transformedProfile);
         localStorage.setItem('currentUser', JSON.stringify(transformedProfile));
       } else {
@@ -162,13 +159,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (identifier: string, password: string) => {
     setLoading(true);
     try {
-      console.log('Attempting login with:', { identifier });
       const response = await api.post(endpoints.auth.studentLogin, {
         identifier,
         password,
       });
-
-      console.log('Login response:', response.data);
 
       if (response.status === 200 && response.data.status === 'success' && response.data.data) {
         const { token } = response.data.data;

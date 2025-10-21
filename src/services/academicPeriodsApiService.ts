@@ -78,7 +78,6 @@ export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ 
  */
 export const getAllLevels = async (): Promise<ApiResponse<{ items: Level[] }>> => {
   const response = await api.get('/levels'); // Assuming your backend route for levels is /levels
-  console.log(response.data);
   return response.data;
 };
 // --- END ADDITION ---

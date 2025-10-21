@@ -48,7 +48,6 @@ const Results = () => {
       try {
         setIsLoadingHistory(true);
         const response = await getStudentResultHistory();
-        console.log('Result history response:', response);
 
         if (response.status === 'success') {
           // The API returns data in response.data.history

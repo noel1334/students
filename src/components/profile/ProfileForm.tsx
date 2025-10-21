@@ -112,7 +112,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo }) => {
   // Final submission after review
   const handleFinalSubmit = () => {
     const data = methods.getValues();
-    console.log("Form submitted:", data);
     toast.success("Profile information updated successfully");
     setReviewModalOpen(false);
     // Here you would typically send this data to your backend API

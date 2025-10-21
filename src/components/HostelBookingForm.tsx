@@ -139,7 +139,6 @@ const HostelBookingForm = () => {
     form.setValue("paymentMethod", method);
     
     // In a real app, this would call an API to process the payment
-    console.log("Processing payment with:", method);
     
     // Show success message
     toast.success("Hostel booking confirmed! Redirecting to payment...", {

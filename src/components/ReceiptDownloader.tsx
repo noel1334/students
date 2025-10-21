@@ -30,7 +30,6 @@ const ReceiptDownloader = ({ receiptData }: ReceiptDownloaderProps) => {
     documentTitle: `Hostel_Receipt_${receiptData.receiptNumber}`,
     onAfterPrint: () => {
       toast.success('Receipt downloaded successfully!');
-      console.log('Receipt printed/downloaded successfully!');
     },
     onPrintError: () => {
       toast.error('Failed to download receipt. Please try again.');

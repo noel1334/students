@@ -71,69 +71,69 @@ const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | 
     const mostRecentPayment = record.payments?.[0];
 
     return (
-        <div ref={ref} className="p-6 sm:p-10 font-sans text-gray-800 bg-white max-w-4xl mx-auto">
-            <header className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+        <div ref={ref} className="p-4 sm:p-6 md:p-10 font-sans text-gray-800 bg-white max-w-4xl mx-auto">
+            <header className="flex flex-col gap-3 sm:gap-4 pb-4 sm:pb-6 border-b-2 border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">ScholarHub University</h1>
-                        <p className="text-sm text-gray-600 mt-1">123 University Drive, Knowledge City</p>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">ScholarHub University</h1>
+                        <p className="text-xs sm:text-sm text-gray-600 mt-1">123 University Drive, Knowledge City</p>
                     </div>
                     <div className="sm:text-right">
-                        <h2 className="text-xl sm:text-2xl font-semibold text-blue-600">PAYMENT RECEIPT</h2>
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-600">PAYMENT RECEIPT</h2>
                     </div>
                 </div>
             </header>
 
-            <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+            <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
                 <div className="space-y-1">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Billed To</h3>
-                    <p className="font-bold text-lg">{user.name}</p>
-                    <p className="text-sm text-gray-600">{user.regNo || 'N/A'}</p>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    <p className="text-sm text-gray-600">{user.program?.name || 'N/A'}</p>
-                    <p className="text-sm text-gray-600">{user.department?.name || 'N/A'}</p>
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Billed To</h3>
+                    <p className="font-bold text-base sm:text-lg break-words">{user.name}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.regNo || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.email}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.program?.name || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.department?.name || 'N/A'}</p>
                 </div>
                 <div className="space-y-1 sm:text-right">
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Receipt Details</h3>
-                    <p className="text-sm"><span className="font-semibold">Receipt No:</span> {mostRecentPayment?.reference || record.id}</p>
-                    <p className="text-sm"><span className="font-semibold">Payment Date:</span> {mostRecentPayment ? new Date(mostRecentPayment.paymentDate).toLocaleDateString() : 'N/A'}</p>
-                    <p className="text-sm"><span className="font-semibold">Payment Method:</span> {mostRecentPayment?.channel || 'N/A'}</p>
+                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Receipt Details</h3>
+                    <p className="text-xs sm:text-sm break-words"><span className="font-semibold">Receipt No:</span> {mostRecentPayment?.reference || record.id}</p>
+                    <p className="text-xs sm:text-sm"><span className="font-semibold">Payment Date:</span> {mostRecentPayment ? new Date(mostRecentPayment.paymentDate).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs sm:text-sm"><span className="font-semibold">Payment Method:</span> {mostRecentPayment?.channel || 'N/A'}</p>
                 </div>
             </section>
 
-            <section className="mt-8">
+            <section className="mt-6 sm:mt-8">
                 <div className="border rounded-lg overflow-hidden">
-                    <div className="bg-gray-100 p-3 grid grid-cols-3 gap-2 text-sm font-semibold">
+                    <div className="bg-gray-100 p-2 sm:p-3 grid grid-cols-3 gap-1 sm:gap-2 text-xs sm:text-sm font-semibold">
                         <div>Description</div>
                         <div>Session</div>
                         <div className="text-right">Amount</div>
                     </div>
-                    <div className="p-3 grid grid-cols-3 gap-2 text-sm">
-                        <div>{record.description || 'School Fees'}</div>
-                        <div>{record.season.name}</div>
+                    <div className="p-2 sm:p-3 grid grid-cols-3 gap-1 sm:gap-2 text-xs sm:text-sm">
+                        <div className="break-words">{record.description || 'School Fees'}</div>
+                        <div className="break-words text-xs sm:text-sm">{record.season.name}</div>
                         <div className="text-right font-semibold">₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
                     </div>
                 </div>
             </section>
 
-            <section className="mt-6">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2 max-w-sm ml-auto">
-                    <div className="flex justify-between text-sm">
+            <section className="mt-4 sm:mt-6">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-2 max-w-sm sm:ml-auto">
+                    <div className="flex justify-between text-xs sm:text-sm">
                         <span className="font-semibold">Total Fee:</span>
                         <span>₦{record.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-xs sm:text-sm">
                         <span className="font-semibold">Amount Paid:</span>
                         <span>₦{record.amountPaid.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     </div>
-                    <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <div className="flex justify-between text-base sm:text-lg font-bold pt-2 border-t">
                         <span>Balance Due:</span>
                         <span className="text-blue-600">₦{(record.amount - record.amountPaid).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                     </div>
                 </div>
             </section>
 
-            <footer className="text-center text-sm text-gray-500 mt-12 pt-6 border-t">
+            <footer className="text-center text-xs sm:text-sm text-gray-500 mt-8 sm:mt-12 pt-4 sm:pt-6 border-t">
                 <p>Thank you for your payment.</p>
                 <p className="mt-1">© {new Date().getFullYear()} ScholarHub University. All rights reserved.</p>
             </footer>
@@ -235,9 +235,9 @@ const SummaryCard = ({ title, amount, variant = 'default' }: { title: string, am
     };
     return (
         <Card className={`${colorClasses[variant]} border-none`}>
-            <CardContent className="p-4">
-                <p className="text-sm font-medium opacity-80 mb-1">{title}</p>
-                <p className="text-2xl font-bold">₦{amount.toLocaleString()}</p>
+            <CardContent className="p-3 sm:p-4">
+                <p className="text-xs sm:text-sm font-medium opacity-80 mb-1">{title}</p>
+                <p className="text-xl sm:text-2xl font-bold">₦{amount.toLocaleString()}</p>
             </CardContent>
         </Card>
     );
@@ -514,19 +514,19 @@ const Payments = () => {
 
 
     return (
-        <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
+        <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto bg-background">
             <div className="max-w-5xl mx-auto">
-                <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Payment Dashboard</h1>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Payment Dashboard</h1>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
                         <Card className="col-span-1 lg:col-span-2 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2"><Calendar size={18} className="text-primary" />Payment History & Receipts</CardTitle>
-                                <CardDescription>View your past payments and download receipts.</CardDescription>
+                            <CardHeader className="p-4 sm:p-6">
+                                <CardTitle className="flex items-center gap-2 text-base sm:text-lg"><Calendar size={16} className="text-primary sm:w-[18px] sm:h-[18px]" />Payment History & Receipts</CardTitle>
+                                <CardDescription className="text-xs sm:text-sm">View your past payments and download receipts.</CardDescription>
                             </CardHeader>
-                            <CardContent>
-                                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
-                                    <Button onClick={handlePrint} variant="outline" disabled={!latestPaidRecord || historyLoading}>
-                                        <Download size={16} className="mr-2" />
+                            <CardContent className="p-4 sm:p-6">
+                                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:gap-4 mb-4">
+                                    <Button onClick={handlePrint} variant="outline" size="sm" className="w-full sm:w-auto text-xs sm:text-sm" disabled={!latestPaidRecord || historyLoading}>
+                                        <Download size={14} className="mr-2 sm:w-4 sm:h-4" />
                                         Download Latest Receipt
                                     </Button>
                                 </div>
@@ -534,24 +534,24 @@ const Payments = () => {
                             </CardContent>
                         </Card>
 
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                             <Card className="shadow-sm">
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2"><CreditCard size={18} className="text-primary" />Current Fees</CardTitle>
-                                    <CardDescription>Outstanding balance for {selectedSession}</CardDescription>
+                                <CardHeader className="p-4 sm:p-6">
+                                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg"><CreditCard size={16} className="text-primary sm:w-[18px] sm:h-[18px]" />Current Fees</CardTitle>
+                                    <CardDescription className="text-xs sm:text-sm">Outstanding balance for {selectedSession}</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    {loading ? ( <div className="flex items-center justify-center h-24"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-                                    ) : error ? ( <p className="text-red-600 bg-red-50 p-3 rounded-md">{error}</p>
+                                <CardContent className="p-4 sm:p-6">
+                                    {loading ? ( <div className="flex items-center justify-center h-24"><Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin text-primary" /></div>
+                                    ) : error ? ( <p className="text-xs sm:text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>
                                     ) : (
                                         <>
-                                            <div className="bg-primary/5 p-4 rounded-lg text-center"><p className="text-sm text-gray-600">Amount Due</p><p className="text-3xl font-bold text-gray-900">₦{currentBalance.toLocaleString()}</p></div>
+                                            <div className="bg-primary/5 p-3 sm:p-4 rounded-lg text-center"><p className="text-xs sm:text-sm text-gray-600">Amount Due</p><p className="text-2xl sm:text-3xl font-bold text-gray-900">₦{currentBalance.toLocaleString()}</p></div>
                                             {!hasCurrentSeasonBeenPaid && (
-                                                <Button className="w-full mt-4" disabled={loading || currentBalance === 0} onClick={openPaymentMethodModal}><CreditCard size={18} className="mr-2" />Make Payment</Button>
+                                                <Button className="w-full mt-3 sm:mt-4 text-sm" size="sm" disabled={loading || currentBalance === 0} onClick={openPaymentMethodModal}><CreditCard size={16} className="mr-2" />Make Payment</Button>
                                             )}
                                             {hasCurrentSeasonBeenPaid && (
-                                                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
-                                                    <p className="text-sm text-green-700 font-medium">✓ Payment Complete</p>
+                                                <div className="mt-3 sm:mt-4 p-3 bg-green-50 border border-green-200 rounded-lg text-center">
+                                                    <p className="text-xs sm:text-sm text-green-700 font-medium">✓ Payment Complete</p>
                                                     <p className="text-xs text-green-600 mt-1">You have paid for this session</p>
                                                 </div>
                                         )}
@@ -568,17 +568,17 @@ const Payments = () => {
                 </div>
 
                 <AlertDialog open={paymentMethodModalOpen} onOpenChange={setPaymentMethodModalOpen}>
-                    <AlertDialogContent className="max-w-md">
-                        <AlertDialogHeader><AlertDialogTitle>Complete Your Payment</AlertDialogTitle><AlertDialogDescription>Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
+                    <AlertDialogContent className="max-w-[90vw] sm:max-w-md mx-auto">
+                        <AlertDialogHeader><AlertDialogTitle className="text-base sm:text-lg">Complete Your Payment</AlertDialogTitle><AlertDialogDescription className="text-xs sm:text-sm">Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
                         <div className="py-2 space-y-1">
-                            <div className="flex justify-between text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
-                            <div className="flex justify-between text-lg"><span className="text-gray-600">Amount:</span><span className="font-bold text-gray-900">₦{currentBalance.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-xs sm:text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
+                            <div className="flex justify-between text-base sm:text-lg"><span className="text-gray-600">Amount:</span><span className="font-bold text-gray-900">₦{currentBalance.toLocaleString()}</span></div>
                         </div>
                         <GatewaySelector gateways={['paystack', 'flutterwave', 'stripe']} selectedGateway={selectedPaymentMethod} onSelectGateway={(method) => setSelectedPaymentMethod(method as GatewayKey)} isProcessing={isProcessing}/>
-                        <AlertDialogFooter className="mt-4">
-                            <AlertDialogCancel onClick={closePaymentMethodModal} disabled={isProcessing}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleProceedToPayment} disabled={!selectedPaymentMethod || isProcessing}>
-                                {isProcessing ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</>) : (`Pay with ${selectedPaymentMethod || '...'}`)}
+                        <AlertDialogFooter className="mt-4 flex-col sm:flex-row gap-2">
+                            <AlertDialogCancel onClick={closePaymentMethodModal} disabled={isProcessing} className="w-full sm:w-auto text-sm">Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleProceedToPayment} disabled={!selectedPaymentMethod || isProcessing} className="w-full sm:w-auto text-sm">
+                                {isProcessing ? (<><Loader2 className="mr-2 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />Processing...</>) : (`Pay with ${selectedPaymentMethod || '...'}`)}
                             </AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>

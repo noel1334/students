@@ -126,7 +126,6 @@ export const getApplicableSchoolFeesForStudent = async (
         seasonId: seasonId,
       },
     });
-    console.log(response.data);
     return response.data;
   } catch (error: any) {
     console.error('Error fetching applicable school fees:', error);

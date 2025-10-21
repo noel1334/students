@@ -13,11 +13,8 @@ const PaymentStatus = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fetchSchoolFees = async () => {
-    console.log('PaymentStatus: Fetching school fees...');
-    console.log('PaymentStatus: User data:', user);
     
     if (authLoading) {
-      console.log('PaymentStatus: Auth still loading...');
       return;
     }
     
@@ -36,14 +33,11 @@ const PaymentStatus = () => {
     try {
       setLoading(true);
       setError(null);
-      console.log('PaymentStatus: Fetching school fees for season ID:', user.currentSeasonId);
       
       const response = await getApplicableSchoolFeesForStudent(parseInt(user.currentSeasonId));
-      console.log('PaymentStatus: School fees response:', response);
       
       if (response.status === 'success' && response.data) {
         setSchoolFees(response.data.items);
-        console.log('PaymentStatus: School fees set:', response.data.items);
       } else {
         const errorMessage = response.message || 'Failed to fetch school fees';
         console.error('PaymentStatus: API error:', errorMessage);
