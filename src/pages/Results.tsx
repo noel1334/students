@@ -79,17 +79,17 @@ useEffect(() => {
     const fetchResultDetail = async () => {
       try {
         setIsLoadingDetail(true);
-        // The API service already unwraps the first 'data' layer for you
         const apiResponse = await getResultById(selectedResultId); 
+        console.log('Result detail API response:', apiResponse);
         
-        // The API returns the result data directly
         if (apiResponse.status === 'success' && apiResponse.data) {
+          console.log('Result detail data:', apiResponse.data);
           setResultDetail(apiResponse.data);
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
         toast.error(error.response?.data?.message || 'Failed to load result details');
-        setResultDetail(null); // Clear previous result on error
+        setResultDetail(null);
       } finally {
         setIsLoadingDetail(false);
       }
