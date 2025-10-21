@@ -80,11 +80,11 @@ useEffect(() => {
       try {
         setIsLoadingDetail(true);
         const apiResponse = await getResultById(selectedResultId); 
-        console.log('Result detail API response:', apiResponse);
         
         if (apiResponse.status === 'success' && apiResponse.data) {
-          console.log('Result detail data:', apiResponse.data);
-          setResultDetail(apiResponse.data);
+          // Access the nested result object
+          const resultData = (apiResponse.data as any).result || apiResponse.data;
+          setResultDetail(resultData);
         }
       } catch (error: any) {
         console.error('Error fetching result detail:', error);
