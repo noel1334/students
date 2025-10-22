@@ -514,7 +514,7 @@ const Payments = () => {
 
 
     return (
-        <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto bg-background">
+        <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto bg-background print:hidden">
             <div className="max-w-5xl mx-auto">
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 md:mb-6">Payment Dashboard</h1>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-4 sm:mb-6">
@@ -562,13 +562,13 @@ const Payments = () => {
                     </div>
                 </div>
 
-                {/* This div holds the receipt component but is positioned off-screen */}
-                <div className="absolute -left-full top-0">
+                {/* This div holds the receipt component but is positioned off-screen for printing */}
+                <div className="fixed -left-[9999px] top-0 print:static print:left-0">
                     <ReceiptComponent ref={receiptRef} record={latestPaidRecord} user={user} />
                 </div>
 
                 <AlertDialog open={paymentMethodModalOpen} onOpenChange={setPaymentMethodModalOpen}>
-                    <AlertDialogContent className="max-w-[90vw] sm:max-w-md mx-auto">
+                    <AlertDialogContent className="max-w-[90vw] sm:max-w-md mx-auto print:hidden">
                         <AlertDialogHeader><AlertDialogTitle className="text-base sm:text-lg">Complete Your Payment</AlertDialogTitle><AlertDialogDescription className="text-xs sm:text-sm">Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
                         <div className="py-2 space-y-1">
                             <div className="flex justify-between text-xs sm:text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
