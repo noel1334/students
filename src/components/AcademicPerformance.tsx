@@ -8,18 +8,26 @@ type SemesterResult = {
   maxGpa: number;
 };
 
-const AcademicPerformance = () => {
-  // This would come from an API in a real application
-  const semesterResults: SemesterResult[] = [
-    { semester: '1st', gpa: 3.7, maxGpa: 5.0 },
-    { semester: '2nd', gpa: 4.0, maxGpa: 5.0 },
-    { semester: '3rd', gpa: 3.5, maxGpa: 5.0 },
-    { semester: '4th', gpa: 3.8, maxGpa: 5.0 },
-    { semester: '5th', gpa: 4.2, maxGpa: 5.0 },
-  ];
+interface AcademicPerformanceProps {
+  semesterResults?: SemesterResult[];
+  cgpa?: number;
+}
 
-  // Calculate CGPA
-  const cgpa = semesterResults.reduce((sum, sem) => sum + sem.gpa, 0) / semesterResults.length;
+const AcademicPerformance = ({ semesterResults = [], cgpa }: AcademicPerformanceProps) => {
+  // If no data provided, show a message
+  if (semesterResults.length === 0) {
+    return (
+      <div className="dashboard-card">
+        <h2 className="text-lg font-semibold mb-4">Academic Performance</h2>
+        <div className="flex items-center justify-center h-64 text-muted-foreground">
+          <p>No academic performance data available yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate CGPA if not provided
+  const displayCgpa = cgpa ?? (semesterResults.reduce((sum, sem) => sum + sem.gpa, 0) / semesterResults.length);
 
   return (
     <div className="dashboard-card">
@@ -27,7 +35,7 @@ const AcademicPerformance = () => {
         <h2 className="text-lg font-semibold">Academic Performance</h2>
         <div className="flex items-center gap-2">
           <div className="px-3 py-1 bg-primary text-white rounded-md">
-            <span className="font-medium">CGPA: {cgpa.toFixed(2)}</span>
+            <span className="font-medium">CGPA: {displayCgpa.toFixed(2)}</span>
           </div>
         </div>
       </div>

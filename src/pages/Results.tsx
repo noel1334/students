@@ -27,7 +27,8 @@ import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   getStudentResultHistory, 
-  getResultById, 
+  getResultById,
+  getAllResults,
   ResultMinimal, 
   ResultDetail 
 } from '@/services/resultApiService';
@@ -38,8 +39,10 @@ const Results = () => {
   const [availableResults, setAvailableResults] = useState<ResultMinimal[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [resultDetail, setResultDetail] = useState<ResultDetail | null>(null);
+  const [allResults, setAllResults] = useState<ResultDetail[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
+  const [isLoadingAllResults, setIsLoadingAllResults] = useState(true);
   const printableRef = useRef(null);
 
  // Fetch available results on mount
@@ -96,6 +99,51 @@ useEffect(() => {
 
     fetchResultDetail();
   }, [selectedResultId]);
+
+  // Fetch all results for the academic performance chart
+  useEffect(() => {
+    const fetchAllResults = async () => {
+      try {
+        setIsLoadingAllResults(true);
+        const response = await getAllResults({ limit: 100 });
+        
+        if (response.status === 'success' && response.data) {
+          setAllResults(response.data.results || []);
+        }
+      } catch (error: any) {
+        console.error('Error fetching all results:', error);
+      } finally {
+        setIsLoadingAllResults(false);
+      }
+    };
+
+    fetchAllResults();
+  }, []);
+
+  // Transform results data for the chart
+  const chartData = useMemo(() => {
+    if (!allResults || allResults.length === 0) return [];
+    
+    return allResults
+      .sort((a, b) => {
+        // Sort by semester number if available
+        const semA = a.semester?.semesterNumber || 0;
+        const semB = b.semester?.semesterNumber || 0;
+        return semA - semB;
+      })
+      .map((result) => ({
+        semester: result.semester?.name?.split(' ')[0] || 'N/A', // Extract "First", "Second", etc.
+        gpa: result.gpa || 0,
+        maxGpa: 5.0,
+      }));
+  }, [allResults]);
+
+  // Calculate CGPA from all results
+  const overallCgpa = useMemo(() => {
+    if (!allResults || allResults.length === 0) return 0;
+    // Use the latest result's CGPA as it should be cumulative
+    return allResults[allResults.length - 1]?.cgpa || 0;
+  }, [allResults]);
 
    const totalQualityPoints = useMemo(() => {
     if (!resultDetail?.courseScores) {
@@ -349,7 +397,15 @@ useEffect(() => {
         {/* Academic Performance Chart */}
         <div className="print:hidden">
           <h2 className="text-xl font-semibold mb-4">Academic Performance</h2>
-          <AcademicPerformance />
+          {isLoadingAllResults ? (
+            <div className="dashboard-card">
+              <div className="h-64 flex items-center justify-center">
+                <p className="text-muted-foreground">Loading academic performance...</p>
+              </div>
+            </div>
+          ) : (
+            <AcademicPerformance semesterResults={chartData} cgpa={overallCgpa} />
+          )}
         </div>
       </div>
     </div>
