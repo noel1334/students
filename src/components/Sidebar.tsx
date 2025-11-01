@@ -9,6 +9,7 @@ import {
   CreditCard, 
   Hotel,
   User,
+  Settings as SettingsIcon,
   Menu,
   X,
   LogOut,
@@ -91,6 +92,7 @@ const Sidebar = () => {
     { label: 'Payments', icon: <CreditCard size={20} />, to: '/payments' },
     { label: 'Hostel', icon: <Hotel size={20} />, to: '/hostel' },
     { label: 'Profile', icon: <User size={20} />, to: '/profile' },
+    { label: 'Settings', icon: <SettingsIcon size={20} />, to: '/settings' },
   ];
 
   const toggleSidebar = () => {

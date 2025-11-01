@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { 
   Form,
   FormControl,
@@ -22,9 +23,13 @@ import {
   Eye, 
   EyeOff, 
   Save, 
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Moon,
+  Sun,
+  Palette
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from '@/hooks/use-theme';
 import {
   Popover,
   PopoverContent,
@@ -44,7 +49,8 @@ const Settings = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState('password');
+  const [activeTab, setActiveTab] = useState('appearance');
+  const { theme, toggleTheme } = useTheme();
 
   const form = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -64,20 +70,32 @@ const Settings = () => {
     <div className="flex flex-col min-h-screen bg-background">
       <div className="flex-1 p-4 sm:p-6 md:p-8 max-w-6xl mx-auto w-full">
         <div className="flex items-center gap-2 mb-4 sm:mb-6">
-          <SettingsIcon className="text-[#1a4aa6]" size={24} />
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Settings</h1>
+          <SettingsIcon className="text-primary" size={24} />
+          <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
         </div>
 
         <div className="grid md:grid-cols-[250px_1fr] gap-4 sm:gap-6">
           {/* Sidebar */}
-          <div className="bg-white rounded-lg border shadow-sm p-4">
+          <div className="bg-card rounded-lg border shadow-sm p-4">
             <nav className="space-y-1">
               <button
+                onClick={() => setActiveTab('appearance')}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                  activeTab === 'appearance' 
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                <Palette size={18} />
+                <span>Appearance</span>
+              </button>
+              
+              <button
                 onClick={() => setActiveTab('password')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                   activeTab === 'password' 
-                    ? 'bg-[#1a4aa6] text-white' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <Lock size={18} />
@@ -86,10 +104,10 @@ const Settings = () => {
               
               <button
                 onClick={() => setActiveTab('notifications')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                   activeTab === 'notifications' 
-                    ? 'bg-[#1a4aa6] text-white' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <Bell size={18} />
@@ -98,10 +116,10 @@ const Settings = () => {
               
               <button
                 onClick={() => setActiveTab('privacy')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
                   activeTab === 'privacy' 
-                    ? 'bg-[#1a4aa6] text-white' 
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
                 }`}
               >
                 <Shield size={18} />
@@ -111,7 +129,65 @@ const Settings = () => {
           </div>
 
           {/* Content */}
-          <div className="bg-white rounded-lg border shadow-sm p-6">
+          <div className="bg-card rounded-lg border shadow-sm p-6">
+            {activeTab === 'appearance' && (
+              <div>
+                <h2 className="text-lg font-medium mb-4">Appearance</h2>
+                <p className="text-muted-foreground mb-6">
+                  Customize how ScholarHub looks on your device.
+                </p>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-background">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        {theme === 'dark' ? (
+                          <Moon className="h-5 w-5 text-primary" />
+                        ) : (
+                          <Sun className="h-5 w-5 text-primary" />
+                        )}
+                        <h3 className="font-medium">Dark Mode</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {theme === 'dark' 
+                          ? 'Switch to light theme for better visibility in bright environments' 
+                          : 'Switch to dark theme to reduce eye strain in low-light conditions'}
+                      </p>
+                    </div>
+                    <Switch 
+                      checked={theme === 'dark'} 
+                      onCheckedChange={toggleTheme}
+                    />
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg bg-muted/50">
+                    <h3 className="font-medium mb-2 flex items-center gap-2">
+                      <Palette className="h-4 w-4" />
+                      Theme Preview
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3 mt-3">
+                      <div className="space-y-2">
+                        <div className="h-8 bg-primary rounded" />
+                        <p className="text-xs text-muted-foreground">Primary</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-8 bg-secondary rounded" />
+                        <p className="text-xs text-muted-foreground">Secondary</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-8 bg-accent rounded" />
+                        <p className="text-xs text-muted-foreground">Accent</p>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-8 bg-muted rounded" />
+                        <p className="text-xs text-muted-foreground">Muted</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {activeTab === 'password' && (
               <div>
                 <h2 className="text-lg font-medium mb-4">Change Password</h2>
@@ -220,7 +296,7 @@ const Settings = () => {
                       )}
                     />
 
-                    <Button type="submit" className="bg-[#1a4aa6] hover:bg-[#0f3c8c]">
+                    <Button type="submit" className="bg-primary hover:bg-primary/90">
                       <Save size={16} className="mr-2" />
                       Save Changes
                     </Button>
@@ -278,7 +354,7 @@ const Settings = () => {
                   </div>
                 </div>
                 
-                <Button className="mt-6 bg-[#1a4aa6] hover:bg-[#0f3c8c]">
+                <Button className="mt-6 bg-primary hover:bg-primary/90">
                   <Save size={16} className="mr-2" />
                   Save Preferences
                 </Button>
@@ -330,7 +406,7 @@ const Settings = () => {
                                 <Button variant="outline">SMS</Button>
                                 <Button variant="outline">Authenticator App</Button>
                               </div>
-                              <Button className="bg-[#1a4aa6] hover:bg-[#0f3c8c]">
+                              <Button className="bg-primary hover:bg-primary/90">
                                 Set up
                               </Button>
                             </div>
@@ -351,7 +427,7 @@ const Settings = () => {
                   </div>
                 </div>
                 
-                <Button className="mt-6 bg-[#1a4aa6] hover:bg-[#0f3c8c]">
+                <Button className="mt-6 bg-primary hover:bg-primary/90">
                   <Save size={16} className="mr-2" />
                   Save Settings
                 </Button>
