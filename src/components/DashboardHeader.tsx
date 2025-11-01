@@ -30,25 +30,25 @@ const DashboardHeader = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+    <header className="bg-card border-b border-border sticky top-0 z-10">
       <div className="flex justify-between items-center py-3 px-4 md:px-6">
         <div className="flex items-center space-x-2 md:hidden">
-          <Menu className="text-gray-600" size={24} />
+          <Menu className="text-muted-foreground" size={24} />
         </div>
         
         {/* Academic Info - visible on larger screens */}
         <div className="hidden md:flex items-center space-x-6">
           <div className="text-sm">
-            <span className="text-gray-500">Session:</span>
-            <span className="ml-1 font-medium text-gray-800">{studentInfo.currentSession}</span>
+            <span className="text-muted-foreground">Session:</span>
+            <span className="ml-1 font-medium text-foreground">{studentInfo.currentSession}</span>
           </div>
           <div className="text-sm">
-            <span className="text-gray-500">Semester:</span>
-            <span className="ml-1 font-medium text-gray-800">{studentInfo.currentSemester}</span>
+            <span className="text-muted-foreground">Semester:</span>
+            <span className="ml-1 font-medium text-foreground">{studentInfo.currentSemester}</span>
           </div>
           <div className="text-sm">
-            <span className="text-gray-500">Level:</span>
-            <span className="ml-1 font-medium text-gray-800">{studentInfo.level}</span>
+            <span className="text-muted-foreground">Level:</span>
+            <span className="ml-1 font-medium text-foreground">{studentInfo.level}</span>
           </div>
         </div>
         
@@ -57,8 +57,8 @@ const DashboardHeader = () => {
             <DropdownMenuTrigger className="outline-none">
               <div className="flex items-center">
                 <div className="text-right mr-3">
-                  <h2 className="font-medium text-gray-800">{studentInfo.name}</h2>
-                  <div className="text-xs text-gray-500">
+                  <h2 className="font-medium text-foreground">{studentInfo.name}</h2>
+                  <div className="text-xs text-muted-foreground">
                     <div>{studentInfo.courseOfStudy}</div>
                     <div className="flex items-center">
                       <span>{studentInfo.studyMode}</span>
@@ -76,7 +76,7 @@ const DashboardHeader = () => {
                 />
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-white">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem 
                 className="flex items-center gap-2 cursor-pointer"
                 onClick={() => navigate('/profile')}

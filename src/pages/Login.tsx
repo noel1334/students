@@ -73,7 +73,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -91,7 +91,7 @@ const Login = () => {
           </Button>
 
           <div className="text-center">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Don't have an account?{" "}
               <Link to="/register" className="text-[#1a4aa6] hover:underline">
                 Sign up

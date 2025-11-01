@@ -32,7 +32,7 @@ const Dashboard = () => {
         {/* Registered Courses Card */}
         <div className="bg-primary text-primary-foreground rounded-xl p-6 mb-6 shadow-sm">
           <div className="flex items-start">
-            <div className="bg-white/20 p-3 rounded-lg mr-4">
+            <div className="bg-card/20 p-3 rounded-lg mr-4">
               <BookOpen size={24} />
             </div>
             <div>

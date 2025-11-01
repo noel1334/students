@@ -71,12 +71,12 @@ const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | 
     const mostRecentPayment = record.payments?.[0];
 
     return (
-        <div ref={ref} className="p-4 sm:p-6 md:p-10 font-sans text-gray-800 bg-white max-w-4xl mx-auto">
-            <header className="flex flex-col gap-3 sm:gap-4 pb-4 sm:pb-6 border-b-2 border-gray-200">
+        <div ref={ref} className="p-4 sm:p-6 md:p-10 font-sans text-foreground bg-card max-w-4xl mx-auto print:bg-white print:text-gray-800">
+            <header className="flex flex-col gap-3 sm:gap-4 pb-4 sm:pb-6 border-b-2 border-border">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">ScholarHub University</h1>
-                        <p className="text-xs sm:text-sm text-gray-600 mt-1">123 University Drive, Knowledge City</p>
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground print:text-gray-900">ScholarHub University</h1>
+                        <p className="text-xs sm:text-sm text-muted-foreground print:text-gray-600 mt-1">123 University Drive, Knowledge City</p>
                     </div>
                     <div className="sm:text-right">
                         <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-blue-600">PAYMENT RECEIPT</h2>
@@ -86,15 +86,15 @@ const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | 
 
             <section className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mt-4 sm:mt-6">
                 <div className="space-y-1">
-                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Billed To</h3>
+                    <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground print:text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Billed To</h3>
                     <p className="font-bold text-base sm:text-lg break-words">{user.name}</p>
-                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.regNo || 'N/A'}</p>
-                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.email}</p>
-                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.program?.name || 'N/A'}</p>
-                    <p className="text-xs sm:text-sm text-gray-600 break-words">{user.department?.name || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground print:text-gray-600 break-words">{user.regNo || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground print:text-gray-600 break-words">{user.email}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground print:text-gray-600 break-words">{user.program?.name || 'N/A'}</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground print:text-gray-600 break-words">{user.department?.name || 'N/A'}</p>
                 </div>
                 <div className="space-y-1 sm:text-right">
-                    <h3 className="text-xs sm:text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Receipt Details</h3>
+                    <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground print:text-gray-500 uppercase tracking-wider mb-2 sm:mb-3">Receipt Details</h3>
                     <p className="text-xs sm:text-sm break-words"><span className="font-semibold">Receipt No:</span> {mostRecentPayment?.reference || record.id}</p>
                     <p className="text-xs sm:text-sm"><span className="font-semibold">Payment Date:</span> {mostRecentPayment ? new Date(mostRecentPayment.paymentDate).toLocaleDateString() : 'N/A'}</p>
                     <p className="text-xs sm:text-sm"><span className="font-semibold">Payment Method:</span> {mostRecentPayment?.channel || 'N/A'}</p>
@@ -133,7 +133,7 @@ const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | 
                 </div>
             </section>
 
-            <footer className="text-center text-xs sm:text-sm text-gray-500 mt-8 sm:mt-12 pt-4 sm:pt-6 border-t">
+            <footer className="text-center text-xs sm:text-sm text-muted-foreground print:text-gray-500 mt-8 sm:mt-12 pt-4 sm:pt-6 border-t">
                 <p>Thank you for your payment.</p>
                 <p className="mt-1">© {new Date().getFullYear()} ScholarHub University. All rights reserved.</p>
             </footer>
@@ -174,12 +174,12 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex-1">
                                         <p className="font-semibold text-sm">{record.description || 'School Fees'}</p>
-                                        <p className="text-xs text-gray-600 mt-1">{record.season.name}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">{record.season.name}</p>
                                     </div>
                                     <StatusBadge status={record.paymentStatus} />
                                 </div>
                                 <div className="flex justify-between items-center pt-3 border-t">
-                                    <span className="text-sm text-gray-600">Amount:</span>
+                                    <span className="text-sm text-muted-foreground">Amount:</span>
                                     <span className="font-bold text-lg">₦{record.amount.toLocaleString()}</span>
                                 </div>
                             </CardContent>
@@ -187,7 +187,7 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                     ))
                 ) : (
                     <Card>
-                        <CardContent className="p-6 text-center text-gray-500 text-sm">
+                        <CardContent className="p-6 text-center text-muted-foreground text-sm">
                             No payment history found.
                         </CardContent>
                     </Card>
@@ -220,7 +220,7 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                             </tbody>
                         </table>
                     </div>
-                ) : ( <p className="p-4 text-center text-gray-500 text-sm">No payment history found.</p> )}
+                ) : ( <p className="p-4 text-center text-muted-foreground text-sm">No payment history found.</p> )}
             </div>
         </div>
     );
@@ -258,7 +258,7 @@ const StatusBadge = ({ status }: { status: SchoolFeeRecord['paymentStatus'] }) =
 const GatewaySelector = ({ gateways, selectedGateway, onSelectGateway, isProcessing }: { gateways: GatewayKey[], selectedGateway: GatewayKey | null, onSelectGateway: (gateway: GatewayKey) => void, isProcessing: boolean }) => {
     return (
         <div className="space-y-3">
-            <p className="text-sm font-medium text-gray-700">Select a Gateway:</p>
+            <p className="text-sm font-medium text-foreground">Select a Gateway:</p>
             {gateways.map(gateway => (
                 <Button key={gateway} variant="outline" className={`w-full justify-start text-left h-12 ${selectedGateway === gateway ? 'bg-primary/10 border-primary' : ''}`} onClick={() => onSelectGateway(gateway)} disabled={isProcessing}>
                     <CreditCard className="h-5 w-5 mr-3" /><span className="font-semibold">Pay with {gateway.charAt(0).toUpperCase() + gateway.slice(1)}</span>
@@ -545,7 +545,7 @@ const Payments = () => {
                                     ) : error ? ( <p className="text-xs sm:text-sm text-red-600 bg-red-50 p-3 rounded-md">{error}</p>
                                     ) : (
                                         <>
-                                            <div className="bg-primary/5 p-3 sm:p-4 rounded-lg text-center"><p className="text-xs sm:text-sm text-gray-600">Amount Due</p><p className="text-2xl sm:text-3xl font-bold text-gray-900">₦{currentBalance.toLocaleString()}</p></div>
+                                            <div className="bg-primary/5 p-3 sm:p-4 rounded-lg text-center"><p className="text-xs sm:text-sm text-muted-foreground">Amount Due</p><p className="text-2xl sm:text-3xl font-bold text-foreground">₦{currentBalance.toLocaleString()}</p></div>
                                             {!hasCurrentSeasonBeenPaid && (
                                                 <Button className="w-full mt-3 sm:mt-4 text-sm" size="sm" disabled={loading || currentBalance === 0} onClick={openPaymentMethodModal}><CreditCard size={16} className="mr-2" />Make Payment</Button>
                                             )}
@@ -571,8 +571,8 @@ const Payments = () => {
                     <AlertDialogContent className="max-w-[90vw] sm:max-w-md mx-auto print:hidden">
                         <AlertDialogHeader><AlertDialogTitle className="text-base sm:text-lg">Complete Your Payment</AlertDialogTitle><AlertDialogDescription className="text-xs sm:text-sm">Select a secure payment gateway to pay your fees.</AlertDialogDescription></AlertDialogHeader>
                         <div className="py-2 space-y-1">
-                            <div className="flex justify-between text-xs sm:text-sm"><span className="text-gray-500">Payment for:</span><span className="font-medium">School Fees</span></div>
-                            <div className="flex justify-between text-base sm:text-lg"><span className="text-gray-600">Amount:</span><span className="font-bold text-gray-900">₦{currentBalance.toLocaleString()}</span></div>
+                            <div className="flex justify-between text-xs sm:text-sm"><span className="text-muted-foreground">Payment for:</span><span className="font-medium">School Fees</span></div>
+                            <div className="flex justify-between text-base sm:text-lg"><span className="text-muted-foreground">Amount:</span><span className="font-bold text-foreground">₦{currentBalance.toLocaleString()}</span></div>
                         </div>
                         <GatewaySelector gateways={['paystack', 'flutterwave', 'stripe']} selectedGateway={selectedPaymentMethod} onSelectGateway={(method) => setSelectedPaymentMethod(method as GatewayKey)} isProcessing={isProcessing}/>
                         <AlertDialogFooter className="mt-4 flex-col sm:flex-row gap-2">

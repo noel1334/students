@@ -421,7 +421,7 @@ const Courses = () => {
             userCurrentLevelName={user?.currentLevelName}
           />
 
-          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 mb-4 sm:mb-6">
+          <div className="bg-card rounded-lg border border-border p-3 sm:p-6 mb-4 sm:mb-6">
             {/* Top Actions */}
             <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
               <CourseActions
@@ -473,7 +473,7 @@ const Courses = () => {
             )}
 
             {!selectedSeasonId || !selectedSemesterId || !selectedLevelId ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 Please select season, semester, and level to view available courses.
               </div>
             ) : (

@@ -48,16 +48,16 @@ const Landing = () => {
     <div className="min-h-screen bg-[#1a4aa6] text-white">
       {/* Main Content */}
       <div className="max-w-3xl mx-auto py-10 px-6">
-        <div className="bg-white rounded-lg shadow-lg text-gray-800">
+        <div className="bg-card rounded-lg shadow-lg text-card-foreground">
           {/* Semester Info */}
-          <div className="p-4 border-b">
+          <div className="p-4 border-b border-border">
             <div className="flex items-center gap-2 mb-2">
-              <Calendar className="w-5 h-5 text-gray-600" />
+              <Calendar className="w-5 h-5 text-muted-foreground" />
               <span className="text-sm font-medium uppercase">
                 {currentSemester}, {currentSession}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-600">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <BookOpen className="w-4 h-4" />
                 <span>{programName}</span>
@@ -84,12 +84,12 @@ const Landing = () => {
             />
             
             <h2 className="text-2xl font-bold">{fullName}</h2>
-            <p className="text-gray-600 mb-2">{studentEmail}</p>
+            <p className="text-muted-foreground mb-2">{studentEmail}</p>
             
             <div className="text-center">
-              <p className="text-gray-600 mb-1">{departmentName}</p>
-              <p className="text-gray-600 mb-1">{programName}</p>
-              <p className="text-gray-500 text-sm">
+              <p className="text-muted-foreground mb-1">{departmentName}</p>
+              <p className="text-muted-foreground mb-1">{programName}</p>
+              <p className="text-muted-foreground text-sm">
                 {studyMode} • {level}
               </p>
             </div>
@@ -120,7 +120,7 @@ const Landing = () => {
             
             <div className="mt-4 space-y-3">
               <div 
-                className="bg-white/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
+                className="bg-card/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
                 onClick={() => navigate('/payments')}
               >
                 <span className="font-medium">Fees</span>
@@ -128,7 +128,7 @@ const Landing = () => {
               </div>
               
               <div 
-                className="bg-white/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
+                className="bg-card/10 p-4 rounded-md flex justify-between items-center cursor-pointer"
                 onClick={() => navigate('/courses')}
               >
                 <span className="font-medium">Courses</span>
@@ -145,7 +145,7 @@ const Landing = () => {
               your payment hasn't been verified, please click the button below to
               requery the verification.
             </p>
-            <Button variant="outline" className="w-full mt-4 bg-white text-[#1a4aa6] hover:bg-white/90">
+            <Button variant="outline" className="w-full mt-4">
               Requery Payment Verification
             </Button>
           </div>

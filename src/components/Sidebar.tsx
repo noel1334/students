@@ -110,7 +110,7 @@ const Sidebar = () => {
       <button 
         id="menu-button"
         onClick={toggleSidebar} 
-        className="md:hidden fixed top-6 left-4 z-50 text-gray-700"
+        className="md:hidden fixed top-6 left-4 z-50 text-foreground"
       >
         <Menu size={24} />
       </button>

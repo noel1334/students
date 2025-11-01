@@ -21,9 +21,9 @@ const CoursesHeader = ({
   return (
     <div className="mb-6">
       <h1 className="text-xl font-bold mb-1">Courses</h1>
-      <div className="text-sm text-gray-500">
+      <div className="text-sm text-muted-foreground">
         <p>{selectedSeason?.name || userCurrentSeasonName || 'No Season Selected'}</p>
-        <p className="font-medium text-gray-800">{selectedLevel?.name || userCurrentLevelName || 'No Level Selected'}</p>
+        <p className="font-medium text-foreground">{selectedLevel?.name || userCurrentLevelName || 'No Level Selected'}</p>
         <p>{selectedSemester?.name || userCurrentSemesterName || 'No Semester Selected'}</p>
       </div>
     </div>

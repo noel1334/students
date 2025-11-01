@@ -44,7 +44,7 @@ const Hostel = () => {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="status" className="mt-4 space-y-4">
-              <div className="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+              <div className="bg-card rounded-lg border border-border p-4 shadow-sm">
                 <HostelStatus />
               </div>
             </TabsContent>

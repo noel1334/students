@@ -41,7 +41,7 @@ const CourseCard = ({
         </div>
         <div>
           <div className="flex items-center">
-            <span className="font-medium text-gray-800">{code}</span>
+            <span className="font-medium text-foreground">{code}</span>
             {isCarryOver && <Badge className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">Carryover</Badge>}
             {isElective && <Badge className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">Elective</Badge>}
             {/* NEW: Indicator for already registered courses */}
@@ -49,11 +49,11 @@ const CourseCard = ({
               <Badge className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">Registered</Badge>
             )}
           </div>
-          <p className="text-sm text-gray-600">{title}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm text-gray-500">Unit Load</p>
+        <p className="text-sm text-muted-foreground">Unit Load</p>
         <p className="text-xl font-medium">{units}</p>
       </div>
     </div>
