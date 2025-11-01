@@ -29,7 +29,7 @@ import {
   Palette
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useTheme } from '@/hooks/use-theme';
+import { useTheme } from '@/contexts/ThemeContext';
 import {
   Popover,
   PopoverContent,
