@@ -39,15 +39,15 @@ const MedicalRecordSection = ({
       onOpenChange={onToggleSection}
       className="w-full"
     >
-      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
+      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-accent hover:bg-accent/80 transition-colors rounded-md">
         <div className="flex items-center">
-          <FileCheck className="h-5 w-5 mr-2 text-blue-800" />
-          <h2 className="font-semibold text-blue-800">MEDICAL RECORD</h2>
+          <FileCheck className="h-5 w-5 mr-2 text-accent-foreground" />
+          <h2 className="font-semibold text-accent-foreground">MEDICAL RECORD</h2>
         </div>
-        <span>{openSection ? "▲" : "▼"}</span>
+        <span className="text-accent-foreground">{openSection ? "▲" : "▼"}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 px-1">
-        <div className="bg-white p-6 rounded-md border shadow-sm">
+        <div className="bg-card p-6 rounded-md border shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Blood Group */}
             <FormField
@@ -170,12 +170,12 @@ const MedicalRecordSection = ({
 
           <div className="mt-6">
             <div className="text-sm font-medium mb-2">Medical Documents</div>
-            <div className="border border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
-              <Upload className="h-10 w-10 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500 mb-2">Upload medical reports or certificates</p>
+            <div className="border border-dashed border-border rounded-md p-6 flex flex-col items-center justify-center">
+              <Upload className="h-10 w-10 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground mb-2">Upload medical reports or certificates</p>
               <label 
                 htmlFor="document-upload" 
-                className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm font-medium cursor-pointer"
+                className="px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/80 text-sm font-medium cursor-pointer"
               >
                 Upload Document
               </label>
@@ -194,12 +194,12 @@ const MedicalRecordSection = ({
               <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium">Uploaded Documents:</p>
                 {medicalDocuments.map((doc, index) => (
-                  <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded-md">
+                  <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
                     <div className="flex items-center">
-                      <FileCheck className="h-4 w-4 mr-2 text-gray-500" />
+                      <FileCheck className="h-4 w-4 mr-2 text-muted-foreground" />
                       <span className="text-sm truncate max-w-[200px]">{doc.name}</span>
                     </div>
-                    <span className="text-xs text-gray-500">{(doc.size / 1024).toFixed(2)} KB</span>
+                    <span className="text-xs text-muted-foreground">{(doc.size / 1024).toFixed(2)} KB</span>
                   </div>
                 ))}
               </div>

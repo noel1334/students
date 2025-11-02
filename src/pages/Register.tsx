@@ -61,12 +61,12 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
-      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+    <div className="min-h-screen flex items-center justify-center bg-background py-8">
+      <div className="w-full max-w-md p-8 space-y-6 bg-card rounded-lg shadow-md">
         <div className="text-center">
           <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="mx-auto h-16 w-16" />
-          <h2 className="mt-4 text-3xl font-bold text-[#1a4aa6]">Create Account</h2>
-          <p className="mt-2 text-gray-600">Register to get started</p>
+          <h2 className="mt-4 text-3xl font-bold text-primary">Create Account</h2>
+          <p className="mt-2 text-muted-foreground">Register to get started</p>
         </div>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
@@ -138,7 +138,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={toggleShowPassword}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               >
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
@@ -160,7 +160,7 @@ const Register = () => {
 
           <Button
             type="submit"
-            className="w-full py-3 bg-[#1a4aa6] hover:bg-[#0f3c8c] text-white mt-6"
+            className="w-full py-3 bg-primary hover:bg-primary/90 text-primary-foreground mt-6"
             disabled={isLoading}
           >
             <UserPlus className="mr-2 h-4 w-4" />
@@ -168,9 +168,9 @@ const Register = () => {
           </Button>
 
           <div className="text-center mt-4">
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/login" className="text-[#1a4aa6] hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Sign in
               </Link>
             </p>

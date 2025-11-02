@@ -26,15 +26,15 @@ const NextOfKinSection = ({
       onOpenChange={onToggleSection}
       className="w-full"
     >
-      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
+      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-accent hover:bg-accent/80 transition-colors rounded-md">
         <div className="flex items-center">
-          <Users className="h-5 w-5 mr-2 text-blue-800" />
-          <h2 className="font-semibold text-blue-800">NEXT OF KIN & SPONSOR</h2>
+          <Users className="h-5 w-5 mr-2 text-accent-foreground" />
+          <h2 className="font-semibold text-accent-foreground">NEXT OF KIN & SPONSOR</h2>
         </div>
-        <span>{openSection ? "▲" : "▼"}</span>
+        <span className="text-accent-foreground">{openSection ? "▲" : "▼"}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 px-1">
-        <div className="bg-white p-6 rounded-md border shadow-sm">
+        <div className="bg-card p-6 rounded-md border shadow-sm">
           <Tabs defaultValue="next-of-kin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="next-of-kin">Next of Kin</TabsTrigger>

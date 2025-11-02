@@ -34,7 +34,7 @@ const AcademicPerformance = ({ semesterResults = [], cgpa }: AcademicPerformance
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-lg font-semibold">Academic Performance</h2>
         <div className="flex items-center gap-2">
-          <div className="px-3 py-1 bg-primary text-white rounded-md">
+          <div className="px-3 py-1 bg-primary text-primary-foreground rounded-md">
             <span className="font-medium">CGPA: {displayCgpa.toFixed(2)}</span>
           </div>
         </div>

@@ -49,7 +49,7 @@ const ProfileHeader = ({
       {/* Profile Header Section with Avatar */}
       <Card className="mb-6 overflow-hidden">
         <CardContent className="p-0">
-          <div className="bg-white p-6 flex flex-col items-center">
+          <div className="bg-card p-6 flex flex-col items-center">
             <div className="relative mb-3 group">
               <Avatar className="w-24 h-24 border-4 border-primary/20">
                 {avatar ? (
@@ -64,7 +64,7 @@ const ProfileHeader = ({
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <label 
                   htmlFor="avatar-upload" 
-                  className="bg-primary text-white rounded-full p-2 cursor-pointer"
+                  className="bg-primary text-primary-foreground rounded-full p-2 cursor-pointer"
                 >
                   Upload
                 </label>

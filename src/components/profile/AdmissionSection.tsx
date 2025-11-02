@@ -24,15 +24,15 @@ const AdmissionSection = ({
       onOpenChange={onToggleSection}
       className="w-full"
     >
-      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
+      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-accent hover:bg-accent/80 transition-colors rounded-md">
         <div className="flex items-center">
-          <FileText className="h-5 w-5 mr-2 text-blue-800" />
-          <h2 className="font-semibold text-blue-800">ADMISSION</h2>
+          <FileText className="h-5 w-5 mr-2 text-accent-foreground" />
+          <h2 className="font-semibold text-accent-foreground">ADMISSION</h2>
         </div>
-        <span>{openSection ? "▲" : "▼"}</span>
+        <span className="text-accent-foreground">{openSection ? "▲" : "▼"}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 px-1">
-        <div className="bg-white p-6 rounded-md border shadow-sm">
+        <div className="bg-card p-6 rounded-md border shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Mode of Admission */}
             <FormField
@@ -130,7 +130,7 @@ const AdmissionSection = ({
                 <FormItem>
                   <FormLabel>Admission Number</FormLabel>
                   <FormControl>
-                    <Input {...field} readOnly className="bg-gray-100" />
+                    <Input {...field} readOnly className="bg-muted" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -140,10 +140,10 @@ const AdmissionSection = ({
 
           <div className="mt-6">
             <div className="text-sm font-medium mb-2">Admission Document</div>
-            <div className="border border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
-              <FileText className="h-10 w-10 text-gray-400 mb-2" />
-              <p className="text-sm text-gray-500 mb-2">Admission letter</p>
-              <button type="button" className="px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 text-sm font-medium">
+            <div className="border border-dashed border-border rounded-md p-6 flex flex-col items-center justify-center">
+              <FileText className="h-10 w-10 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground mb-2">Admission letter</p>
+              <button type="button" className="px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/80 text-sm font-medium">
                 View Admission Letter
               </button>
             </div>
