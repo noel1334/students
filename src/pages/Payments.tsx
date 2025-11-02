@@ -196,11 +196,11 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
 
             {/* Desktop Table View */}
             <div className="hidden sm:block border rounded-lg overflow-hidden">
-                <div className="p-4 bg-gray-50/50 border-b"><h3 className="font-semibold text-base">Transaction History</h3></div>
+                <div className="p-4 bg-muted/50 border-b"><h3 className="font-semibold text-base">Transaction History</h3></div>
                 {records.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
-                            <thead className="bg-gray-50 text-left">
+                            <thead className="bg-muted text-left">
                                 <tr>
                                     <th className="p-3 font-medium">Description</th>
                                     <th className="p-3 font-medium">Amount</th>
@@ -210,7 +210,7 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                             </thead>
                             <tbody>
                                 {records.map((record) => (
-                                    <tr key={record.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                                    <tr key={record.id} className="border-b last:border-b-0 hover:bg-muted/30">
                                         <td className="p-3">{record.description || 'School Fees'}</td>
                                         <td className="p-3">₦{record.amount.toLocaleString()}</td>
                                         <td className="p-3">{record.season.name}</td>

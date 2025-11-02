@@ -93,9 +93,9 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
 
           {/* Center Title */}
           <div className="flex-1 text-center px-4">
-            <h1 className="text-xl font-bold mb-2">COURSE REGISTRATION FORM</h1>
-            <p className="text-lg font-semibold">{user?.currentSeasonName}</p>
-            <p className="text-md">{user?.currentSemesterName}</p>
+            <h1 className="text-base font-bold mb-1">COURSE REGISTRATION FORM</h1>
+            <p className="text-sm font-semibold">{user?.currentSeasonName}</p>
+            <p className="text-xs">{user?.currentSemesterName}</p>
           </div>
 
           {/* School Logo */}
@@ -107,7 +107,7 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
         </div>
 
         {/* Student Details */}
-        <div className="mb-8 grid grid-cols-2 gap-4">
+        <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
           <div>
             <p><strong>Student Name:</strong> {user?.name || 'N/A'}</p>
             <p><strong>Registration No:</strong> {user?.regNo || 'N/A'}</p>
@@ -123,57 +123,57 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
         </div>
 
         {/* Course Table */}
-        <div className="mb-8">
-          <h3 className="text-lg font-bold mb-4">Registered Courses</h3>
-          <table className="w-full border border-black">
+        <div className="mb-4">
+          <h3 className="text-sm font-bold mb-2">Registered Courses</h3>
+          <table className="w-full border border-black text-xs">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-black p-2 text-left">S/N</th>
-                <th className="border border-black p-2 text-left">Course Code</th>
-                <th className="border border-black p-2 text-left">Course Title</th>
-                <th className="border border-black p-2 text-left">Units</th>
-                <th className="border border-black p-2 text-left">Status</th>
+                <th className="border border-black px-1 py-0.5 text-left">S/N</th>
+                <th className="border border-black px-1 py-0.5 text-left">Course Code</th>
+                <th className="border border-black px-1 py-0.5 text-left">Course Title</th>
+                <th className="border border-black px-1 py-0.5 text-left">Units</th>
+                <th className="border border-black px-1 py-0.5 text-left">Status</th>
               </tr>
             </thead>
             <tbody>
               {registrations.map((registration, index) => (
                 <tr key={registration.id}>
-                  <td className="border border-black p-2">{index + 1}</td>
-                  <td className="border border-black p-2 font-medium">{registration.course.code}</td>
-                  <td className="border border-black p-2">{registration.course.title}</td>
-                  <td className="border border-black p-2">{registration.course.creditUnit}</td>
-                  <td className="border border-black p-2">Registered</td>
+                  <td className="border border-black px-1 py-0.5">{index + 1}</td>
+                  <td className="border border-black px-1 py-0.5 font-medium">{registration.course.code}</td>
+                  <td className="border border-black px-1 py-0.5">{registration.course.title}</td>
+                  <td className="border border-black px-1 py-0.5">{registration.course.creditUnit}</td>
+                  <td className="border border-black px-1 py-0.5">Registered</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <div className="mt-4">
+          <div className="mt-2 text-xs">
             <p><strong>Total Units:</strong> {registrations.reduce((sum, reg) => sum + reg.course.creditUnit, 0)}</p>
           </div>
         </div>
 
         {/* Signatures */}
-        <div className="mt-16 grid grid-cols-3 gap-8">
+        <div className="mt-8 grid grid-cols-3 gap-4">
           <div className="text-center">
-            <div className="border-t border-black mt-12 pt-2">
-              <p className="font-bold">Student Signature</p>
+            <div className="border-t border-black mt-8 pt-1">
+              <p className="font-bold text-xs">Student Signature</p>
             </div>
           </div>
           <div className="text-center">
-            <div className="border-t border-black mt-12 pt-2">
-              <p className="font-bold">Academic Advisor</p>
+            <div className="border-t border-black mt-8 pt-1">
+              <p className="font-bold text-xs">Academic Advisor</p>
             </div>
           </div>
           <div className="text-center">
-            <div className="border-t border-black mt-12 pt-2">
-              <p className="font-bold">HOD Signature</p>
+            <div className="border-t border-black mt-8 pt-1">
+              <p className="font-bold text-xs">HOD Signature</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-600">
+        <div className="mt-4 text-center text-xs text-gray-600">
           <p>Generated on: {new Date().toLocaleDateString()}</p>
         </div>
       </div>

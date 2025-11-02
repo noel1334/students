@@ -8,7 +8,7 @@ const ProfileFormActions = () => {
     <div className="flex flex-col gap-4">
       <Button
         type="submit"
-        className="w-full py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+        className="w-full py-3"
       >
         <Eye className="mr-2" size={18} />
         Review and Update
@@ -17,13 +17,14 @@ const ProfileFormActions = () => {
       <div className="flex gap-2">
         <Button
           type="button"
-          className="flex-1 py-3 bg-gray-100 text-gray-700 font-medium rounded-md hover:bg-gray-200 transition-colors"
+          variant="outline"
+          className="flex-1 py-3"
         >
           Print Profile Records
         </Button>
         <Button
           type="button"
-          className="flex-1 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+          className="flex-1 py-3"
         >
           Print Medical Records
         </Button>

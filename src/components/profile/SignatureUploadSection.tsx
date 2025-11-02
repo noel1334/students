@@ -37,26 +37,26 @@ const SignatureUploadSection = ({
       onOpenChange={onToggleSection}
       className="w-full"
     >
-      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 transition-colors rounded-md">
+      <CollapsibleTrigger className="flex justify-between items-center w-full px-4 py-3 bg-accent hover:bg-accent/80 transition-colors rounded-md">
         <div className="flex items-center">
-          <Signature className="h-5 w-5 mr-2 text-blue-800" />
-          <h2 className="font-semibold text-blue-800">SIGNATURE UPLOAD</h2>
+          <Signature className="h-5 w-5 mr-2 text-accent-foreground" />
+          <h2 className="font-semibold text-accent-foreground">SIGNATURE UPLOAD</h2>
         </div>
         <span>{openSection ? "▲" : "▼"}</span>
       </CollapsibleTrigger>
       <CollapsibleContent className="pt-4 px-1">
-        <div className="bg-white p-6 rounded-md border shadow-sm">
+        <div className="bg-card p-6 rounded-md border shadow-sm">
           <div className="text-center">
             <div className="mb-6">
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Please upload a clear image of your signature on a white background. 
                 This signature will be used for official documents and verifications.
               </p>
 
-              <div className="w-full max-w-md mx-auto border-2 border-dashed border-gray-300 rounded-lg p-6">
+              <div className="w-full max-w-md mx-auto border-2 border-dashed border-border rounded-lg p-6">
                 {signature ? (
                   <div className="flex flex-col items-center">
-                    <div className="mb-4 p-4 bg-white shadow rounded-md">
+                    <div className="mb-4 p-4 bg-card shadow rounded-md">
                       <img 
                         src={signature} 
                         alt="Your signature" 
@@ -66,20 +66,20 @@ const SignatureUploadSection = ({
                     <button
                       type="button"
                       onClick={() => setSignature(null)}
-                      className="px-4 py-2 text-red-600 bg-red-50 text-sm font-medium rounded-md hover:bg-red-100"
+                      className="px-4 py-2 text-destructive-foreground bg-destructive/10 text-sm font-medium rounded-md hover:bg-destructive/20"
                     >
                       Remove Signature
                     </button>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center">
-                    <Signature className="h-16 w-16 text-gray-300 mb-4" />
-                    <p className="text-sm text-gray-500 mb-4">
+                    <Signature className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                    <p className="text-sm text-muted-foreground mb-4">
                       No signature uploaded yet
                     </p>
                     <label
                       htmlFor="signature-upload"
-                      className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary/90 cursor-pointer"
+                      className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 cursor-pointer"
                     >
                       Upload Signature
                     </label>
@@ -95,7 +95,7 @@ const SignatureUploadSection = ({
               </div>
             </div>
 
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-muted-foreground">
               <p className="mb-2 font-medium">Guidelines for signature upload:</p>
               <ul className="list-disc text-left pl-6 space-y-1">
                 <li>Sign on a white piece of paper with black or blue ink</li>
