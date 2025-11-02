@@ -73,14 +73,14 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm }: ReviewForm
           <Accordion type="single" collapsible className="space-y-4">
             {Object.entries(sections).map(([sectionName, fields]) => (
               <AccordionItem key={sectionName} value={sectionName} className="border rounded-lg overflow-hidden">
-                <AccordionTrigger className="px-4 py-3 bg-blue-50 hover:bg-blue-100">
-                  <h3 className="text-lg font-semibold text-blue-800">{sectionName}</h3>
+                <AccordionTrigger className="px-4 py-3 bg-accent hover:bg-accent/80">
+                  <h3 className="text-lg font-semibold text-accent-foreground">{sectionName}</h3>
                 </AccordionTrigger>
                 <AccordionContent className="p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {fields.map((field) => (
                       <div key={field} className="flex flex-col">
-                        <span className="text-sm font-medium text-gray-500">{formatFieldName(field)}</span>
+                        <span className="text-sm font-medium text-muted-foreground">{formatFieldName(field)}</span>
                         <span className="text-base">
                           {formData[field] ? String(formData[field]) : '-'}
                         </span>
