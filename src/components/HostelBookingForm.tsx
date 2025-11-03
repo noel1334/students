@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Form, 
   FormControl, 
+  FormDescription,
   FormField, 
   FormItem, 
   FormLabel, 
@@ -21,155 +21,176 @@ import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { CreditCard, Wallet, Receipt } from "lucide-react";
+import { CreditCard, Wallet, Loader2 } from "lucide-react";
+import { getStudentHostelFees, getHostelRooms, createHostelBooking, HostelFeeData, HostelRoom } from '@/services/hostelApiService';
 
 // Schema for the form validation
 const formSchema = z.object({
-  blockId: z.string().min(1, { message: "Please select a block" }),
+  hostelFeeId: z.string().min(1, { message: "Please select a hostel block" }),
   roomId: z.string().min(1, { message: "Please select a room" }),
   paymentMethod: z.enum(["paystack", "stripe", "flutterwave"])
 });
 
-// Define the hostel blocks and rooms data
-// This would come from an API in a real application
-const hostelBlocks = [
-  {
-    id: "block-a",
-    name: "Block A",
-    gender: "male",
-    description: "Newly renovated block with modern facilities and amenities",
-    price: 75000,
-    image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2400&q=80",
-    rooms: [
-      { id: "a-101", number: "A101", capacity: 4, available: 1 },
-      { id: "a-102", number: "A102", capacity: 4, available: 2 },
-      { id: "a-103", number: "A103", capacity: 2, available: 0 },
-      { id: "a-104", number: "A104", capacity: 2, available: 2 },
-    ]
-  },
-  {
-    id: "block-b",
-    name: "Block B",
-    gender: "female",
-    description: "Quiet block with study rooms and garden view",
-    price: 65000,
-    image: "https://images.unsplash.com/photo-1580041065738-e72023775cdc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2400&q=80",
-    rooms: [
-      { id: "b-101", number: "B101", capacity: 4, available: 0 },
-      { id: "b-102", number: "B102", capacity: 4, available: 3 },
-      { id: "b-103", number: "B103", capacity: 2, available: 1 },
-    ]
-  },
-  {
-    id: "block-c",
-    name: "Block C",
-    gender: "male",
-    description: "Premium block with air conditioning and private bathrooms",
-    price: 95000,
-    image: "https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2400&q=80",
-    rooms: [
-      { id: "c-101", number: "C101", capacity: 2, available: 2 },
-      { id: "c-102", number: "C102", capacity: 2, available: 1 },
-    ]
-  },
-  {
-    id: "block-d",
-    name: "Block D",
-    gender: "female",
-    description: "Newly constructed block with modern amenities",
-    price: 85000,
-    image: "https://images.unsplash.com/photo-1585779034823-7e9ac8faec70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2400&q=80",
-    rooms: [
-      { id: "d-101", number: "D101", capacity: 4, available: 1 },
-      { id: "d-102", number: "D102", capacity: 2, available: 0 },
-    ]
-  }
-];
-
 const HostelBookingForm = () => {
-  const [selectedBlock, setSelectedBlock] = useState<any>(null);
+  const [hostelFees, setHostelFees] = useState<HostelFeeData[]>([]);
+  const [selectedHostelFee, setSelectedHostelFee] = useState<HostelFeeData | null>(null);
+  const [availableRooms, setAvailableRooms] = useState<HostelRoom[]>([]);
+  const [isLoadingFees, setIsLoadingFees] = useState(true);
+  const [isLoadingRooms, setIsLoadingRooms] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<"paystack" | "stripe" | "flutterwave" | null>(null);
-  
-  // Mock user data - in a real application, this would come from authentication
-  const user = {
-    id: "user-123",
-    name: "John Doe",
-    gender: "male",
-    // Change this to "female" to test female-only blocks
-  };
-  
-  // Filter blocks by user gender
-  const availableBlocks = hostelBlocks.filter(block => block.gender === user.gender);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      blockId: "",
+      hostelFeeId: "",
       roomId: "",
+      paymentMethod: "paystack",
     },
   });
-  
-  // Watch the blockId field to update rooms when block changes
-  const watchBlockId = form.watch("blockId");
+
+  // Fetch hostel fees on component mount
+  useEffect(() => {
+    const fetchHostelFees = async () => {
+      try {
+        setIsLoadingFees(true);
+        const response = await getStudentHostelFees(1, 50);
+        setHostelFees(response.data.hostelFees);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Failed to load hostel options');
+        console.error('Error fetching hostel fees:', error);
+      } finally {
+        setIsLoadingFees(false);
+      }
+    };
+
+    fetchHostelFees();
+  }, []);
+
+  // Group hostel fees by hostel for better display
+  const groupedHostels = hostelFees.reduce((acc, fee) => {
+    const hostelId = fee.hostel.id;
+    if (!acc[hostelId]) {
+      acc[hostelId] = {
+        hostel: fee.hostel,
+        fees: [],
+        season: fee.season,
+      };
+    }
+    acc[hostelId].fees.push(fee);
+    return acc;
+  }, {} as Record<number, { hostel: HostelFeeData['hostel']; fees: HostelFeeData[]; season: HostelFeeData['season'] }>);
+
+  const hostelOptions = Object.values(groupedHostels);
+
+  // Watch hostel fee selection
+  const watchHostelFeeId = form.watch("hostelFeeId");
   const watchRoomId = form.watch("roomId");
-  
-  // When block selection changes, update the selected block and reset room selection
-  React.useEffect(() => {
-    if (watchBlockId) {
-      const block = hostelBlocks.find(b => b.id === watchBlockId);
-      setSelectedBlock(block);
+
+  // Fetch rooms when hostel fee is selected
+  useEffect(() => {
+    if (watchHostelFeeId) {
+      const selectedFee = hostelFees.find(f => f.id.toString() === watchHostelFeeId);
+      setSelectedHostelFee(selectedFee || null);
+      
+      if (selectedFee) {
+        fetchRooms(selectedFee.hostel.id);
+      }
+      
+      // Reset room selection when hostel changes
       form.setValue("roomId", "");
     } else {
-      setSelectedBlock(null);
+      setSelectedHostelFee(null);
+      setAvailableRooms([]);
     }
-  }, [watchBlockId, form]);
-  
+  }, [watchHostelFeeId, hostelFees]);
+
+  const fetchRooms = async (hostelId: number) => {
+    try {
+      setIsLoadingRooms(true);
+      const response = await getHostelRooms(hostelId);
+      setAvailableRooms(response.data.rooms);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to load rooms');
+      setAvailableRooms([]);
+      console.error('Error fetching rooms:', error);
+    } finally {
+      setIsLoadingRooms(false);
+    }
+  };
+
   // Handler for form submission
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    // Open the payment dialog when submitting the form
     setShowPaymentDialog(true);
   };
-  
-  // Handle payment method selection
-  const handlePaymentMethodSelect = (method: "paystack" | "stripe" | "flutterwave") => {
+
+  // Handle payment method selection and booking
+  const handlePaymentMethodSelect = async (method: "paystack" | "stripe" | "flutterwave") => {
     setSelectedPaymentMethod(method);
     form.setValue("paymentMethod", method);
     
-    // In a real app, this would call an API to process the payment
-    
-    // Show success message
-    toast.success("Hostel booking confirmed! Redirecting to payment...", {
-      description: "You will be redirected to complete your payment."
-    });
-    
-    // Simulate payment processing - in a real app this would redirect to payment gateway
-    setTimeout(() => {
-      toast.success("Payment successful!", {
-        description: "Your hostel booking has been confirmed."
+    try {
+      setIsSubmitting(true);
+      const values = form.getValues();
+      
+      await createHostelBooking({
+        hostelId: selectedHostelFee!.hostel.id,
+        roomId: parseInt(values.roomId),
+        hostelFeeListId: parseInt(values.hostelFeeId),
+      });
+      
+      toast.success("Hostel booking successful!", {
+        description: `Your room has been booked. Redirecting to ${method} for payment...`,
       });
       
       // Reset form and close dialog
-      form.reset();
-      setShowPaymentDialog(false);
-      setSelectedPaymentMethod(null);
-    }, 2000);
+      setTimeout(() => {
+        form.reset();
+        setShowPaymentDialog(false);
+        setSelectedPaymentMethod(null);
+        setSelectedHostelFee(null);
+        setAvailableRooms([]);
+      }, 1500);
+      
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create booking');
+      console.error('Error creating booking:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
+
   // Get the selected room details
-  const selectedRoom = selectedBlock && watchRoomId ? 
-    selectedBlock.rooms.find(room => room.id === watchRoomId) : null;
-  
+  const selectedRoom = availableRooms.find(room => room.id.toString() === watchRoomId);
+
+  if (isLoadingFees) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading hostel options...</span>
+      </div>
+    );
+  }
+
+  if (hostelFees.length === 0) {
+    return (
+      <div className="text-center p-8 bg-muted rounded-lg">
+        <p className="text-muted-foreground">No hostel accommodations available for your current season.</p>
+        <p className="text-sm text-muted-foreground mt-2">Please contact the hostel administration for more information.</p>
+      </div>
+    );
+  }
+
   return (
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Block Selection */}
+          {/* Hostel Block Selection */}
           <FormField
             control={form.control}
-            name="blockId"
+            name="hostelFeeId"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Select Hostel Block</FormLabel>
@@ -183,89 +204,112 @@ const HostelBookingForm = () => {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {availableBlocks.map((block) => (
-                      <SelectItem key={block.id} value={block.id}>
-                        {block.name}
+                    {hostelOptions.map((option) => (
+                      <SelectItem 
+                        key={option.hostel.id} 
+                        value={option.fees[0].id.toString()}
+                      >
+                        {option.hostel.name} - ₦{option.fees[0].amount.toLocaleString()}
+                        {option.hostel.gender && ` (${option.hostel.gender})`}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <FormDescription>
+                  Showing hostels available for the current season
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
           
-          {/* Show Block Details if a block is selected */}
-          {selectedBlock && (
-            <div className="border rounded-lg overflow-hidden shadow-sm">
-              <div className="h-48 overflow-hidden relative">
-                <img 
-                  src={selectedBlock.image} 
-                  alt={selectedBlock.name} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-                  <div className="p-4 text-white">
-                    <h3 className="text-xl font-semibold">{selectedBlock.name}</h3>
-                    <p className="text-sm opacity-90">{selectedBlock.description}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 bg-white">
-                <div className="flex justify-between items-center mb-4">
+          {/* Show Hostel Details if a hostel is selected */}
+          {selectedHostelFee && (
+            <div className="bg-card rounded-lg border border-border p-4 space-y-3">
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">{selectedHostelFee.hostel.name}</h3>
+                {selectedHostelFee.description && (
+                  <p className="text-sm text-muted-foreground">{selectedHostelFee.description}</p>
+                )}
+                <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <p className="text-sm text-gray-500">Price per semester</p>
-                    <p className="text-xl font-bold">₦{selectedBlock.price.toLocaleString()}</p>
+                    <span className="text-muted-foreground">Season:</span>
+                    <p className="font-medium">{selectedHostelFee.season.name}</p>
                   </div>
-                  <div className="px-3 py-1 bg-primary/10 rounded-full text-primary text-sm font-medium">
-                    {selectedBlock.gender === "male" ? "Male Only" : "Female Only"}
+                  <div>
+                    <span className="text-muted-foreground">Fee Amount:</span>
+                    <p className="font-semibold text-primary">₦{selectedHostelFee.amount.toLocaleString()}</p>
                   </div>
-                </div>
-                
-                {/* Room Selection */}
-                <FormField
-                  control={form.control}
-                  name="roomId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Select Room</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value}
-                        disabled={!selectedBlock}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a room" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {selectedBlock.rooms.map((room) => (
-                            <SelectItem 
-                              key={room.id} 
-                              value={room.id}
-                              disabled={room.available === 0}
-                            >
-                              {room.number} - {room.available} of {room.capacity} spots available
-                              {room.available === 0 && " (Full)"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
+                  {selectedHostelFee.hostel.gender && (
+                    <div>
+                      <span className="text-muted-foreground">Gender:</span>
+                      <p className="font-medium capitalize">{selectedHostelFee.hostel.gender.toLowerCase()}</p>
+                    </div>
                   )}
-                />
+                </div>
               </div>
             </div>
           )}
           
+          {/* Room Selection */}
+          {selectedHostelFee && (
+            <FormField
+              control={form.control}
+              name="roomId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Select Room</FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    value={field.value}
+                    disabled={isLoadingRooms || availableRooms.length === 0}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={
+                          isLoadingRooms 
+                            ? "Loading rooms..." 
+                            : availableRooms.length === 0 
+                            ? "No rooms available" 
+                            : "Select a room"
+                        } />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {availableRooms.map((room) => (
+                        <SelectItem 
+                          key={room.id} 
+                          value={room.id.toString()}
+                          disabled={!room.isAvailable}
+                        >
+                          Room {room.roomNumber} - Capacity: {room.capacity}
+                          {!room.isAvailable && " (Not Available)"}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Available rooms in {selectedHostelFee.hostel.name}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
+          
           <Button 
             type="submit" 
-            className="w-full" 
-            disabled={!form.formState.isValid}
+            className="w-full"
+            disabled={!form.formState.isValid || isLoadingRooms || isSubmitting}
           >
-            Proceed to Payment
+            {isLoadingRooms ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Loading Rooms...
+              </>
+            ) : (
+              'Proceed to Payment'
+            )}
           </Button>
         </form>
       </Form>
@@ -281,19 +325,23 @@ const HostelBookingForm = () => {
           </DialogHeader>
           
           <div className="flex flex-col gap-4 py-4">
-            {selectedBlock && selectedRoom && (
-              <div className="bg-muted p-3 rounded-md">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-sm font-medium">{selectedBlock.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Room {selectedRoom.number}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">Amount</p>
-                    <p className="text-lg font-bold text-primary">₦{selectedBlock.price.toLocaleString()}</p>
-                  </div>
+            {selectedHostelFee && selectedRoom && (
+              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Hostel:</span>
+                  <span className="text-sm font-medium">{selectedHostelFee.hostel.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Room:</span>
+                  <span className="text-sm font-medium">Room {selectedRoom.roomNumber}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Season:</span>
+                  <span className="text-sm font-medium">{selectedHostelFee.season.name}</span>
+                </div>
+                <div className="flex justify-between pt-2 border-t border-border">
+                  <span className="text-sm font-semibold">Amount Due:</span>
+                  <span className="text-lg font-bold text-primary">₦{selectedHostelFee.amount.toLocaleString()}</span>
                 </div>
               </div>
             )}
@@ -301,9 +349,9 @@ const HostelBookingForm = () => {
             <RadioGroup defaultValue="paystack" className="grid grid-cols-1 gap-3">
               <div 
                 className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "paystack" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("paystack")}
+                onClick={() => !isSubmitting && handlePaymentMethodSelect("paystack")}
               >
-                <RadioGroupItem value="paystack" id="paystack" checked={selectedPaymentMethod === "paystack"} />
+                <RadioGroupItem value="paystack" id="paystack" checked={selectedPaymentMethod === "paystack"} disabled={isSubmitting} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="paystack" className="flex items-center space-x-2 cursor-pointer">
                     <CreditCard className="h-5 w-5" />
@@ -314,9 +362,9 @@ const HostelBookingForm = () => {
               </div>
               <div 
                 className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "stripe" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("stripe")}
+                onClick={() => !isSubmitting && handlePaymentMethodSelect("stripe")}
               >
-                <RadioGroupItem value="stripe" id="stripe" checked={selectedPaymentMethod === "stripe"} />
+                <RadioGroupItem value="stripe" id="stripe" checked={selectedPaymentMethod === "stripe"} disabled={isSubmitting} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="stripe" className="flex items-center space-x-2 cursor-pointer">
                     <CreditCard className="h-5 w-5" />
@@ -327,9 +375,9 @@ const HostelBookingForm = () => {
               </div>
               <div 
                 className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${selectedPaymentMethod === "flutterwave" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("flutterwave")}
+                onClick={() => !isSubmitting && handlePaymentMethodSelect("flutterwave")}
               >
-                <RadioGroupItem value="flutterwave" id="flutterwave" checked={selectedPaymentMethod === "flutterwave"} />
+                <RadioGroupItem value="flutterwave" id="flutterwave" checked={selectedPaymentMethod === "flutterwave"} disabled={isSubmitting} />
                 <div className="flex flex-1 items-center justify-between">
                   <label htmlFor="flutterwave" className="flex items-center space-x-2 cursor-pointer">
                     <Wallet className="h-5 w-5" />
@@ -339,10 +387,21 @@ const HostelBookingForm = () => {
                 </div>
               </div>
             </RadioGroup>
+            
+            {isSubmitting && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Processing booking...</span>
+              </div>
+            )}
           </div>
           
           <DialogFooter className="sm:justify-start">
-            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPaymentDialog(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
           </DialogFooter>
