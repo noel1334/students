@@ -15,6 +15,7 @@ import Results from "./pages/Results";
 import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
 import Hostel from "./pages/Hostel";
+import HostelBookingDetails from "./pages/HostelBookingDetails";
 import Profile from "./pages/Profile";
 import Support from "./pages/Support";
 import Settings from "./pages/Settings";
@@ -112,6 +113,11 @@ const App = () => {
                   <Layout>
                     <Hostel />
                   </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/hostel/booking/:bookingId" element={
+                <ProtectedRoute>
+                  <HostelBookingDetails />
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Home, MapPin, Calendar, Users, Download, Info, CreditCard, Loader2, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Home, MapPin, Calendar, Users, Download, Info, CreditCard, Loader2, Filter, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const HostelStatus = () => {
+  const navigate = useNavigate();
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<BookingDetail | null>(null);
   const [selectedSession, setSelectedSession] = useState("2023/2024");
@@ -210,13 +212,9 @@ const HostelStatus = () => {
               variant="outline" 
               size="sm"
               className="w-full flex gap-2 items-center"
-              onClick={() => {
-                setSelectedBooking(booking);
-                setSelectedSession(booking.season.name);
-                setShowReceiptDialog(true);
-              }}
+              onClick={() => navigate(`/hostel/booking/${booking.id}`)}
             >
-              <Download size={14} /> Download Receipt
+              <Eye size={14} /> View Details
             </Button>
           </div>
         )}
