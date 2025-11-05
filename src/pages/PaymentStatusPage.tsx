@@ -1,57 +1,100 @@
 // src/pages/PaymentStatusPage.tsx
 
 import React, { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
-// --- IMPORT THE NEW FUNCTION ---
-import { completeSchoolFeeStripePayment, handleStripeCancellation } from '@/services/feeApiService';
+// --- Import Stripe completion services for BOTH types of payments ---
+import { completeSchoolFeeStripePayment } from '@/services/feeApiService';
+import { completeHostelBookingStripePayment } from '@/services/hostelApiService';
 
 type Status = 'verifying' | 'success' | 'failed' | 'cancelled';
+type PaymentPurpose = 'schoolFee' | 'hostelBooking' | null;
 
 const PaymentStatusPage = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+
   const [status, setStatus] = useState<Status>('verifying');
-  const [message, setMessage] = useState('Please wait...');
+  const [message, setMessage] = useState('Please wait while we verify your transaction...');
+  const [redirectPath, setRedirectPath] = useState('/payments');
+  const [paymentPurpose, setPaymentPurpose] = useState<PaymentPurpose>(null);
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
-    const paymentStatus = searchParams.get('status');
-    const schoolFeeId = searchParams.get('school_fee_id'); // For cancellation
+    const statusFromUrl = searchParams.get('status');
+    const currentPurpose: PaymentPurpose = searchParams.get('purpose') as PaymentPurpose;
+    const relatedIdFromUrl = searchParams.get('related_id'); // This `relatedIdFromUrl` is now primarily for redirecting, not cleanup
+
+    setPaymentPurpose(currentPurpose);
+
+    // Set dynamic redirect path
+    if (currentPurpose === 'hostelBooking' && relatedIdFromUrl) {
+      // Note: `relatedIdFromUrl` won't be available on Stripe cancel_url as no booking was created.
+      // This path is more relevant for displaying existing booking details if a payment succeeded.
+      setRedirectPath(`/hostel-bookings/${relatedIdFromUrl}`);
+    } else {
+      setRedirectPath('/payments');
+    }
 
     const processPayment = async () => {
-        // --- THIS IS THE UPDATED LOGIC ---
-        if (paymentStatus === 'cancelled') {
+        // --- 1. Handle explicit cancellation from Stripe redirect ---
+        if (statusFromUrl === 'cancelled') {
             setStatus('cancelled');
             setMessage('Your payment was cancelled. You have not been charged.');
-            if (schoolFeeId) {
-                // Also call the cleanup function in the background.
-                // We don't need to wait for it or show an error if it fails.
-                handleStripeCancellation(schoolFeeId);
-            }
+            // <<< REMOVED: No backend cleanup needed for cancelled Stripe payments with the new flow >>>
+            // if (currentPurpose === 'hostelBooking' && relatedIdFromUrl) {
+            //     const parsedBookingId = parseInt(relatedIdFromUrl, 10);
+            //     if (!isNaN(parsedBookingId)) {
+            //         await handlePaymentInitiationCancellationCleanup(parsedBookingId);
+            //     } else {
+            //         console.error("Invalid booking ID for cancellation cleanup:", relatedIdFromUrl);
+            //     }
+            // }
+            return; // Exit processPayment, just show cancelled status
+        }
+
+        // --- 2. Basic validation: sessionId is essential ---
+        if (!sessionId) {
+            setStatus('failed');
+            setMessage('Invalid payment session. No Stripe session ID found in the URL.');
+            console.error('Missing sessionId in URL for payment-status.');
             return;
         }
 
-        if (sessionId) {
-            setMessage('Payment successful. Verifying transaction...');
-            try {
-                await completeSchoolFeeStripePayment(sessionId);
-                setStatus('success');
-                setMessage('Your payment has been successfully recorded. Thank you!');
-            } catch (error: any) {
-                setStatus('failed');
-                setMessage(error.message || 'Verification failed. Please contact support.');
-            }
-        } else {
+        // --- 3. Validate 'purpose' to dispatch to the correct backend service ---
+        if (!currentPurpose || (currentPurpose !== 'schoolFee' && currentPurpose !== 'hostelBooking')) {
             setStatus('failed');
-            setMessage('Invalid payment session. Could not verify payment.');
+            setMessage(`Unknown or missing payment purpose ("${currentPurpose || 'none'}"). Contact support.`);
+            console.error(`Invalid payment purpose: ${currentPurpose}. Session ID: ${sessionId}`);
+            return;
+        }
+
+        // --- MAIN LOGIC: Call the appropriate service based on purpose ---
+        try {
+            setMessage(`Verifying ${currentPurpose.replace('hostelBooking', 'hostel booking').replace('schoolFee', 'school fee')} payment...`);
+
+            if (currentPurpose === 'schoolFee') {
+                await completeSchoolFeeStripePayment(sessionId);
+            } else if (currentPurpose === 'hostelBooking') {
+                // This call will create the HostelBooking and PaymentReceipt on success
+                await completeHostelBookingStripePayment(sessionId);
+            }
+
+            setStatus('success');
+            setMessage('Your payment has been successfully recorded. Thank you!');
+
+        } catch (error: any) {
+            setStatus('failed');
+            setMessage(error.message || `Verification failed for ${currentPurpose}. Please contact support.`);
+            console.error(`Error completing ${currentPurpose} payment for session ${sessionId}:`, error);
         }
     };
     
     processPayment();
-  }, [searchParams]);
+  }, [searchParams, navigate]);
 
   const StatusDisplay = () => {
     switch (status) {
@@ -91,7 +134,7 @@ const PaymentStatusPage = () => {
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <Button asChild className="mt-4">
-            <Link to="/payments">Return to Payment Dashboard</Link>
+            <Link to={redirectPath}>Return to {paymentPurpose === 'hostelBooking' ? 'Hostel Booking' : 'Payment'} Dashboard</Link> 
           </Button>
         </CardContent>
       </Card>
