@@ -272,7 +272,10 @@ const HostelBookingForm = () => {
                 amount: bookingDetails.amountDue,
                 currency: 'NGN',
                 payment_options: 'card,banktransfer,ussd',
-                customer: userDetails,
+                customer: {
+                    ...userDetails,
+                    phone_number: '0000000000', // Required by Flutterwave
+                },
                 customizations: {
                     title: 'University Hostel Booking',
                     description: `Hostel booking for ${selectedHostelFeeDetail.hostel.name} - Room ${selectedRoom?.roomNumber || ''} (${selectedHostelFeeDetail.season.name} session)`,

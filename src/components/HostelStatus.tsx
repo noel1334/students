@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { Home, MapPin, Calendar, Users, Download, Info, CreditCard } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Home, MapPin, Calendar, Users, Download, Info, CreditCard, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -12,7 +11,6 @@ import {
 import ReceiptDownloader from './ReceiptDownloader';
 import HostelReceipt from './HostelReceipt';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -21,79 +19,131 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
+import { getMyHostelBookings, fetchMyRoommates, type BookingDetail, type RoommateDetail } from '@/services/hostelApiService';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/card';
 
 const HostelStatus = () => {
   const [showReceiptDialog, setShowReceiptDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedSession, setSelectedSession] = useState("2023/2024");
-  const [paymentMethod, setPaymentMethod] = useState("paystack");
   const isMobile = useIsMobile();
+  const { user } = useAuth();
   
-  // This would come from an API in a real application
-  const hostelData = {
-    name: "Diamond Hall",
-    room: "Room 234",
-    block: "Block C",
-    checkIn: "September 10, 2023",
-    checkOut: "July 20, 2024",
-    status: "active",
-    roommates: [
-      "Jane Smith",
-      "Sarah Johnson"
-    ],
-    features: [
-      "Wi-Fi",
-      "Study Room",
-      "Kitchen Access",
-      "Laundry"
-    ],
-    payment: {
-      amount: 95000,
-      date: "August 15, 2023",
-      id: "PAY-2023081501",
-      academicYear: "2023/2024",
-      receiptNumber: "REC-2023081501"
+  const [loading, setLoading] = useState(true);
+  const [booking, setBooking] = useState<BookingDetail | null>(null);
+  const [roommates, setRoommates] = useState<RoommateDetail[]>([]);
+  const [loadingRoommates, setLoadingRoommates] = useState(false);
+
+  // Fetch the student's hostel booking
+  useEffect(() => {
+    const fetchBooking = async () => {
+      if (!user?.currentSeasonId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await getMyHostelBookings(1, 1, 'PAID'); // Fetch only paid bookings
+        
+        if (response.data.bookings && response.data.bookings.length > 0) {
+          const currentBooking = response.data.bookings[0];
+          setBooking(currentBooking);
+          
+          // Fetch roommates if we have a booking
+          if (currentBooking && user.currentSeasonId) {
+            fetchRoommatesData(parseInt(user.currentSeasonId));
+          }
+        } else {
+          setBooking(null);
+        }
+      } catch (error: any) {
+        console.error('Error fetching booking:', error);
+        toast.error('Failed to load hostel booking details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBooking();
+  }, [user?.currentSeasonId]);
+
+  const fetchRoommatesData = async (seasonId: number) => {
+    try {
+      setLoadingRoommates(true);
+      const roommatesData = await fetchMyRoommates(seasonId);
+      setRoommates(roommatesData);
+    } catch (error) {
+      console.error('Error fetching roommates:', error);
+      // Don't show error toast for roommates, it's not critical
+    } finally {
+      setLoadingRoommates(false);
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <Card className="p-8 text-center">
+        <Home className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No Active Hostel Booking</h3>
+        <p className="text-muted-foreground mb-4">
+          You don't have an active hostel booking for the current academic session.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Please navigate to the "Book Accommodation" tab to make a booking.
+        </p>
+      </Card>
+    );
+  }
+
+  // Format dates
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // Get the latest payment
+  const latestPayment = booking.payments && booking.payments.length > 0 
+    ? booking.payments[booking.payments.length - 1] 
+    : null;
+
   // Receipt data for downloaded receipt
   const receiptData = {
-    studentName: "John Doe", // Would come from user authentication
-    studentId: "STU-2023-001",
-    blockName: hostelData.block,
-    roomNumber: hostelData.room,
-    amount: hostelData.payment.amount,
-    paymentDate: hostelData.payment.date,
-    paymentId: hostelData.payment.id,
-    academicYear: selectedSession,
-    receiptNumber: hostelData.payment.receiptNumber
+    studentName: user?.name || 'Student',
+    studentId: user?.regNo || 'N/A',
+    blockName: booking.hostel.name,
+    roomNumber: booking.room?.roomNumber || 'N/A',
+    amount: booking.amountPaid,
+    paymentDate: latestPayment ? formatDate(latestPayment.paymentDate) : 'N/A',
+    paymentId: latestPayment?.reference || 'N/A',
+    academicYear: booking.season.name,
+    receiptNumber: latestPayment?.reference || 'N/A'
   };
 
-  const handlePaymentMethodSelect = (method: string) => {
-    setPaymentMethod(method);
-  };
-
-  const handlePayment = () => {
-    // In a real app, this would process the payment via the selected gateway
-    toast.success(`Processing payment via ${paymentMethod}`, {
-      description: "You'll be redirected to complete your payment."
-    });
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      toast.success("Payment successful!", {
-        description: "Your hostel payment has been confirmed."
-      });
-      setShowPaymentDialog(false);
-    }, 2000);
-  };
+  const isPaid = booking.paymentStatus === 'PAID' || booking.paymentStatus === 'COMPLETED';
 
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">Hostel Information</h2>
-        <div className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-          Active
+        <div className={`px-2 py-1 text-xs rounded-full ${
+          isPaid 
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300' 
+            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
+        }`}>
+          {isPaid ? 'Active' : booking.paymentStatus}
         </div>
       </div>
       
@@ -104,8 +154,10 @@ const HostelStatus = () => {
               <Home className="text-primary" size={24} />
             </div>
             <div>
-              <h3 className="font-medium">{hostelData.name}</h3>
-              <p className="text-sm text-muted-foreground">{hostelData.room}, {hostelData.block}</p>
+              <h3 className="font-medium">{booking.hostel.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                Room {booking.room?.roomNumber || 'N/A'}
+              </p>
               <div className="flex items-center text-sm text-muted-foreground mt-1">
                 <MapPin size={14} className="mr-1" />
                 <span>Main Campus</span>
@@ -118,14 +170,14 @@ const HostelStatus = () => {
               <span className="text-xs text-muted-foreground">Check-in Date</span>
               <div className="flex items-center gap-1 mt-1">
                 <Calendar size={14} />
-                <span className="text-sm font-medium">{hostelData.checkIn}</span>
+                <span className="text-sm font-medium">{formatDate(booking.checkInDate)}</span>
               </div>
             </div>
             <div className="p-3 border border-border rounded-md">
               <span className="text-xs text-muted-foreground">Check-out Date</span>
               <div className="flex items-center gap-1 mt-1">
                 <Calendar size={14} />
-                <span className="text-sm font-medium">{hostelData.checkOut}</span>
+                <span className="text-sm font-medium">{formatDate(booking.checkOutDate)}</span>
               </div>
             </div>
           </div>
@@ -136,32 +188,36 @@ const HostelStatus = () => {
             </div>
             <div className="border border-border rounded-md p-3">
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Amount Paid:</span>
-                <span className="font-medium">₦{hostelData.payment.amount.toLocaleString()}</span>
+                <span className="text-sm text-muted-foreground">Amount Due:</span>
+                <span className="font-medium">₦{booking.amountDue?.toLocaleString() || '0'}</span>
               </div>
               <div className="flex justify-between mb-2">
-                <span className="text-sm text-muted-foreground">Payment Date:</span>
-                <span>{hostelData.payment.date}</span>
+                <span className="text-sm text-muted-foreground">Amount Paid:</span>
+                <span className="font-medium">₦{booking.amountPaid.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between mb-4">
-                <span className="text-sm text-muted-foreground">Receipt Number:</span>
-                <span>{hostelData.payment.receiptNumber}</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full flex gap-2 items-center"
-                  onClick={() => setShowReceiptDialog(true)}
-                >
-                  <Download size={14} /> View/Download Receipt
-                </Button>
-                <Button 
-                  className="w-full flex gap-2 items-center"
-                  onClick={() => setShowPaymentDialog(true)}
-                >
-                  <CreditCard size={14} /> Make Payment
-                </Button>
-              </div>
+              {latestPayment && (
+                <>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">Payment Date:</span>
+                    <span>{formatDate(latestPayment.paymentDate)}</span>
+                  </div>
+                  <div className="flex justify-between mb-4">
+                    <span className="text-sm text-muted-foreground">Receipt Number:</span>
+                    <span className="text-xs">{latestPayment.reference}</span>
+                  </div>
+                </>
+              )}
+              {isPaid && (
+                <div className="grid grid-cols-1 gap-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full flex gap-2 items-center"
+                    onClick={() => setShowReceiptDialog(true)}
+                  >
+                    <Download size={14} /> View/Download Receipt
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -172,44 +228,42 @@ const HostelStatus = () => {
               <Users size={16} />
               <span>Roommates</span>
             </h3>
-            <div className="space-y-2">
-              {hostelData.roommates.map((roommate, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <div className="bg-secondary text-white w-8 h-8 rounded-full flex items-center justify-center">
-                    {roommate.charAt(0)}
+            {loadingRoommates ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Loading roommates...</span>
+              </div>
+            ) : roommates.length > 0 ? (
+              <div className="space-y-2">
+                {roommates.map((roommate) => (
+                  <div key={roommate.id} className="flex items-center gap-2">
+                    <div className="bg-secondary text-secondary-foreground w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium">
+                      {roommate.name.charAt(0)}
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium">{roommate.name}</span>
+                      <p className="text-xs text-muted-foreground">{roommate.regNo}</p>
+                    </div>
                   </div>
-                  <span className="text-sm">{roommate}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No roommates assigned yet</p>
+            )}
           </div>
           
-          <div>
-            <h3 className="font-medium mb-2">Facilities</h3>
-            <div className="flex flex-wrap gap-2">
-              {hostelData.features.map((feature, index) => (
-                <span 
-                  key={index} 
-                  className="px-2 py-1 bg-secondary/10 text-secondary text-xs rounded-md"
-                >
-                  {feature}
-                </span>
-              ))}
-            </div>
-          </div>
-          
-          <div className="mt-6 p-3 border border-blue-200 bg-blue-50 rounded-md flex gap-2">
+          <div className="mt-6 p-3 border border-border bg-muted/50 rounded-md flex gap-2">
             <div className="flex-shrink-0">
-              <Info size={16} className="text-blue-600" />
+              <Info size={16} className="text-muted-foreground" />
             </div>
-            <p className="text-xs text-blue-800">
+            <p className="text-xs text-muted-foreground">
               If you need to request maintenance or have any issues with your accommodation, please submit a request through the student portal or contact the hostel management office.
             </p>
           </div>
         </div>
       </div>
       
-      {/* Receipt Dialog - Improved for mobile */}
+      {/* Receipt Dialog */}
       <Dialog open={showReceiptDialog} onOpenChange={setShowReceiptDialog}>
         <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw] p-3 sm:p-6" : "sm:max-w-3xl"}>
           <DialogHeader className="space-y-2">
@@ -225,9 +279,7 @@ const HostelStatus = () => {
                     <SelectValue placeholder="Select Session" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="2023/2024">2023/2024</SelectItem>
-                    <SelectItem value="2022/2023">2022/2023</SelectItem>
-                    <SelectItem value="2021/2022">2021/2022</SelectItem>
+                    <SelectItem value={booking.season.name}>{booking.season.name}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -240,87 +292,6 @@ const HostelStatus = () => {
           
           <div className="flex justify-end mt-4">
             <ReceiptDownloader receiptData={receiptData} />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Payment Method Dialog */}
-      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
-        <DialogContent className={isMobile ? "w-[95vw] max-w-[95vw] p-3 sm:p-6" : "sm:max-w-md"}>
-          <DialogHeader>
-            <DialogTitle>Select Payment Method</DialogTitle>
-            <DialogDescription>
-              Choose your preferred payment method to complete your hostel payment
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="flex flex-col gap-4 py-4">
-            <div className="bg-muted p-3 rounded-md">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="text-sm font-medium">{hostelData.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {hostelData.room}, {hostelData.block}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Academic Year: {selectedSession}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">Amount</p>
-                  <p className="text-sm">₦{hostelData.payment.amount.toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
-            
-            <RadioGroup defaultValue="paystack" className="grid grid-cols-1 gap-3">
-              <div 
-                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "paystack" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("paystack")}
-              >
-                <RadioGroupItem value="paystack" id="paystack" checked={paymentMethod === "paystack"} />
-                <div className="flex flex-1 items-center justify-between">
-                  <label htmlFor="paystack" className="flex items-center space-x-2 cursor-pointer">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Pay with Paystack</span>
-                  </label>
-                  <img src="https://paystack.com/assets/img/logo/paystack-logo-vector.svg" alt="Paystack" className="h-6" />
-                </div>
-              </div>
-              <div 
-                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "stripe" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("stripe")}
-              >
-                <RadioGroupItem value="stripe" id="stripe" checked={paymentMethod === "stripe"} />
-                <div className="flex flex-1 items-center justify-between">
-                  <label htmlFor="stripe" className="flex items-center space-x-2 cursor-pointer">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Pay with Stripe</span>
-                  </label>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-6" />
-                </div>
-              </div>
-              <div 
-                className={`flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-muted transition-colors ${paymentMethod === "flutterwave" ? "border-primary bg-primary/5" : ""}`}
-                onClick={() => handlePaymentMethodSelect("flutterwave")}
-              >
-                <RadioGroupItem value="flutterwave" id="flutterwave" checked={paymentMethod === "flutterwave"} />
-                <div className="flex flex-1 items-center justify-between">
-                  <label htmlFor="flutterwave" className="flex items-center space-x-2 cursor-pointer">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Pay with Flutterwave</span>
-                  </label>
-                  <img src="https://cdn.filestackcontent.com/OITnhSPCSzOuiw9ohCBG" alt="Flutterwave" className="h-6" />
-                </div>
-              </div>
-            </RadioGroup>
-            
-            <Button 
-              onClick={handlePayment} 
-              className="w-full mt-2"
-            >
-              Proceed with Payment
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
