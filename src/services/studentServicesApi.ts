@@ -76,4 +76,21 @@ export const getStudentProfile = async (): Promise<ApiResponse<{ student: Studen
   return response.data;
 };
 
-// ... rest of the file ...
+export interface UpdateStudentProfileData {
+  // Student table fields
+  profileImg?: string;
+  password?: string;
+  
+  // StudentDetails fields
+  dob?: string;
+  gender?: string;
+  address?: string;
+  phone?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+}
+
+export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {
+  const response = await api.put('/students/me', data);
+  return response.data;
+};

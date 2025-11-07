@@ -1,36 +1,92 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileForm from '@/components/profile/ProfileForm';
+import { getStudentProfile, StudentProfileData } from '@/services/studentServicesApi';
+import { useToast } from '@/hooks/use-toast';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Profile = () => {
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [studentData, setStudentData] = useState<StudentProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  // Student information - in a real app, this would come from an API or context
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const response = await getStudentProfile();
+        if (response.status === 'success' && response.data?.student) {
+          setStudentData(response.data.student);
+          setAvatar(response.data.student.profileImg || null);
+        } else {
+          toast({
+            title: "Error",
+            description: response.message || "Failed to fetch profile data",
+            variant: "destructive"
+          });
+        }
+      } catch (error: any) {
+        console.error('Error fetching profile:', error);
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to load profile data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [toast]);
+
+  if (loading) {
+    return (
+      <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!studentData) {
+    return (
+      <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
+        <div className="max-w-4xl mx-auto">
+          <p className="text-center text-muted-foreground">No profile data available</p>
+        </div>
+      </div>
+    );
+  }
+
   const studentInfo = {
-    name: "Victor NOEL",
-    regNo: "18/50770D/6",
-    department: "Science Education",
-    program: "Full Time",
-    level: "600 Level",
-    email: "victor.noel@example.com",
-    phone: "+1234567890",
-    session: "FIRST SEMESTER, 2024/2025 SESSION"
+    name: studentData.name || "N/A",
+    regNo: studentData.regNo || "N/A",
+    department: studentData.department?.name || "N/A",
+    program: studentData.program?.name || "N/A",
+    level: studentData.currentLevel?.name || "N/A",
+    email: studentData.email || "",
+    phone: studentData.studentDetails?.phone || "",
+    session: `${studentData.currentSemester?.name || ''}, ${studentData.currentSeason?.name || ''}`.trim()
   };
 
   return (
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-4xl mx-auto">
         <ProfileHeader
-            studentInfo={studentInfo}
-            avatar={avatar}
-            setAvatar={setAvatar}
-          />
+          studentInfo={studentInfo}
+          avatar={avatar}
+          setAvatar={setAvatar}
+        />
 
-          {/* Profile Form */}
-          <ProfileForm studentInfo={studentInfo} />
-        </div>
+        {/* Profile Form */}
+        <ProfileForm studentInfo={studentInfo} studentData={studentData} />
       </div>
+    </div>
   );
 };
 

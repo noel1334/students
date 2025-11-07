@@ -18,9 +18,10 @@ interface ReviewFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  isSubmitting?: boolean;
 }
 
-const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm }: ReviewFormModalProps) => {
+const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting = false }: ReviewFormModalProps) => {
   // Function to format field names from camelCase to readable text
   const formatFieldName = (fieldName: string) => {
     return fieldName
@@ -95,9 +96,11 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm }: ReviewForm
         
         <DialogFooter className="mt-6">
           <DialogClose asChild>
-            <Button variant="outline">Back to Edit</Button>
+            <Button variant="outline" disabled={isSubmitting}>Back to Edit</Button>
           </DialogClose>
-          <Button onClick={onConfirm}>Confirm Update</Button>
+          <Button onClick={onConfirm} disabled={isSubmitting}>
+            {isSubmitting ? 'Updating...' : 'Confirm Update'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
