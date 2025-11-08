@@ -143,7 +143,7 @@ export const createStripeSession = async (
     semesterId: number,
     amount: number,
     paymentChannel: 'STRIPE',
-    purpose: string,
+    purpose: 'schoolFee', 
     email: string,
     name: string
 ) => {
@@ -156,6 +156,7 @@ export const createStripeSession = async (
             email,
             name,
             paymentChannel,
+            purpose, // <--- ADD THIS LINE to send purpose to the backend
         });
 
         return response.data;

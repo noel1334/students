@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
 // --- Import Stripe completion services for BOTH types of payments ---
-import { completeSchoolFeeStripePayment } from '@/services/feeApiService';
+// Ensure handleStripeCancellation is imported
+import { completeSchoolFeeStripePayment, handleStripeCancellation } from '@/services/feeApiService';
 import { completeHostelBookingStripePayment } from '@/services/hostelApiService';
 
 type Status = 'verifying' | 'success' | 'failed' | 'cancelled';
@@ -26,14 +27,15 @@ const PaymentStatusPage = () => {
     const sessionId = searchParams.get('session_id');
     const statusFromUrl = searchParams.get('status');
     const currentPurpose: PaymentPurpose = searchParams.get('purpose') as PaymentPurpose;
-    const relatedIdFromUrl = searchParams.get('related_id'); // This `relatedIdFromUrl` is now primarily for redirecting, not cleanup
+    // Get the school_fee_id from the URL, which is sent on Stripe cancellation for school fees
+    const schoolFeeIdFromUrl = searchParams.get('school_fee_id');
+    // For hostel bookings, the related_id might be used for post-success redirection
+    const relatedIdFromUrl = searchParams.get('related_id');
 
     setPaymentPurpose(currentPurpose);
 
-    // Set dynamic redirect path
+    // Set dynamic redirect path based on purpose and any related ID
     if (currentPurpose === 'hostelBooking' && relatedIdFromUrl) {
-      // Note: `relatedIdFromUrl` won't be available on Stripe cancel_url as no booking was created.
-      // This path is more relevant for displaying existing booking details if a payment succeeded.
       setRedirectPath(`/hostel-bookings/${relatedIdFromUrl}`);
     } else {
       setRedirectPath('/payments');
@@ -44,19 +46,29 @@ const PaymentStatusPage = () => {
         if (statusFromUrl === 'cancelled') {
             setStatus('cancelled');
             setMessage('Your payment was cancelled. You have not been charged.');
-            // <<< REMOVED: No backend cleanup needed for cancelled Stripe payments with the new flow >>>
-            // if (currentPurpose === 'hostelBooking' && relatedIdFromUrl) {
-            //     const parsedBookingId = parseInt(relatedIdFromUrl, 10);
-            //     if (!isNaN(parsedBookingId)) {
-            //         await handlePaymentInitiationCancellationCleanup(parsedBookingId);
-            //     } else {
-            //         console.error("Invalid booking ID for cancellation cleanup:", relatedIdFromUrl);
-            //     }
+
+            // Perform backend cleanup for cancelled Stripe school fee payments
+            if (currentPurpose === 'schoolFee' && schoolFeeIdFromUrl) {
+                try {
+                    console.log(`Attempting cleanup for cancelled school fee ID: ${schoolFeeIdFromUrl}`);
+                    await handleStripeCancellation(schoolFeeIdFromUrl);
+                    console.log(`Cleanup successful for school fee ID: ${schoolFeeIdFromUrl}`);
+                } catch (cleanupError) {
+                    console.error(`Failed to perform cleanup for cancelled school fee ID ${schoolFeeIdFromUrl}:`, cleanupError);
+                    // Log the error for debugging, but don't prevent the user from seeing the cancellation message.
+                }
+            }
+            // Add similar cleanup logic here for hostel booking cancellations if applicable
+            // For example:
+            // if (currentPurpose === 'hostelBooking' && hostelBookingIdFromUrl) {
+            //     try { /* call hostel booking specific cancellation cleanup service */ }
+            //     catch (e) { /* log error */ }
             // }
+
             return; // Exit processPayment, just show cancelled status
         }
 
-        // --- 2. Basic validation: sessionId is essential ---
+        // --- 2. Basic validation: sessionId is essential for verification ---
         if (!sessionId) {
             setStatus('failed');
             setMessage('Invalid payment session. No Stripe session ID found in the URL.');
@@ -92,9 +104,13 @@ const PaymentStatusPage = () => {
             console.error(`Error completing ${currentPurpose} payment for session ${sessionId}:`, error);
         }
     };
-    
+
+    // Dependencies for the useEffect hook:
+    // searchParams: to react to changes in URL query parameters.
+    // navigate: part of react-router-dom, included for best practice though not directly used in logic.
+    // paymentPurpose: ensures cleanup logic runs if purpose is dynamically set.
     processPayment();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, paymentPurpose]);
 
   const StatusDisplay = () => {
     switch (status) {
@@ -134,7 +150,7 @@ const PaymentStatusPage = () => {
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <Button asChild className="mt-4">
-            <Link to={redirectPath}>Return to {paymentPurpose === 'hostelBooking' ? 'Hostel Booking' : 'Payment'} Dashboard</Link> 
+            <Link to={redirectPath}>Return to {paymentPurpose === 'hostelBooking' ? 'Hostel Booking' : 'Payment'} Dashboard</Link>
           </Button>
         </CardContent>
       </Card>

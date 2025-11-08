@@ -1,16 +1,17 @@
+// src/pages/Payments.tsx
 import React, { useState, useRef, useEffect, useCallback, useMemo, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-    getApplicableSchoolFeesForStudent, 
+import {
+    getApplicableSchoolFeesForStudent,
     getMySchoolFeeRecords,
-    createStripeSession, 
-    verifyPaystackPayment, 
-    verifyFlutterwavePayment,  
-    deleteIncompletePayment 
+    createStripeSession,
+    verifyPaystackPayment,
+    verifyFlutterwavePayment,
+    deleteIncompletePayment
 } from '@/services/feeApiService';
 import {
     Select,
@@ -163,7 +164,7 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                 <SummaryCard title="Amount Paid" amount={summary.totalAmountPaid} variant="success" />
                 <SummaryCard title="Balance Due" amount={summary.balanceDue} variant="danger" />
             </div>
-            
+
             {/* Mobile Card View */}
             <div className="block sm:hidden space-y-3">
                 <h3 className="font-semibold text-base mb-3">Transaction History</h3>
@@ -285,7 +286,7 @@ const Payments = () => {
     const [paymentRecords, setPaymentRecords] = useState<SchoolFeeRecord[]>([]);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [historyError, setHistoryError] = useState<string | null>(null);
-    
+
     // --- Other State ---
     const [selectedSemester, setSelectedSemester] = useState('1st');
     const [selectedSession, setSelectedSession] = useState('2023/2024');
@@ -305,11 +306,11 @@ const Payments = () => {
     // Check if the current season has been fully paid
     const hasCurrentSeasonBeenPaid = useMemo(() => {
         if (!user?.currentSeasonId || !paymentRecords.length) return false;
-        
+
         const currentSeasonRecord = paymentRecords.find(
             record => record.season.id.toString() === user.currentSeasonId
         );
-        
+
         return currentSeasonRecord?.paymentStatus === 'PAID';
     }, [paymentRecords, user?.currentSeasonId]);
 
@@ -359,7 +360,7 @@ const Payments = () => {
     const handlePaymentSuccess = useCallback(async (gateway: string) => {
         setIsProcessing(false);
         toast({ title: "Payment Verified!", description: `Your payment via ${gateway} has been successfully recorded.` });
-        await fetchCurrentBalance(); 
+        await fetchCurrentBalance();
         await fetchHistory();
         closePaymentMethodModal();
     }, [toast, fetchCurrentBalance, fetchHistory]);
@@ -379,7 +380,7 @@ const Payments = () => {
     }, [authLoading, seasonId, fetchCurrentBalance, fetchHistory]);
 
     const openPaymentMethodModal = () => setPaymentMethodModalOpen(true);
-    
+
     const handleProceedToPayment = async () => {
         if (!selectedPaymentMethod) {
             toast({ title: "No Gateway Selected", description: "Please select a payment gateway to proceed.", variant: "destructive" });
@@ -393,37 +394,37 @@ const Payments = () => {
             default: handlePaymentFailure("Invalid payment method selected.", "System");
         }
     };
- const initiateStripePayment = async () => {
-    if (!user?.email || !user?.name || !seasonId) {
-        return handlePaymentFailure("User details or academic session are missing.", "Stripe");
-    }
-    try {
-        const stripeData = await createStripeSession(
-            parseInt(user.id),
-            parseInt(seasonId, 10),
-            1,
-            currentBalance,
-            'STRIPE',
-            `School fees for ${selectedSession}`,
-            user.email,
-            user.name
-        );
+    const initiateStripePayment = async () => {
+        if (!user?.email || !user?.name || !seasonId) {
+            return handlePaymentFailure("User details or academic session are missing.", "Stripe");
+        }
+        try {
+            const stripeData = await createStripeSession(
+                parseInt(user.id),
+                parseInt(seasonId, 10),
+                1,
+                currentBalance,
+                'STRIPE',
+                'schoolFee', // <--- THIS IS THE CRUCIAL CHANGE
+                user.email,
+                user.name
+            );
 
-        if (!stripeData.sessionId) throw new Error("Stripe session ID was not returned.");
+            if (!stripeData.sessionId) throw new Error("Stripe session ID was not returned.");
 
-        const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
-        if (!stripe) throw new Error("Stripe.js failed to load.");
-
-
-        const { error } = await stripe.redirectToCheckout({ sessionId: stripeData.sessionId });
-        if (error) throw new Error(error.message);
-        
+            const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
+            if (!stripe) throw new Error("Stripe.js failed to load.");
 
 
-    } catch (error) {
-        handlePaymentFailure(error, "Stripe");
-    }
-};
+            const { error } = await stripe.redirectToCheckout({ sessionId: stripeData.sessionId });
+            if (error) throw new Error(error.message);
+
+
+
+        } catch (error) {
+            handlePaymentFailure(error, "Stripe");
+        }
+    };
 
 
 
