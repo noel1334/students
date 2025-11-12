@@ -8,11 +8,13 @@ import { Download, Eye, Calendar, MapPin, Clock, FileText } from 'lucide-react';
 import { getMyExamAssignments, ExamAssignment } from '@/services/examAssignmentApiService';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ExamAssignments = () => {
   const [assignments, setAssignments] = useState<ExamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignment, setSelectedAssignment] = useState<ExamAssignment | null>(null);
+   const { user } = useAuth();
 
   useEffect(() => {
     fetchAssignments();
@@ -141,21 +143,15 @@ const ExamAssignments = () => {
               <CardContent className="pt-6">
                 <div className="flex gap-4 items-start">
                   {/* Profile Image */}
-                  <div className="flex-shrink-0">
-                    {assignment.student.profileImg ? (
-                      <img 
-                        src={assignment.student.profileImg} 
-                        alt={assignment.student.name}
-                        className="h-20 w-20 rounded-lg object-cover border-2 border-border"
-                      />
-                    ) : (
-                      <div className="h-20 w-20 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-border">
-                        <span className="text-2xl font-bold text-primary">
-                          {assignment.student.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <div className="w-20 h-20 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
+            {user?.profileImage ? (
+              <img src={user.profileImage} alt="Student" className="w-full h-full object-cover rounded-lg" />
+            ) : (
+              <span className="text-2xl font-bold text-gray-600">
+                {user?.avatarLetter || user?.name?.charAt(0) || 'S'}
+              </span>
+            )}
+          </div>
 
                   {/* Main Content */}
                   <div className="flex-1 space-y-3">
