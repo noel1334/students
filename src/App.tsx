@@ -25,6 +25,7 @@ import TopBar from "./components/TopBar";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PaymentStatusPage from './pages/PaymentStatusPage';
+import ExamAssignments from './pages/ExamAssignments';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -118,6 +119,13 @@ const App = () => {
               <Route path="/hostel/booking/:bookingId" element={
                 <ProtectedRoute>
                   <HostelBookingDetails />
+                </ProtectedRoute>
+              } />
+              <Route path="/exams" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExamAssignments />
+                  </Layout>
                 </ProtectedRoute>
               } />
               <Route path="/profile" element={
