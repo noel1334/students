@@ -46,7 +46,7 @@ const ExamAssignments = () => {
     // Title
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
-    doc.text('Exam Assignment', pageWidth / 2, yPos, { align: 'center' });
+    doc.text('CBT Exam Schedule', pageWidth / 2, yPos, { align: 'center' });
     yPos += 15;
 
     // Student Info
@@ -61,6 +61,10 @@ const ExamAssignments = () => {
     doc.text(`Registration No: ${assignment.student.regNo}`, 20, yPos);
     yPos += 7;
     doc.text(`Email: ${assignment.student.email}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Department: ${assignment.student.department.name}`, 20, yPos);
+    yPos += 7;
+    doc.text(`Program: ${assignment.student.program.name}`, 20, yPos);
     yPos += 12;
 
     // Exam Details
@@ -118,7 +122,7 @@ const ExamAssignments = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-foreground">Exam Assignments</h1>
+        <h1 className="text-3xl font-bold text-foreground">CBT Exam Schedule</h1>
         <p className="text-muted-foreground">View and download your exam session assignments</p>
       </div>
 
@@ -134,83 +138,109 @@ const ExamAssignments = () => {
         <div className="grid gap-4">
           {assignments.map((assignment) => (
             <Card key={assignment.id} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <CardTitle className="text-xl">
-                      {assignment.examSession.exam.course.code} - {assignment.examSession.exam.course.title}
-                    </CardTitle>
-                    <CardDescription className="text-base">
-                      {assignment.examSession.exam.title}
-                    </CardDescription>
-                  </div>
-                  <Badge variant={assignment.examSession.isActive ? 'default' : 'secondary'}>
-                    {assignment.examSession.exam.examType}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start gap-3">
-                    <Calendar className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Date & Time</p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(assignment.examSession.startTime), 'PPP')}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(assignment.examSession.startTime), 'p')} - {format(new Date(assignment.examSession.endTime), 'p')}
-                      </p>
-                    </div>
+              <CardContent className="pt-6">
+                <div className="flex gap-4 items-start">
+                  {/* Profile Image */}
+                  <div className="flex-shrink-0">
+                    {assignment.student.profileImg ? (
+                      <img 
+                        src={assignment.student.profileImg} 
+                        alt={assignment.student.name}
+                        className="h-20 w-20 rounded-lg object-cover border-2 border-border"
+                      />
+                    ) : (
+                      <div className="h-20 w-20 rounded-lg bg-primary/10 flex items-center justify-center border-2 border-border">
+                        <span className="text-2xl font-bold text-primary">
+                          {assignment.student.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
 
-                  {assignment.examSession.venue && (
-                    <div className="flex items-start gap-3">
-                      <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                  {/* Main Content */}
+                  <div className="flex-1 space-y-3">
+                    {/* Header with Title and Badge */}
+                    <div className="flex items-start justify-between gap-4">
                       <div>
-                        <p className="text-sm font-medium text-foreground">Venue</p>
-                        <p className="text-sm text-muted-foreground">{assignment.examSession.venue.name}</p>
-                        <p className="text-sm text-muted-foreground">{assignment.examSession.venue.location}</p>
+                        <h3 className="text-xl font-semibold text-foreground">
+                          {assignment.examSession.exam.course.code} - {assignment.examSession.exam.course.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {assignment.examSession.exam.title}
+                        </p>
+                      </div>
+                      <Badge variant={assignment.examSession.isActive ? 'default' : 'secondary'}>
+                        {assignment.examSession.exam.examType}
+                      </Badge>
+                    </div>
+
+                    {/* Student Info */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Student:</span>{' '}
+                        <span className="font-medium text-foreground">{assignment.student.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Reg No:</span>{' '}
+                        <span className="font-medium text-foreground">{assignment.student.regNo}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Department:</span>{' '}
+                        <span className="font-medium text-foreground">{assignment.student.department.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Program:</span>{' '}
+                        <span className="font-medium text-foreground">{assignment.student.program.name}</span>
                       </div>
                     </div>
-                  )}
 
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Session</p>
-                      <p className="text-sm text-muted-foreground">{assignment.examSession.sessionName}</p>
-                    </div>
-                  </div>
+                    {/* Session Details */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                      <div className="flex items-start gap-3">
+                        <Calendar className="h-5 w-5 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Date & Time</p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(assignment.examSession.startTime), 'PPP')}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {format(new Date(assignment.examSession.startTime), 'p')} - {format(new Date(assignment.examSession.endTime), 'p')}
+                          </p>
+                        </div>
+                      </div>
 
-                  {assignment.seatNumber && (
-                    <div className="flex items-start gap-3">
-                      <FileText className="h-5 w-5 text-primary mt-0.5" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Seat Number</p>
-                        <p className="text-sm text-muted-foreground">{assignment.seatNumber}</p>
+                      <div className="flex items-start gap-3">
+                        <Clock className="h-5 w-5 text-primary mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-foreground">Session</p>
+                          <p className="text-sm text-muted-foreground">{assignment.examSession.sessionName}</p>
+                          {assignment.seatNumber && (
+                            <p className="text-sm text-muted-foreground">Seat: {assignment.seatNumber}</p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  )}
-                </div>
 
-                <div className="flex gap-2 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleView(assignment)}
-                  >
-                    <Eye className="h-4 w-4 mr-2" />
-                    View Details
-                  </Button>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleDownload(assignment)}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
-                  </Button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleView(assignment)}
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => handleDownload(assignment)}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -233,6 +263,8 @@ const ExamAssignments = () => {
                   <p><span className="font-medium">Name:</span> {selectedAssignment.student.name}</p>
                   <p><span className="font-medium">Registration No:</span> {selectedAssignment.student.regNo}</p>
                   <p><span className="font-medium">Email:</span> {selectedAssignment.student.email}</p>
+                  <p><span className="font-medium">Department:</span> {selectedAssignment.student.department.name}</p>
+                  <p><span className="font-medium">Program:</span> {selectedAssignment.student.program.name}</p>
                 </div>
               </div>
 

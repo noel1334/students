@@ -10,6 +10,23 @@ export interface ExamAssignment {
     name: string;
     email: string;
     profileImg: string | null;
+    department: {
+      id: number;
+      name: string;
+      faculty: {
+        id: number;
+        name: string;
+        facultyCode: string;
+      };
+    };
+    program: {
+      id: number;
+      name: string;
+      programCode: string;
+      degree: string;
+      duration: number;
+      modeOfStudy: string;
+    };
   };
   examSession: {
     id: number;
