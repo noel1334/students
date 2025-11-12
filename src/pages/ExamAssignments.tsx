@@ -22,8 +22,12 @@ const ExamAssignments = () => {
     try {
       setLoading(true);
       const data = await getMyExamAssignments();
+      console.log('Fetched assignments data:', data);
+      console.log('Assignments array:', data.assignments);
+      console.log('Total assignments:', data.totalAssignments);
       setAssignments(data.assignments);
     } catch (error: any) {
+      console.error('Error fetching assignments:', error);
       toast.error(error.response?.data?.message || 'Failed to load exam assignments');
     } finally {
       setLoading(false);
