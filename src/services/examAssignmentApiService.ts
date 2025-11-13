@@ -27,6 +27,10 @@ export interface ExamAssignment {
       duration: number;
       modeOfStudy: string;
     };
+    currentLevel?: {
+      id: number;
+      name: string;
+    };
   };
   examSession: {
     id: number;
