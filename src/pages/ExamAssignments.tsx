@@ -4,17 +4,31 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Download, Eye, Calendar, MapPin, Clock, FileText } from 'lucide-react';
+import { Download, Eye, Calendar, Clock, FileText, Loader2 } from 'lucide-react';
 import { getMyExamAssignments, ExamAssignment } from '@/services/examAssignmentApiService';
+import { getPaymentStatus } from '@/services/examPaymentApiService';
 import { format } from 'date-fns';
 import jsPDF from 'jspdf';
+// --- RESOLVED MERGE CONFLICT (IMPORTS) ---
 import { useAuth } from '@/contexts/AuthContext';
+import ExamCountdown from '@/components/ExamCountdown';
+import ExamPaymentModal from '@/components/ExamPaymentModal';
+// ------------------------------------------
 
 const ExamAssignments = () => {
   const [assignments, setAssignments] = useState<ExamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignment, setSelectedAssignment] = useState<ExamAssignment | null>(null);
-   const { user } = useAuth();
+  // --- RESOLVED MERGE CONFLICT (STATE/HOOKS) ---
+  const { user } = useAuth();
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedExamForPayment, setSelectedExamForPayment] = useState<{
+    examId: number;
+    examTitle: string;
+    amount: number;
+  } | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState<number | null>(null);
+  // ---------------------------------------------
 
   useEffect(() => {
     fetchAssignments();
@@ -40,72 +54,159 @@ const ExamAssignments = () => {
     setSelectedAssignment(assignment);
   };
 
-  const handleDownload = (assignment: ExamAssignment) => {
+  const handleDownload = async (assignment: ExamAssignment) => {
+    try {
+      setCheckingPayment(assignment.examSession.exam.id);
+      
+      // Check payment status
+      const paymentStatus = await getPaymentStatus(assignment.examSession.exam.id);
+      
+      if (paymentStatus.status === 'NOT_REQUIRED') {
+        // No payment required, proceed with download
+        generatePDF(assignment);
+      } else if (paymentStatus.status === 'PAID') {
+        // Payment already completed, proceed with download
+        generatePDF(assignment);
+      } else {
+        // Payment required
+        setSelectedExamForPayment({
+          examId: assignment.examSession.exam.id,
+          examTitle: `${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.title}`,
+          amount: paymentStatus.feeDetails?.amount || 0
+        });
+        setPaymentModalOpen(true);
+      }
+    } catch (error: any) {
+      console.error('Error checking payment status:', error);
+      toast.error('Failed to check payment status');
+    } finally {
+      setCheckingPayment(null);
+    }
+  };
+
+  const generatePDF = async (assignment: ExamAssignment) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
-    let yPos = 20;
+    const pageHeight = doc.internal.pageSize.getHeight();
+    
+    // Add border
+    doc.setDrawColor(0, 100, 200);
+    doc.setLineWidth(2);
+    doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+    
+    // Add inner border
+    doc.setLineWidth(0.5);
+    doc.rect(15, 15, pageWidth - 30, pageHeight - 30);
 
-    // Title
-    doc.setFontSize(18);
+    let yPos = 30;
+
+    // Header
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
-    doc.text('CBT Exam Schedule', pageWidth / 2, yPos, { align: 'center' });
+    doc.setTextColor(0, 100, 200);
+    doc.text('CBT EXAM ENTRY PASS', pageWidth / 2, yPos, { align: 'center' });
+    
+    yPos += 15;
+    
+    // Profile Image
+    if (assignment.student.profileImg) {
+      try {
+        const imgData = assignment.student.profileImg;
+        doc.addImage(imgData, 'JPEG', pageWidth / 2 - 20, yPos, 40, 40);
+        yPos += 45;
+      } catch (error) {
+        console.error('Error adding profile image:', error);
+        yPos += 5;
+      }
+    } else {
+      yPos += 5;
+    }
+
+    // Student Information Section
+    doc.setFillColor(240, 248, 255);
+    doc.rect(20, yPos, pageWidth - 40, 50, 'F');
+    
+    yPos += 10;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('STUDENT INFORMATION', 25, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Name: ${assignment.student.name}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Registration No: ${assignment.student.regNo}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Department: ${assignment.student.department.name}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Program: ${assignment.student.program.name} (${assignment.student.program.degree})`, 25, yPos);
+    yPos += 6;
+    doc.text(`Level: ${assignment.student.currentLevel?.name || 'N/A'}`, 25, yPos);
+    
     yPos += 15;
 
-    // Student Info
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Student Information', 20, yPos);
-    yPos += 8;
+    // Exam Details Section
+    doc.setFillColor(255, 250, 240);
+    doc.rect(20, yPos, pageWidth - 40, 40, 'F');
     
+    yPos += 10;
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EXAM DETAILS', 25, yPos);
+    
+    yPos += 8;
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Name: ${assignment.student.name}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Registration No: ${assignment.student.regNo}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Email: ${assignment.student.email}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Department: ${assignment.student.department.name}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Program: ${assignment.student.program.name}`, 20, yPos);
-    yPos += 12;
+    doc.text(`Course: ${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.course.title}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Exam Type: ${assignment.examSession.exam.examType}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Session: ${assignment.examSession.sessionName}`, 25, yPos);
+    
+    yPos += 15;
 
-    // Exam Details
-    doc.setFont('helvetica', 'bold');
-    doc.text('Exam Details', 20, yPos);
-    yPos += 8;
+    // Session Details Section
+    doc.setFillColor(240, 255, 240);
+    doc.rect(20, yPos, pageWidth - 40, 35, 'F');
     
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Course: ${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.course.title}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Exam Title: ${assignment.examSession.exam.title}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Exam Type: ${assignment.examSession.exam.examType}`, 20, yPos);
-    yPos += 12;
-
-    // Session Details
+    yPos += 10;
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('Session Details', 20, yPos);
-    yPos += 8;
+    doc.text('SESSION DETAILS', 25, yPos);
     
+    yPos += 8;
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Session: ${assignment.examSession.sessionName}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Date: ${format(new Date(assignment.examSession.startTime), 'PPP')}`, 20, yPos);
-    yPos += 7;
-    doc.text(`Time: ${format(new Date(assignment.examSession.startTime), 'p')} - ${format(new Date(assignment.examSession.endTime), 'p')}`, 20, yPos);
-    yPos += 7;
+    doc.text(`Date: ${format(new Date(assignment.examSession.startTime), 'EEEE, MMMM do, yyyy')}`, 25, yPos);
+    yPos += 6;
+    doc.text(`Time: ${format(new Date(assignment.examSession.startTime), 'h:mm a')} - ${format(new Date(assignment.examSession.endTime), 'h:mm a')}`, 25, yPos);
+    
     if (assignment.examSession.venue) {
-      doc.text(`Venue: ${assignment.examSession.venue.name}`, 20, yPos);
-      yPos += 7;
-      doc.text(`Location: ${assignment.examSession.venue.location}`, 20, yPos);
-      yPos += 7;
+      yPos += 6;
+      doc.text(`Venue: ${assignment.examSession.venue.name}`, 25, yPos);
+      yPos += 6;
+      doc.text(`Location: ${assignment.examSession.venue.location}`, 25, yPos);
     }
+    
     if (assignment.seatNumber) {
-      doc.text(`Seat Number: ${assignment.seatNumber}`, 20, yPos);
+      yPos += 6;
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Seat Number: ${assignment.seatNumber}`, 25, yPos);
     }
 
-    doc.save(`exam-assignment-${assignment.student.regNo}-${assignment.examSession.exam.course.code}.pdf`);
-    toast.success('Assignment downloaded successfully');
+    // Footer
+    yPos = pageHeight - 35;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 100, 100);
+    doc.text('This is an official exam entry pass. Present this at the examination venue.', pageWidth / 2, yPos, { align: 'center' });
+    yPos += 5;
+    doc.text(`Generated on: ${format(new Date(), 'PPP p')}`, pageWidth / 2, yPos, { align: 'center' });
+
+    doc.save(`exam-pass-${assignment.student.regNo}-${assignment.examSession.exam.course.code}.pdf`);
+    toast.success('Exam pass downloaded successfully');
   };
 
   if (loading) {
@@ -217,6 +318,11 @@ const ExamAssignments = () => {
                       </div>
                     </div>
 
+                    {/* Countdown Timer */}
+                    <div className="pt-2">
+                      <ExamCountdown startTime={assignment.examSession.startTime} />
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-2">
                       <Button
@@ -231,9 +337,19 @@ const ExamAssignments = () => {
                         variant="default"
                         size="sm"
                         onClick={() => handleDownload(assignment)}
+                        disabled={checkingPayment === assignment.examSession.exam.id}
                       >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
+                        {checkingPayment === assignment.examSession.exam.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Checking...
+                          </>
+                        ) : (
+                          <>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download Pass
+                          </>
+                        )}
                       </Button>
                     </div>
                   </div>
@@ -297,14 +413,42 @@ const ExamAssignments = () => {
                 <Button onClick={() => setSelectedAssignment(null)} variant="outline" className="flex-1">
                   Close
                 </Button>
-                <Button onClick={() => handleDownload(selectedAssignment)} className="flex-1">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
+                <Button 
+                  onClick={() => handleDownload(selectedAssignment)} 
+                  className="flex-1"
+                  disabled={checkingPayment === selectedAssignment.examSession.exam.id}
+                >
+                  {checkingPayment === selectedAssignment.examSession.exam.id ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Pass
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Payment Modal */}
+      {selectedExamForPayment && (
+        <ExamPaymentModal
+          open={paymentModalOpen}
+          onOpenChange={setPaymentModalOpen}
+          examId={selectedExamForPayment.examId}
+          examTitle={selectedExamForPayment.examTitle}
+          amount={selectedExamForPayment.amount}
+          onPaymentInitialized={() => {
+            setPaymentModalOpen(false);
+            setSelectedExamForPayment(null);
+          }}
+        />
       )}
     </div>
   );
