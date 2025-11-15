@@ -16,7 +16,7 @@ interface ExamPaymentDetails {
     // The studentId will be added by the backend from the auth token
 }
 export interface ExamPaymentStatus {
-  status: 'PAID' | 'PENDING' | 'FAILED' | 'NOT_PAID' | 'NOT_REQUIRED';
+  status: 'PAID' | 'PENDING' | 'FAILED' | 'NOT_PAID' | 'NOT_REQUIRED' | 'FEE_NOT_CONFIGURED';
   message: string;
   feeDetails?: {
     id: number;

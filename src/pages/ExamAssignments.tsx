@@ -257,40 +257,45 @@ const ExamAssignments = () => {
     setSelectedAssignment(assignment);
   };
 
-  const handleDownload = async (assignment: ExamAssignment) => {
+ const handleDownload = async (assignment: ExamAssignment) => {
     try {
-      setCheckingPayment(assignment.examSession.exam.id);
-      const paymentStatus = await getPaymentStatus(
-        assignment.examSession.exam.id
-      );
+        setCheckingPayment(assignment.examSession.exam.id);
+        const paymentStatus = await getPaymentStatus(
+            assignment.examSession.exam.id
+        );
 
-      if (
-        paymentStatus.status === "PAID" ||
-        paymentStatus.status === "NOT_REQUIRED"
-      ) {
-        // --- CHANGE: Generate QR Code and set state to trigger PDF generation ---
-        const qrData = `RegNo: ${assignment.student.regNo}\nCourse: ${
-          assignment.examSession.exam.course.code
-        }\nSeat: ${assignment.seatNumber || "N/A"}`;
-        const qrUrl = await QRCode.toDataURL(qrData);
-        setQrCodeUrl(qrUrl); // Set the QR code URL
-        setAssignmentForPdf(assignment); // Set the assignment data
-      } else {
-        setSelectedExamForPayment({
-          examId: assignment.examSession.exam.id,
-          examTitle: `${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.title}`,
-          amount: paymentStatus.feeDetails?.amount || 0,
-        });
-        setPaymentModalOpen(true);
-      }
+        // --- THIS IS THE UPDATED LOGIC ---
+
+        if (paymentStatus.status === "PAID") {
+            // Logic to generate QR code and prepare PDF
+            const qrData = `RegNo: ${assignment.student.regNo}\nCourse: ${assignment.examSession.exam.course.code}\nSeat: ${assignment.seatNumber || "N/A"}`;
+            const qrUrl = await QRCode.toDataURL(qrData);
+            setQrCodeUrl(qrUrl);
+            setAssignmentForPdf(assignment);
+
+        } else if (paymentStatus.status === 'FEE_NOT_CONFIGURED') {
+            // Handle the new error case: show a specific error message
+            toast.error("Action Required by Admin", {
+                description: paymentStatus.message,
+            });
+
+        } else {
+            // This now correctly handles 'NOT_PAID' and other statuses
+            setSelectedExamForPayment({
+                examId: assignment.examSession.exam.id,
+                examTitle: `${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.title}`,
+                amount: paymentStatus.feeDetails?.amount || 0,
+            });
+            setPaymentModalOpen(true);
+        }
+
     } catch (error: any) {
-      console.error("Error during download prep:", error);
-      toast.error("Failed to prepare exam pass");
+        console.error("Error during download prep:", error);
+        toast.error(error.response?.data?.message || "Failed to prepare exam pass");
     } finally {
-      setCheckingPayment(null);
+        setCheckingPayment(null);
     }
-  };
-
+};
   const generatePDF = async () => {
     if (!pdfLayoutRef.current || !assignmentForPdf) return;
     toast.info("Preparing your PDF...");
