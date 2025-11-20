@@ -2,12 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import api, { endpoints } from '@/config/api';
-// IMPORTANT: Make sure StudentProfileData interface correctly represents what getStudentProfile returns.
-// If getStudentProfile returns { student: actualStudentObject }, then StudentProfileData should be { student: ActualStudentDetailsInterface }
-// For now, let's assume StudentProfileData is the 'actualStudentObject' directly,
-// and we'll adjust the API service call to destructure it.
-import { getStudentProfile, StudentProfileData as BackendStudentData } from '@/services/studentServicesApi';
+// Import setLogoutCallback from your updated api config
+import api, { endpoints, setLogoutCallback } from '@/config/api'; 
+import { getStudentProfile } from '@/services/studentServicesApi';
 
 
 interface User {
@@ -36,7 +33,7 @@ interface User {
   isGraduated?: boolean;
   yearOfAdmission?: number;
   entryMode?: string;
-  bioData?: { // Changed from studentDetails?: any;
+  bioData?: { 
       nationality?: string;
     };
 }
@@ -58,83 +55,94 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   const signOut = useCallback(async (showToast: boolean = true) => {
+    // Check if the user was actually logged in before this function was called.
+    const wasLoggedIn = !!localStorage.getItem('authToken');
+
     try {
-      await api.post(endpoints.auth.logout);
+      // Only attempt to call the logout endpoint if it wasn't an automatic session expiry
+      if (wasLoggedIn) {
+        await api.post(endpoints.auth.logout);
+      }
     } catch (error) {
-      console.error('Logout API call failed:', error);
+      console.error('Logout API call failed, but proceeding with client-side logout:', error);
     } finally {
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('currentUser');
       delete api.defaults.headers.common['Authorization'];
       setUser(null);
-      setLoading(false);
+
+      // Show a more informative toast message
       if (showToast) {
         toast({
-          title: "Logged out",
-          description: "You have been successfully logged out",
+          title: wasLoggedIn ? "Session Expired" : "Logged Out",
+          description: wasLoggedIn
+            ? "Your session has expired. Please log in again."
+            : "You have been successfully logged out.",
+          variant: wasLoggedIn ? "destructive" : "default",
         });
       }
     }
   }, [toast]);
 
+  // THIS IS A KEY ADDITION:
+  // This effect connects the API interceptor to your signOut function.
+  // It runs once and provides the signOut function to the API layer,
+  // allowing it to trigger a graceful logout on any 401 error.
+  useEffect(() => {
+    setLogoutCallback(signOut);
+  }, [signOut]);
 
   const fetchUserProfile = useCallback(async () => {
     setLoading(true);
     try {
-      // This response.data is { student: {...} }
       const response = await getStudentProfile();
       
-      if (response.status === 'success' && response.data && response.data.student) { // <-- Access response.data.student
-        const profileData = response.data.student; // <-- This is the actual student object now!
+      if (response.status === 'success' && response.data && response.data.student) {
+        const profileData = response.data.student;
 
-         const transformedProfile: User = {
-      id: profileData.id,
-      regNo: profileData.regNo,
-      jambRegNo: profileData.jambRegNo,
-      name: profileData.name,
-      email: profileData.email,
-      profileImage: profileData.profileImg,
-      avatarLetter: profileData.avatarLetter,
-      departmentName: profileData.department?.name,
-      programName: profileData.program?.name,
-      studyMode: profileData.program?.modeOfStudy,
-      currentLevelName: profileData.currentLevel?.name,
-      currentLevelValue: profileData.currentLevel?.value,
-      currentLevelId: profileData.currentLevel?.id?.toString(), // Convert to string
-      currentSeasonName: profileData.currentSeason?.name,
-      currentSeasonId: profileData.currentSeason?.id?.toString(), // Convert to string
-      currentSemesterName: profileData.currentSemester?.name,
-      currentSemesterId: profileData.currentSemester?.id?.toString(), // Convert to string
-      currentSemesterType: profileData.currentSemester?.type,
-
-      isActive: profileData.isActive,
-      isGraduated: profileData.isGraduated,
-      yearOfAdmission: profileData.yearOfAdmission,
-      entryMode: profileData.entryMode,
-      bioData: {
-        nationality: profileData.studentDetails?.bioData?.nationality || null,
-      },
-  };
-  setUser(transformedProfile);
+        const transformedProfile: User = {
+          id: profileData.id,
+          regNo: profileData.regNo,
+          jambRegNo: profileData.jambRegNo,
+          name: profileData.name,
+          email: profileData.email,
+          profileImage: profileData.profileImg,
+          avatarLetter: profileData.avatarLetter,
+          departmentName: profileData.department?.name,
+          programName: profileData.program?.name,
+          studyMode: profileData.program?.modeOfStudy,
+          currentLevelName: profileData.currentLevel?.name,
+          currentLevelValue: profileData.currentLevel?.value,
+          currentLevelId: profileData.currentLevel?.id?.toString(),
+          currentSeasonName: profileData.currentSeason?.name,
+          currentSeasonId: profileData.currentSeason?.id?.toString(),
+          currentSemesterName: profileData.currentSemester?.name,
+          currentSemesterId: profileData.currentSemester?.id?.toString(),
+          currentSemesterType: profileData.currentSemester?.type,
+          isActive: profileData.isActive,
+          isGraduated: profileData.isGraduated,
+          yearOfAdmission: profileData.yearOfAdmission,
+          entryMode: profileData.entryMode,
+          bioData: {
+            nationality: profileData.studentDetails?.bioData?.nationality || undefined,
+          },
+        };
+        setUser(transformedProfile);
         localStorage.setItem('currentUser', JSON.stringify(transformedProfile));
       } else {
         console.warn('API returned success but no valid student profile data. Clearing user session.', response);
-        signOut(false);
+        await signOut(false);
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        signOut(false);
-      } else {
-        console.error('Non-auth related error during profile fetch. Signing out.');
-        signOut(false);
-      }
+      // NOTE: We REMOVED the manual signOut call from here.
+      // The API interceptor will now automatically catch the 401/403 error
+      // and call the globally registered signOut function. This prevents duplicate calls.
     } finally {
       setLoading(false); 
     }
   }, [signOut]);
-
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
@@ -150,11 +158,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut(false);
       }
     } else {
-      setUser(null);
       setLoading(false);
     }
   }, [fetchUserProfile, signOut]);
-
 
   const signIn = async (identifier: string, password: string) => {
     setLoading(true);
@@ -165,9 +171,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (response.status === 200 && response.data.status === 'success' && response.data.data) {
-        const { token } = response.data.data;
+        const { token, refreshToken } = response.data.data; // Assuming your login also returns a refreshToken
 
         localStorage.setItem('authToken', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken); // Store the refresh token
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
         await fetchUserProfile();
@@ -212,9 +219,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (response.status === 200 && response.data.status === 'success' && response.data.data) {
-        const { token } = response.data.data;
+        const { token, refreshToken } = response.data.data; // Assuming signup also returns tokens
 
         localStorage.setItem('authToken', token);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken); // Store the refresh token
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await fetchUserProfile();
