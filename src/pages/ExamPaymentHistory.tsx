@@ -225,20 +225,20 @@ const ExamPaymentHistoryPage = () => {
       </Card>
 
       {/* Payment Table */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
           <CardTitle>Payment Records</CardTitle>
           <CardDescription>
             {totalItems > 0 ? `Showing ${payments.length} of ${totalItems} payments` : 'No payments found'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : payments.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="text-center py-12 px-4">
               <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground">No payments found</h3>
               <p className="text-muted-foreground mt-1">You haven't made any exam fee payments yet.</p>
@@ -246,7 +246,7 @@ const ExamPaymentHistoryPage = () => {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-[800px]">
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
@@ -300,7 +300,7 @@ const ExamPaymentHistoryPage = () => {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t px-4 sm:px-0">
                   <p className="text-sm text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </p>
@@ -312,7 +312,7 @@ const ExamPaymentHistoryPage = () => {
                       disabled={currentPage === 1}
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      <span className="hidden sm:inline">Previous</span>
                     </Button>
                     <Button
                       variant="outline"
@@ -320,7 +320,7 @@ const ExamPaymentHistoryPage = () => {
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      <span className="hidden sm:inline">Next</span>
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>

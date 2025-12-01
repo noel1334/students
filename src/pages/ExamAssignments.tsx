@@ -44,99 +44,121 @@ interface ExamPassLayoutProps {
 
 const ExamPassLayout = forwardRef<HTMLDivElement, ExamPassLayoutProps>(
   ({ assignment, user, qrCodeUrl }, ref) => {
+    // Use inline styles to ensure colors are not affected by dark mode
     return (
       <div
         ref={ref}
-        className="bg-white p-8"
-        style={{ width: "210mm", minHeight: "297mm" }}
+        style={{ 
+          width: "210mm", 
+          minHeight: "297mm", 
+          backgroundColor: "#ffffff",
+          padding: "32px",
+          color: "#1f2937"
+        }}
       >
         {/* Header */}
-        <div className="flex justify-between items-start mb-10">
-          <div className="text-left">
-            <h1 className="text-2xl font-bold text-gray-800">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "40px" }}>
+          <div style={{ textAlign: "left" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "bold", color: "#1f2937", margin: 0 }}>
               EXAM ENTRY PASS
             </h1>
-            <p className="text-md text-gray-600">
+            <p style={{ fontSize: "14px", color: "#4b5563", marginTop: "4px" }}>
               {assignment.examSession.exam.title}
             </p>
           </div>
-          <div className="w-24 h-24 border-2 border-gray-200 flex items-center justify-center bg-gray-50">
-            <span className="text-sm font-bold text-gray-500 text-center">
+          <div style={{ 
+            width: "96px", 
+            height: "96px", 
+            border: "2px solid #e5e7eb", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            backgroundColor: "#f9fafb" 
+          }}>
+            <span style={{ fontSize: "12px", fontWeight: "bold", color: "#6b7280", textAlign: "center" }}>
               SCHOOL LOGO
             </span>
           </div>
         </div>
 
         {/* Student Details */}
-        <div className="flex justify-between items-start mb-8">
-          <div className="grid grid-cols-2 gap-x-12 gap-y-2 text-sm">
-            <strong className="text-gray-600">Student Name:</strong>
-            <span className="text-gray-800">{assignment.student.name}</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "32px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "auto auto", gap: "8px 48px", fontSize: "14px" }}>
+            <strong style={{ color: "#4b5563" }}>Student Name:</strong>
+            <span style={{ color: "#1f2937" }}>{assignment.student.name}</span>
 
-            <strong className="text-gray-600">Program of Study:</strong>
-            <span className="text-gray-800">
+            <strong style={{ color: "#4b5563" }}>Program of Study:</strong>
+            <span style={{ color: "#1f2937" }}>
               {assignment.student.program.name}
             </span>
 
-            <strong className="text-gray-600">Registration No:</strong>
-            <span className="text-gray-800">{assignment.student.regNo}</span>
+            <strong style={{ color: "#4b5563" }}>Registration No:</strong>
+            <span style={{ color: "#1f2937" }}>{assignment.student.regNo}</span>
 
-            <strong className="text-gray-600">Level:</strong>
-            <span className="text-gray-800">
+            <strong style={{ color: "#4b5563" }}>Level:</strong>
+            <span style={{ color: "#1f2937" }}>
               {assignment.student.currentLevel?.name || "N/A"}
             </span>
 
-            <strong className="text-gray-600">Department:</strong>
-            <span className="text-gray-800">
+            <strong style={{ color: "#4b5563" }}>Department:</strong>
+            <span style={{ color: "#1f2937" }}>
               {assignment.student.department.name}
             </span>
 
-            <strong className="text-gray-600">Session:</strong>
-            <span className="text-gray-800">
+            <strong style={{ color: "#4b5563" }}>Session:</strong>
+            <span style={{ color: "#1f2937" }}>
               {assignment.examSession.sessionName}
             </span>
           </div>
 
           {/* Student Photo */}
-          <div className="w-32 h-40 border-2 border-gray-300 rounded flex items-center justify-center bg-gray-100 p-1">
+          <div style={{ 
+            width: "128px", 
+            height: "160px", 
+            border: "2px solid #d1d5db", 
+            borderRadius: "4px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            backgroundColor: "#f3f4f6", 
+            padding: "4px" 
+          }}>
             {user?.profileImage ? (
               <img
                 src={user.profileImage}
                 alt="Student"
-                className="w-full h-full object-cover"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 crossOrigin="anonymous"
               />
             ) : (
-              <span className="text-xs text-gray-500">Student Photo</span>
+              <span style={{ fontSize: "12px", color: "#6b7280" }}>Student Photo</span>
             )}
           </div>
         </div>
 
         {/* Examination Details Table */}
-        <div className="mb-12">
-          {" "}
-          {/* Added more bottom margin */}
-          <h3 className="text-lg font-bold mb-2 text-gray-800">
+        <div style={{ marginBottom: "48px" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: "bold", marginBottom: "8px", color: "#1f2937" }}>
             Examination Details
           </h3>
-          <table className="w-full border-collapse text-sm">
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
             <tbody>
-              <tr className="border-b border-gray-200">
-                <td className="font-bold py-2 pr-4 bg-gray-50 w-40">Course:</td>
-                <td className="py-2">{`${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.course.title}`}</td>
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ fontWeight: "bold", padding: "8px", paddingRight: "16px", backgroundColor: "#f9fafb", width: "160px", color: "#1f2937" }}>Course:</td>
+                <td style={{ padding: "8px", color: "#1f2937" }}>{`${assignment.examSession.exam.course.code} - ${assignment.examSession.exam.course.title}`}</td>
               </tr>
-              <tr className="border-b border-gray-200">
-                <td className="font-bold py-2 pr-4 bg-gray-50">Date:</td>
-                <td className="py-2">
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ fontWeight: "bold", padding: "8px", paddingRight: "16px", backgroundColor: "#f9fafb", color: "#1f2937" }}>Date:</td>
+                <td style={{ padding: "8px", color: "#1f2937" }}>
                   {format(
                     new Date(assignment.examSession.startTime),
                     "EEEE, MMMM do, yyyy"
                   )}
                 </td>
               </tr>
-              <tr className="border-b border-gray-200">
-                <td className="font-bold py-2 pr-4 bg-gray-50">Time:</td>
-                <td className="py-2">{`${format(
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ fontWeight: "bold", padding: "8px", paddingRight: "16px", backgroundColor: "#f9fafb", color: "#1f2937" }}>Time:</td>
+                <td style={{ padding: "8px", color: "#1f2937" }}>{`${format(
                   new Date(assignment.examSession.startTime),
                   "h:mm a"
                 )} - ${format(
@@ -144,17 +166,17 @@ const ExamPassLayout = forwardRef<HTMLDivElement, ExamPassLayoutProps>(
                   "h:mm a"
                 )}`}</td>
               </tr>
-              <tr className="border-b border-gray-200">
-                <td className="font-bold py-2 pr-4 bg-gray-50">Venue:</td>
-                <td className="py-2">{`${
+              <tr style={{ borderBottom: "1px solid #e5e7eb" }}>
+                <td style={{ fontWeight: "bold", padding: "8px", paddingRight: "16px", backgroundColor: "#f9fafb", color: "#1f2937" }}>Venue:</td>
+                <td style={{ padding: "8px", color: "#1f2937" }}>{`${
                   assignment.examSession.venue?.name || "N/A"
                 } (${assignment.examSession.venue?.location || "N/A"})`}</td>
               </tr>
-              <tr className="bg-red-50">
-                <td className="font-bold py-2 pr-4 text-red-700">
+              <tr style={{ backgroundColor: "#fef2f2" }}>
+                <td style={{ fontWeight: "bold", padding: "8px", paddingRight: "16px", color: "#b91c1c" }}>
                   Seat Number:
                 </td>
-                <td className="py-2 font-bold text-lg text-red-700">
+                <td style={{ padding: "8px", fontWeight: "bold", fontSize: "18px", color: "#b91c1c" }}>
                   {assignment.seatNumber || "NOT ASSIGNED"}
                 </td>
               </tr>
@@ -162,34 +184,30 @@ const ExamPassLayout = forwardRef<HTMLDivElement, ExamPassLayoutProps>(
           </table>
         </div>
 
-        {/* ====================================================================== */}
-        {/* === THIS IS THE NEW SECTION THAT WAS MISSING                       === */}
-        {/* ====================================================================== */}
-        <div className="flex items-start gap-8">
+        {/* QR Code and Instructions */}
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "32px" }}>
           {/* QR Code */}
-          <div className="text-center">
+          <div style={{ textAlign: "center" }}>
             {qrCodeUrl && (
-              <img src={qrCodeUrl} alt="QR Code" className="w-24 h-24" />
+              <img src={qrCodeUrl} alt="QR Code" style={{ width: "96px", height: "96px" }} />
             )}
           </div>
           {/* Instructions */}
           <div>
-            <h4 className="font-bold text-sm text-gray-700 mb-2">
+            <h4 style={{ fontWeight: "bold", fontSize: "14px", color: "#374151", marginBottom: "8px" }}>
               Instructions to Candidate:
             </h4>
-            <ol className="list-decimal list-inside text-xs text-gray-600 space-y-1">
-              <li>
+            <ol style={{ margin: 0, paddingLeft: "20px", fontSize: "12px", color: "#4b5563" }}>
+              <li style={{ marginBottom: "4px" }}>
                 This pass is required for entry into the examination hall.
               </li>
-              <li>
-                Please arrive at the venue 30 minutes before the scheduled start
-                time.
+              <li style={{ marginBottom: "4px" }}>
+                Please arrive at the venue 30 minutes before the scheduled start time.
               </li>
-              <li>
-                Mobile phones and any electronic gadgets are strictly
-                prohibited.
+              <li style={{ marginBottom: "4px" }}>
+                Mobile phones and any electronic gadgets are strictly prohibited.
               </li>
-              <li>
+              <li style={{ marginBottom: "4px" }}>
                 You must present your Student ID card along with this pass.
               </li>
             </ol>
