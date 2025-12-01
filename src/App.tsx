@@ -26,6 +26,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PaymentStatusPage from './pages/PaymentStatusPage';
 import ExamAssignments from './pages/ExamAssignments';
+import ExamPaymentHistory from './pages/ExamPaymentHistory';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -125,6 +126,13 @@ const App = () => {
                 <ProtectedRoute>
                   <Layout>
                     <ExamAssignments />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/exam-payments" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ExamPaymentHistory />
                   </Layout>
                 </ProtectedRoute>
               } />
