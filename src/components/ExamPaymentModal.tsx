@@ -82,10 +82,12 @@ const ExamPaymentModal = ({
     customer: {
         email: user?.email || '',
         name: user?.name || '',
+        phone_number: (user as any)?.phone || '08000000000',
     },
     customizations: {
         title: "UMS Exam Fee Payment",
         description: `Payment for: ${examTitle}`,
+        logo: '/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png',
     },
   };
 

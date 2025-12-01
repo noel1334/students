@@ -14,7 +14,8 @@ import {
   X,
   LogOut,
   ChevronRight,
-  ClipboardList
+  ClipboardList,
+  Receipt
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -91,6 +92,7 @@ const Sidebar = () => {
     { label: 'Courses', icon: <BookOpen size={20} />, to: '/courses' },
     { label: 'Results', icon: <GraduationCap size={20} />, to: '/results' },
     { label: 'Exams', icon: <ClipboardList size={20} />, to: '/exams' },
+    { label: 'Exam Payments', icon: <Receipt size={20} />, to: '/exam-payments' },
     { label: 'Payments', icon: <CreditCard size={20} />, to: '/payments' },
     { label: 'Hostel', icon: <Hotel size={20} />, to: '/hostel' },
     { label: 'Profile', icon: <User size={20} />, to: '/profile' },
