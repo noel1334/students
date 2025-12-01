@@ -1,3 +1,4 @@
+// src/pages/Login.tsx
 
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -8,7 +9,6 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 const Login = () => {
-  
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,10 +22,9 @@ const Login = () => {
 
     try {
       await signIn(identifier, password);
-      // Redirect to home page after successful login
       navigate('/');
     } catch (error) {
-      // Error is already handled in the auth context
+      // Error handled in auth context
     } finally {
       setIsLoading(false);
     }
@@ -36,17 +35,21 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+    // CHANGE 1: Use theme-aware background color
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      {/* CHANGE 2: Use theme-aware card color and remove shadow which may not look good in dark mode */}
+      <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg border">
         <div className="text-center">
           <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="mx-auto h-16 w-16" />
-          <h2 className="mt-6 text-3xl font-bold text-[#1a4aa6]">Welcome Back</h2>
-          <p className="mt-2 text-gray-600">Sign in to your account</p>
+          {/* CHANGE 3: Use theme-aware text colors */}
+          <h2 className="mt-6 text-3xl font-bold text-primary">Welcome Back</h2>
+          <p className="mt-2 text-muted-foreground">Sign in to your account</p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
+              {/* Use default Label which is already themed */}
               <Label htmlFor="identifier">Registration Number / JAMB Number</Label>
               <Input
                 id="identifier"
@@ -81,9 +84,10 @@ const Login = () => {
             </div>
           </div>
 
+          {/* CHANGE 4: Use the primary button variant, which is already themed */}
           <Button
             type="submit"
-            className="w-full py-3 bg-[#1a4aa6] hover:bg-[#0f3c8c] text-white"
+            className="w-full py-3" // The default Button already has primary styles
             disabled={isLoading}
           >
             <LogIn className="mr-2 h-4 w-4" />
@@ -93,7 +97,8 @@ const Login = () => {
           <div className="text-center">
             <p className="text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/register" className="text-[#1a4aa6] hover:underline">
+              {/* CHANGE 5: Use primary text color for the link */}
+              <Link to="/register" className="text-primary hover:underline">
                 Sign up
               </Link>
             </p>
