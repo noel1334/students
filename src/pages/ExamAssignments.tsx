@@ -23,10 +23,11 @@ import {
   ExamAssignment,
 } from "@/services/examAssignmentApiService";
 import { getPaymentStatus } from "@/services/examPaymentApiService";
-import { format } from "date-fns";
+import { format, isToday, isThisWeek, isThisMonth, isFuture, isPast } from "date-fns";
 import { useAuth } from "@/contexts/AuthContext";
 import ExamCountdown from "@/components/ExamCountdown";
 import ExamPaymentModal from "@/components/ExamPaymentModal";
+import { ExamAssignmentFilters } from "@/components/ExamAssignmentFilters";
 
 // --- NEW IMPORTS ---
 import jsPDF from "jspdf";
@@ -220,6 +221,7 @@ const ExamPassLayout = forwardRef<HTMLDivElement, ExamPassLayoutProps>(
 
 const ExamAssignments = () => {
   const [assignments, setAssignments] = useState<ExamAssignment[]>([]);
+  const [filteredAssignments, setFilteredAssignments] = useState<ExamAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAssignment, setSelectedAssignment] =
     useState<ExamAssignment | null>(null);
@@ -231,6 +233,11 @@ const ExamAssignments = () => {
     amount: number;
   } | null>(null);
   const [checkingPayment, setCheckingPayment] = useState<number | null>(null);
+  
+  // Filter states
+  const [courseFilter, setCourseFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const pdfLayoutRef = useRef<HTMLDivElement>(null);
   const [assignmentForPdf, setAssignmentForPdf] =
@@ -242,6 +249,11 @@ const ExamAssignments = () => {
     fetchAssignments();
   }, []);
 
+  // Apply filters whenever assignments or filter values change
+  useEffect(() => {
+    applyFilters();
+  }, [assignments, courseFilter, dateFilter, statusFilter]);
+
   // This effect now triggers the PDF generation only after QR code is also ready
   useEffect(() => {
     if (assignmentForPdf && qrCodeUrl && pdfLayoutRef.current) {
@@ -250,7 +262,6 @@ const ExamAssignments = () => {
   }, [assignmentForPdf, qrCodeUrl]);
 
   const fetchAssignments = async () => {
-    /* ...fetch logic... */
     try {
       setLoading(true);
       const data = await getMyExamAssignments();
@@ -263,6 +274,67 @@ const ExamAssignments = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...assignments];
+
+    // Course filter
+    if (courseFilter !== 'all') {
+      filtered = filtered.filter(
+        (assignment) => assignment.examSession.exam.course.code === courseFilter
+      );
+    }
+
+    // Date filter
+    if (dateFilter !== 'all') {
+      filtered = filtered.filter((assignment) => {
+        const examDate = new Date(assignment.examSession.startTime);
+        switch (dateFilter) {
+          case 'upcoming':
+            return isFuture(examDate);
+          case 'today':
+            return isToday(examDate);
+          case 'this-week':
+            return isThisWeek(examDate);
+          case 'this-month':
+            return isThisMonth(examDate);
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((assignment) => {
+        const examDate = new Date(assignment.examSession.startTime);
+        switch (statusFilter) {
+          case 'active':
+            return assignment.examSession.isActive && isFuture(examDate);
+          case 'inactive':
+            return !assignment.examSession.isActive;
+          case 'completed':
+            return isPast(examDate);
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredAssignments(filtered);
+  };
+
+  const getAvailableCourses = () => {
+    const courses = assignments.map((assignment) => ({
+      code: assignment.examSession.exam.course.code,
+      title: assignment.examSession.exam.course.title,
+    }));
+    // Remove duplicates
+    return courses.filter(
+      (course, index, self) =>
+        index === self.findIndex((c) => c.code === course.code)
+    );
   };
   const handleSuccessfulPayment = () => {
     /* ...payment success logic... */
@@ -357,18 +429,42 @@ const ExamAssignments = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* ... All your visible JSX for the page ... */}
+    <div className="container mx-auto p-4 md:p-6 space-y-6">
       <div className="flex flex-col gap-2">
-        {" "}
-        <h1 className="text-3xl font-bold text-foreground">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
           CBT Exam Schedule
-        </h1>{" "}
-        <p className="text-muted-foreground">
+        </h1>
+        <p className="text-muted-foreground text-sm md:text-base">
           View and download your exam session assignments
-        </p>{" "}
+        </p>
       </div>
-      {assignments.length === 0 ? (
+
+      {/* Filters */}
+      {assignments.length > 0 && (
+        <ExamAssignmentFilters
+          courseFilter={courseFilter}
+          dateFilter={dateFilter}
+          statusFilter={statusFilter}
+          onCourseChange={setCourseFilter}
+          onDateChange={setDateFilter}
+          onStatusChange={setStatusFilter}
+          availableCourses={getAvailableCourses()}
+        />
+      )}
+
+      {filteredAssignments.length === 0 && assignments.length > 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium text-muted-foreground">
+              No exams match your filters
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Try adjusting your filters to see more results
+            </p>
+          </CardContent>
+        </Card>
+      ) : assignments.length === 0 ? (
         <Card>
           {" "}
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -384,8 +480,7 @@ const ExamAssignments = () => {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {" "}
-          {assignments.map((assignment) => (
+          {filteredAssignments.map((assignment) => (
             <Card
               key={assignment.id}
               className="hover:shadow-md transition-shadow"
