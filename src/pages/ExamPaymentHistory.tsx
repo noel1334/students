@@ -11,7 +11,9 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { getMyExamPaymentHistory, ExamPaymentHistory, PaymentHistoryResponse } from '@/services/examPaymentHistoryApiService';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable'; // Ensure this is installed if not already (npm install jspdf-autotable)
+import autoTable from 'jspdf-autotable';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { ExamPaymentCard } from '@/components/ExamPaymentCard';
 
 const ExamPaymentHistoryPage = () => {
   const [payments, setPayments] = useState<ExamPaymentHistory[]>([]);
@@ -21,6 +23,7 @@ const ExamPaymentHistoryPage = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [channelFilter, setChannelFilter] = useState<string>('all');
+  const isMobile = useIsMobile();
 
   const fetchPayments = async () => {
     setLoading(true);
@@ -162,24 +165,22 @@ const ExamPaymentHistoryPage = () => {
   };
 
   return (
-    // Outer-most div for the page content, ensuring it takes full width
-    <div className="w-full p-4 md:p-6 space-y-6"> 
+    <div className="w-full p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2"> {/* Smaller h1 on mobile */}
-            <Receipt className="h-5 w-5 sm:h-6 sm:w-6 text-primary" /> {/* Smaller icon on mobile */}
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center gap-2">
+            <Receipt className="h-6 w-6 text-primary" />
             Exam Payment History
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm sm:text-base">View all your exam fee payments</p> {/* Smaller text on mobile */}
+          <p className="text-muted-foreground mt-1 text-sm">View all your exam fee payments</p>
         </div>
-        {/* Buttons stack on mobile, go side-by-side on sm screens and up */}
-        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto"> 
-          <Button variant="outline" size="sm" onClick={fetchPayments} disabled={loading} className="w-full sm:w-auto"> {/* Full width on mobile */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2"> 
+          <Button variant="outline" size="sm" onClick={fetchPayments} disabled={loading}>
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportAll} disabled={payments.length === 0} className="w-full sm:w-auto"> {/* Full width on mobile */}
+          <Button variant="outline" size="sm" onClick={handleExportAll} disabled={payments.length === 0}>
             <Download className="h-4 w-4 mr-2" />
             Export PDF
           </Button>
@@ -188,19 +189,18 @@ const ExamPaymentHistoryPage = () => {
 
       {/* Filters */}
       <Card>
-        <CardHeader className="pb-3 px-4 sm:px-6"> 
+        <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
             <Filter className="h-4 w-4" />
             Filters
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-4 sm:px-6 pb-4"> 
-          {/* Filters now stack on mobile (w-full) and go side-by-side on sm screens (sm:w-auto) */}
-          <div className="flex flex-col sm:flex-row flex-wrap gap-4">
-            <div className="w-full sm:w-auto flex-1"> {/* flex-1 allows it to grow on larger screens */}
-              <label className="text-sm font-medium text-muted-foreground block mb-1">Status</label>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
               <Select value={statusFilter} onValueChange={(value) => { setStatusFilter(value); setCurrentPage(1); }}>
-                <SelectTrigger className="w-full"> {/* Ensure trigger takes full width of its parent */}
+                <SelectTrigger>
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,10 +211,10 @@ const ExamPaymentHistoryPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="w-full sm:w-auto flex-1"> {/* flex-1 allows it to grow on larger screens */}
-              <label className="text-sm font-medium text-muted-foreground block mb-1">Channel</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Channel</label>
               <Select value={channelFilter} onValueChange={(value) => { setChannelFilter(value); setCurrentPage(1); }}>
-                <SelectTrigger className="w-full"> {/* Ensure trigger takes full width of its parent */}
+                <SelectTrigger>
                   <SelectValue placeholder="All Channels" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,92 +228,98 @@ const ExamPaymentHistoryPage = () => {
         </CardContent>
       </Card>
 
-      {/* Payment Table */}
-      <Card className="overflow-hidden"> 
-        <CardHeader className="px-4 sm:px-6"> 
-          <CardTitle className="text-lg sm:text-xl">Payment Records</CardTitle> {/* Adjust title size */}
-          <CardDescription className="text-sm sm:text-base"> {/* Adjust description size */}
+      {/* Payment Records */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Payment Records</CardTitle>
+          <CardDescription>
             {totalItems > 0 ? `Showing ${payments.length} of ${totalItems} payments` : 'No payments found'}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0"> 
+        <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12 px-4 sm:px-6"> 
+            <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : payments.length === 0 ? (
-            <div className="text-center py-12 px-4 sm:px-6"> 
+            <div className="text-center py-12">
               <Receipt className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground">No payments found</h3>
               <p className="text-muted-foreground mt-1">You haven't made any exam fee payments yet.</p>
             </div>
           ) : (
             <>
-              {/* This div handles the horizontal scrolling for the table */}
-              <div className="overflow-x-auto"> 
-                {/* min-w-[700px] to ensure horizontal scrolling is possible, 
-                    but not so wide it causes excessive empty space on wider mobile views.
-                    Consider `min-w-[max-content]` for very specific cases, but fixed pixel is often safer. */}
-                <Table className="min-w-[700px]"> 
-                  <TableHeader>
-                    <TableRow>
-                      {/* Smaller padding and font size for TableHead cells on mobile */}
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Date</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Reference</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Exam</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Course</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Amount</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Channel</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 whitespace-nowrap">Status</TableHead>
-                      <TableHead className="px-2 py-2 text-xs sm:px-4 sm:py-3 text-right whitespace-nowrap">Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {payments.map((payment) => (
-                      <TableRow key={payment.id}>
-                        {/* Smaller padding and font size for TableCell cells on mobile */}
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 whitespace-nowrap">
-                          <div className="flex items-center gap-1 sm:gap-2"> {/* Smaller gap on mobile */}
-                            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" /> {/* Smaller icon on mobile */}
-                            {payment.paymentDate ? format(new Date(payment.paymentDate), 'PP') : 'N/A'}
-                          </div>
-                        </TableCell>
-                        {/* Truncate aggressively on mobile, allow more space on larger screens */}
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 font-mono max-w-[80px] sm:max-w-[120px] truncate whitespace-nowrap">{payment.paymentReference}</TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 max-w-[100px] sm:max-w-[200px] truncate whitespace-nowrap">{payment.exam.title}</TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 whitespace-nowrap">
-                          <Badge variant="outline" className="text-xs px-2 py-0.5">{payment.exam.course.code}</Badge> {/* Smaller badge */}
-                        </TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 font-medium whitespace-nowrap">₦{payment.amountPaid.toLocaleString()}</TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 whitespace-nowrap">
-                          <div className="flex items-center gap-1">
-                            {getChannelIcon(payment.paymentChannel)}
-                            <span className="text-xs sm:text-sm">{payment.paymentChannel}</span> {/* Smaller text for channel name */}
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 whitespace-nowrap">{getStatusBadge(payment.paymentStatus)}</TableCell>
-                        <TableCell className="px-2 py-2 text-xs sm:px-4 sm:py-2 text-right whitespace-nowrap">
-                          <Button
-                            variant="ghost"
-                            size="icon" // Use icon size for mobile button, sm for larger screens
-                            className="h-7 w-7 sm:h-8 sm:w-auto" // Adjust button size
-                            onClick={() => handleDownloadReceipt(payment)}
-                            disabled={payment.paymentStatus !== 'PAID'}
-                          >
-                            <FileText className="h-3 w-3 sm:h-4 sm:w-4" /> {/* Smaller icon */}
-                            <span className="hidden sm:inline ml-1">Receipt</span> {/* Hide text on mobile, show on sm and up */}
-                          </Button>
-                        </TableCell>
+              {/* Mobile Card View */}
+              {isMobile ? (
+                <div className="space-y-3">
+                  {payments.map((payment) => (
+                    <ExamPaymentCard
+                      key={payment.id}
+                      payment={payment}
+                      onDownloadReceipt={handleDownloadReceipt}
+                    />
+                  ))}
+                </div>
+              ) : (
+                /* Desktop Table View */
+                <div className="overflow-x-auto">
+                  <Table className="min-w-[800px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Date</TableHead>
+                        <TableHead className="whitespace-nowrap">Reference</TableHead>
+                        <TableHead className="whitespace-nowrap">Exam</TableHead>
+                        <TableHead className="whitespace-nowrap">Course</TableHead>
+                        <TableHead className="whitespace-nowrap">Amount</TableHead>
+                        <TableHead className="whitespace-nowrap">Channel</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                        <TableHead className="text-right whitespace-nowrap">Action</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                    </TableHeader>
+                    <TableBody>
+                      {payments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell className="whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              {payment.paymentDate ? format(new Date(payment.paymentDate), 'PP') : 'N/A'}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm max-w-[150px] truncate">{payment.paymentReference}</TableCell>
+                          <TableCell className="max-w-[200px] truncate">{payment.exam.title}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{payment.exam.course.code}</Badge>
+                          </TableCell>
+                          <TableCell className="font-medium">₦{payment.amountPaid.toLocaleString()}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getChannelIcon(payment.paymentChannel)}
+                              <span>{payment.paymentChannel}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(payment.paymentStatus)}</TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDownloadReceipt(payment)}
+                              disabled={payment.paymentStatus !== 'PAID'}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              Receipt
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
 
-              {/* Pagination (kept separate from overflow-x-auto, correctly has its own padding) */}
+              {/* Pagination */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t px-4 sm:px-6">
-                  <p className="text-xs sm:text-sm text-muted-foreground"> {/* Smaller text on mobile */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
                     Page {currentPage} of {totalPages}
                   </p>
                   <div className="flex gap-2">
@@ -323,8 +329,8 @@ const ExamPaymentHistoryPage = () => {
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage === 1}
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                      <span className="hidden md:inline">Previous</span> {/* Hide on small mobile, show on md and up */}
+                      <ChevronLeft className="h-4 w-4 mr-2" />
+                      Previous
                     </Button>
                     <Button
                       variant="outline"
@@ -332,8 +338,8 @@ const ExamPaymentHistoryPage = () => {
                       onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                       disabled={currentPage === totalPages}
                     >
-                      <span className="hidden md:inline">Next</span> {/* Hide on small mobile, show on md and up */}
-                      <ChevronRight className="h-4 w-4" />
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-2" />
                     </Button>
                   </div>
                 </div>
