@@ -1,9 +1,10 @@
-
 import React, { useState } from 'react';
-import { Menu, Settings, User } from 'lucide-react';
+import { Menu, Settings, User, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
 import UserAvatar from '@/components/UserAvatar';
+import { getMyNotifications, getUnreadNotificationCount, markNotificationAsRead } from '@/services/notificationApiService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,10 +12,43 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
+import { formatDistanceToNow } from 'date-fns';
 
 const DashboardHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  
+  // Fetch unread notification count
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unreadNotificationCount'],
+    queryFn: getUnreadNotificationCount,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
+  // Fetch recent notifications
+  const { data: notificationsData, refetch: refetchNotifications } = useQuery({
+    queryKey: ['recentNotifications'],
+    queryFn: () => getMyNotifications(1, 5),
+    enabled: notificationOpen,
+  });
+
+  const handleNotificationClick = async (notificationId: number) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      refetchNotifications();
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
   
   // Use real user data with fallbacks
   const studentInfo = {
@@ -27,6 +61,20 @@ const DashboardHeader = () => {
     studyMode: user?.studyMode?.replace(/_/g, ' ') || "N/A Mode",
     currentSession: user?.currentSeasonName || "N/A Session",
     currentSemester: user?.currentSemesterName || "N/A Semester"
+  };
+
+  const getNotificationIcon = (type: string) => {
+    const iconClass = "h-4 w-4";
+    switch (type) {
+      case 'exam_assignment':
+        return '📝';
+      case 'payment_reminder':
+        return '💰';
+      case 'warning':
+        return '⚠️';
+      default:
+        return '🔔';
+    }
   };
 
   return (
@@ -52,7 +100,85 @@ const DashboardHeader = () => {
           </div>
         </div>
         
-        <div className="flex items-center ml-auto">
+        <div className="flex items-center ml-auto gap-4">
+          {/* Notification Bell */}
+          <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <Badge 
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                    variant="destructive"
+                  >
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0" align="end">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h3 className="font-semibold">Notifications</h3>
+                {unreadCount > 0 && (
+                  <Badge variant="secondary">{unreadCount} unread</Badge>
+                )}
+              </div>
+              <ScrollArea className="h-[400px]">
+                {notificationsData?.items && notificationsData.items.length > 0 ? (
+                  <div className="divide-y">
+                    {notificationsData.items.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
+                          !notification.isRead ? 'bg-accent/50' : ''
+                        }`}
+                        onClick={() => handleNotificationClick(notification.id)}
+                      >
+                        <div className="flex gap-3">
+                          <span className="text-xl">{getNotificationIcon(notification.type)}</span>
+                          <div className="flex-1 space-y-1">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-medium text-sm leading-tight">
+                                {notification.title}
+                              </p>
+                              {!notification.isRead && (
+                                <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {notification.message}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+                    <Bell className="h-12 w-12 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">No notifications yet</p>
+                  </div>
+                )}
+              </ScrollArea>
+              <div className="p-3 border-t">
+                <Button
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setNotificationOpen(false);
+                    navigate('/notifications');
+                  }}
+                >
+                  View All Notifications
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* User Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger className="outline-none">
               <div className="flex items-center">
