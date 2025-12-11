@@ -22,6 +22,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import AcademicPerformance from '@/components/AcademicPerformance';
+import PrintableResultLayout from '@/components/PrintableResultLayout';
 import { Download, Printer, FileText } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/contexts/AuthContext';
@@ -229,8 +230,8 @@ useEffect(() => {
             </div>
           </CardHeader>
 
-          {/* Printable Content */}
-          <div ref={printableRef} className="p-4 sm:p-6">
+          {/* Screen Content */}
+          <div className="p-4 sm:p-6">
             {isLoadingDetail ? (
               <div className="space-y-4">
                 <Skeleton className="h-32 w-full" />
@@ -248,27 +249,6 @@ useEffect(() => {
               </div>
             ) : (
               <>
-                {/* Student Information */}
-                <div className="hidden print:block mb-6 border-b pb-4">
-                  <div className="text-center mb-4">
-                    <h1 className="text-xl font-bold">STUDENT RESULT STATEMENT</h1>
-                    <h2 className="font-semibold">
-                      {resultDetail.season?.name || 'N/A'} - {resultDetail.semester?.name || 'N/A'}
-                    </h2>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p><span className="font-semibold">Student Name:</span> {resultDetail.student?.name || 'N/A'}</p>
-                      <p><span className="font-semibold">Registration No:</span> {resultDetail.student?.regNo || 'N/A'}</p>
-                      <p><span className="font-semibold">Department:</span> {resultDetail.department?.name || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p><span className="font-semibold">Programme:</span> {resultDetail.program?.name || 'N/A'}</p>
-                      <p><span className="font-semibold">Level:</span> {resultDetail.level?.name || 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Summary Statistics */}
                 <div className="bg-muted/50 p-4 rounded-lg mb-6">
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -348,7 +328,6 @@ useEffect(() => {
                           <div className="space-y-1">
                             <p>Credit Units Registered: <span className="font-semibold">{resultDetail.cuAttempted}</span></p>
                             <p>Credit Units Earned: <span className="font-semibold">{resultDetail.cuPassed}</span></p>
-                            {/* --- ADD THIS LINE TO DISPLAY THE SUM --- */}
                             <p>Total Quality Points: <span className="font-semibold">{totalQualityPoints.toFixed(2)}</span></p>
                             <p>GPA: <span className="font-semibold">{resultDetail.gpa.toFixed(2)}</span></p>
                           </div>
@@ -390,6 +369,17 @@ useEffect(() => {
                   </div>
                 )}
               </>
+            )}
+          </div>
+
+          {/* Hidden Printable Content */}
+          <div className="hidden">
+            {resultDetail && (
+              <PrintableResultLayout
+                ref={printableRef}
+                resultDetail={resultDetail}
+                totalQualityPoints={totalQualityPoints}
+              />
             )}
           </div>
         </Card>
