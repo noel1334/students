@@ -77,37 +77,35 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
 
       {/* Hidden form for PDF generation - only visible to print media or temporarily by JS */}
       {/* Keeping 'print:block' for actual printing if needed, but 'hidden' is problematic. */}
-      <div ref={formRef} className="hidden bg-white p-8" style={{ width: '210mm', minHeight: '297mm' }}>
+      <div ref={formRef} className="hidden" style={{ width: '210mm', minHeight: '297mm', backgroundColor: '#ffffff', padding: '32px', color: '#000000', fontFamily: 'Arial, sans-serif' }}>
         {/* Header with logos and title */}
-        <div className="flex justify-between items-start mb-8">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
           {/* Student Profile Image */}
-          <div className="w-20 h-20 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
+          <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
             {user?.profileImage ? (
-              <img src={user.profileImage} alt="Student" className="w-full h-full object-cover rounded-lg" />
+              <img src={user.profileImage} alt="Student" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
-              <span className="text-2xl font-bold text-gray-600">
+              <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#4b5563' }}>
                 {user?.avatarLetter || user?.name?.charAt(0) || 'S'}
               </span>
             )}
           </div>
 
           {/* Center Title */}
-          <div className="flex-1 text-center px-4">
-            <h1 className="text-base font-bold mb-1">COURSE REGISTRATION FORM</h1>
-            <p className="text-sm font-semibold">{user?.currentSeasonName}</p>
-            <p className="text-xs">{user?.currentSemesterName}</p>
+          <div style={{ flex: 1, textAlign: 'center', padding: '0 16px' }}>
+            <h1 style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '4px', color: '#000000' }}>COURSE REGISTRATION FORM</h1>
+            <p style={{ fontSize: '14px', fontWeight: '600', color: '#000000' }}>{user?.currentSeasonName}</p>
+            <p style={{ fontSize: '12px', color: '#374151' }}>{user?.currentSemesterName}</p>
           </div>
 
           {/* School Logo */}
-          <div className="w-20 h-20 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
-            {/* If school logo is an actual image URL from your backend */}
-            {/* <img src="/path/to/school-logo.png" alt="School Logo" className="w-full h-full object-contain" /> */}
-            <span className="text-sm font-bold text-gray-600">SCHOOL LOGO</span> {/* Placeholder */}
+          <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
+            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textAlign: 'center' }}>SCHOOL LOGO</span>
           </div>
         </div>
 
         {/* Student Details */}
-        <div className="mb-4 grid grid-cols-2 gap-2 text-xs">
+        <div style={{ marginBottom: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '12px', color: '#000000' }}>
           <div>
             <p><strong>Student Name:</strong> {user?.name || 'N/A'}</p>
             <p><strong>Registration No:</strong> {user?.regNo || 'N/A'}</p>
@@ -123,57 +121,57 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
         </div>
 
         {/* Course Table */}
-        <div className="mb-4">
-          <h3 className="text-sm font-bold mb-2">Registered Courses</h3>
-          <table className="w-full border border-black text-xs">
+        <div style={{ marginBottom: '16px' }}>
+          <h3 style={{ fontSize: '14px', fontWeight: 'bold', marginBottom: '8px', color: '#000000' }}>Registered Courses</h3>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-black px-1 py-0.5 text-left">S/N</th>
-                <th className="border border-black px-1 py-0.5 text-left">Course Code</th>
-                <th className="border border-black px-1 py-0.5 text-left">Course Title</th>
-                <th className="border border-black px-1 py-0.5 text-left">Units</th>
-                <th className="border border-black px-1 py-0.5 text-left">Status</th>
+              <tr style={{ backgroundColor: '#f3f4f6' }}>
+                <th style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'left', color: '#000000' }}>S/N</th>
+                <th style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'left', color: '#000000' }}>Course Code</th>
+                <th style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'left', color: '#000000' }}>Course Title</th>
+                <th style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'left', color: '#000000' }}>Units</th>
+                <th style={{ border: '1px solid #000000', padding: '4px 8px', textAlign: 'left', color: '#000000' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {registrations.map((registration, index) => (
                 <tr key={registration.id}>
-                  <td className="border border-black px-1 py-0.5">{index + 1}</td>
-                  <td className="border border-black px-1 py-0.5 font-medium">{registration.course.code}</td>
-                  <td className="border border-black px-1 py-0.5">{registration.course.title}</td>
-                  <td className="border border-black px-1 py-0.5">{registration.course.creditUnit}</td>
-                  <td className="border border-black px-1 py-0.5">Registered</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px 8px', color: '#000000' }}>{index + 1}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px 8px', fontWeight: '500', color: '#000000' }}>{registration.course.code}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px 8px', color: '#000000' }}>{registration.course.title}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px 8px', color: '#000000' }}>{registration.course.creditUnit}</td>
+                  <td style={{ border: '1px solid #000000', padding: '4px 8px', color: '#000000' }}>Registered</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
-          <div className="mt-2 text-xs">
+          <div style={{ marginTop: '8px', fontSize: '12px', color: '#000000' }}>
             <p><strong>Total Units:</strong> {registrations.reduce((sum, reg) => sum + reg.course.creditUnit, 0)}</p>
           </div>
         </div>
 
         {/* Signatures */}
-        <div className="mt-8 grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <div className="border-t border-black mt-8 pt-1">
-              <p className="font-bold text-xs">Student Signature</p>
+        <div style={{ marginTop: '32px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid #000000', marginTop: '32px', paddingTop: '4px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '12px', color: '#000000' }}>Student Signature</p>
             </div>
           </div>
-          <div className="text-center">
-            <div className="border-t border-black mt-8 pt-1">
-              <p className="font-bold text-xs">Academic Advisor</p>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid #000000', marginTop: '32px', paddingTop: '4px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '12px', color: '#000000' }}>Academic Advisor</p>
             </div>
           </div>
-          <div className="text-center">
-            <div className="border-t border-black mt-8 pt-1">
-              <p className="font-bold text-xs">HOD Signature</p>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid #000000', marginTop: '32px', paddingTop: '4px' }}>
+              <p style={{ fontWeight: 'bold', fontSize: '12px', color: '#000000' }}>HOD Signature</p>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-4 text-center text-xs text-gray-600">
+        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '12px', color: '#4b5563' }}>
           <p>Generated on: {new Date().toLocaleDateString()}</p>
         </div>
       </div>
