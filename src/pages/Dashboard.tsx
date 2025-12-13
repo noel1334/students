@@ -1,19 +1,45 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BookOpen, CreditCard, GraduationCap } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { getAllResults } from '@/services/resultApiService';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const [cgpa, setCgpa] = useState<number | null>(null);
+  const [registeredCoursesCount, setRegisteredCoursesCount] = useState<number>(0);
+  const [isLoadingCgpa, setIsLoadingCgpa] = useState(true);
+
+  // Fetch CGPA from results API
+  useEffect(() => {
+    const fetchCgpa = async () => {
+      try {
+        setIsLoadingCgpa(true);
+        const response = await getAllResults({ limit: 100 });
+        
+        if (response.status === 'success' && response.data?.results) {
+          const results = response.data.results;
+          if (results.length > 0) {
+            // Get the latest result's CGPA (cumulative)
+            const latestResult = results[results.length - 1];
+            setCgpa(latestResult.cgpa);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching CGPA:', error);
+      } finally {
+        setIsLoadingCgpa(false);
+      }
+    };
+
+    fetchCgpa();
+  }, []);
 
   // Extract real data from user with fallbacks
   const studentInfo = {
     name: user?.name?.split(' ')[0] || user?.email?.split('@')[0] || "Student",
     level: user?.currentLevelName || "N/A Level",
     semester: user?.currentSemesterName || "N/A Semester",
-    cgpa: "3.77", // This would come from API when available
-    registeredCourses: 0, // This would come from API when available
     year: user?.currentSeasonName || "N/A Session"
   };
 
@@ -37,7 +63,7 @@ const Dashboard = () => {
             </div>
             <div>
               <p className="text-primary-foreground/80 mb-1">Registered Courses</p>
-              <h3 className="text-4xl font-bold">{studentInfo.registeredCourses}</h3>
+              <h3 className="text-4xl font-bold">{registeredCoursesCount}</h3>
             </div>
           </div>
         </div>
@@ -71,7 +97,9 @@ const Dashboard = () => {
               </div>
               <p className="text-muted-foreground">CGPA</p>
             </div>
-            <h4 className="text-2xl font-semibold text-foreground">{studentInfo.cgpa}</h4>
+            <h4 className="text-2xl font-semibold text-foreground">
+              {isLoadingCgpa ? '...' : cgpa !== null ? cgpa.toFixed(2) : 'N/A'}
+            </h4>
           </div>
         </div>
         
