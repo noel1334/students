@@ -32,7 +32,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionName>('bioData');
-  const [signature, setSignature] = useState<string | null>(null);
+  const [signature, setSignature] = useState<string | null>(studentData.studentDetails?.signatureImg || null);
   const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -132,6 +132,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
         phone: formData.phoneNumber || undefined,
         guardianName: formData.sponsorName || undefined,
         guardianPhone: formData.sponsorPhone || undefined,
+        signatureImg: signature || undefined,
       };
 
       const response = await updateStudentProfile(updateData);

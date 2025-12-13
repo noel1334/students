@@ -16,9 +16,13 @@ interface User {
   
   profileImage?: string | null; // Final resolved image URL, or null
   avatarLetter?: string; // First letter of student name for fallback
+  signatureImage?: string | null; // Student signature image URL
   
   departmentName?: string;
   programName?: string;
+  programCode?: string; // e.g., "CSC", "ENG"
+  degreeType?: string; // e.g., "ND", "HND", "UNDERGRADUATE"
+  programDuration?: number; // e.g., 4 (years)
   studyMode?: string; // e.g., "FULL_TIME", "PART_TIME"
   currentLevelName?: string; // e.g., "100 Level", "200 Level"
   currentLevelValue?: number; // e.g., 100, 200
@@ -109,8 +113,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: profileData.email,
           profileImage: profileData.profileImg,
           avatarLetter: profileData.avatarLetter,
+          signatureImage: profileData.studentDetails?.signatureImg || null,
           departmentName: profileData.department?.name,
           programName: profileData.program?.name,
+          programCode: profileData.program?.programCode,
+          degreeType: profileData.program?.degreeType,
+          programDuration: profileData.program?.duration,
           studyMode: profileData.program?.modeOfStudy,
           currentLevelName: profileData.currentLevel?.name,
           currentLevelValue: profileData.currentLevel?.value,

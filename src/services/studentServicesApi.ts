@@ -24,7 +24,8 @@ export interface StudentProfileData {
     programCode: string;
     degree: string;
     duration: number;
-    modeOfStudy: string; 
+    modeOfStudy: string;
+    degreeType?: string;
   };
   currentLevel?: {
     id: number;
@@ -88,6 +89,7 @@ export interface UpdateStudentProfileData {
   phone?: string;
   guardianName?: string;
   guardianPhone?: string;
+  signatureImg?: string;
 }
 
 export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {
