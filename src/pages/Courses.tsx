@@ -419,6 +419,10 @@ const Courses = () => {
             userCurrentSeasonName={user?.currentSeasonName}
             userCurrentSemesterName={user?.currentSemesterName}
             userCurrentLevelName={user?.currentLevelName}
+            isViewingRegistrations={isRegistered && !isEditing}
+            registrationSeason={selectedSeason?.name}
+            registrationSemester={selectedSemester?.name}
+            registrationLevel={selectedLevel?.name}
           />
 
           <div className="bg-card rounded-lg border border-border p-3 sm:p-6 mb-4 sm:mb-6">
