@@ -99,8 +99,12 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
           </div>
 
           {/* School Logo */}
-          <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
-            <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#4b5563', textAlign: 'center' }}>SCHOOL LOGO</span>
+          <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
+            <img 
+              src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" 
+              alt="School Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
         </div>
 
@@ -154,7 +158,18 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
         {/* Signatures */}
         <div style={{ marginTop: '32px', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
           <div style={{ textAlign: 'center' }}>
-            <div style={{ borderTop: '1px solid #000000', marginTop: '32px', paddingTop: '4px' }}>
+            {user?.signatureImage ? (
+              <div style={{ marginBottom: '4px' }}>
+                <img 
+                  src={user.signatureImage} 
+                  alt="Student Signature" 
+                  style={{ maxHeight: '40px', maxWidth: '100%', objectFit: 'contain', margin: '0 auto' }} 
+                />
+              </div>
+            ) : (
+              <div style={{ height: '32px' }}></div>
+            )}
+            <div style={{ borderTop: '1px solid #000000', paddingTop: '4px' }}>
               <p style={{ fontWeight: 'bold', fontSize: '12px', color: '#000000' }}>Student Signature</p>
             </div>
           </div>

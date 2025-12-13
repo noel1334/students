@@ -31,6 +31,9 @@ const Landing = () => {
   const currentSemester = user?.currentSemesterName || 'N/A SEMESTER';
   const departmentName = user?.departmentName || 'N/A Department';
   const programName = user?.programName || 'N/A Program';
+  const programCode = user?.programCode || '';
+  const degreeType = user?.degreeType?.replace(/_/g, ' ') || '';
+  const programDuration = user?.programDuration;
   const studyMode = user?.studyMode?.replace(/_/g, ' ') || 'N/A Mode'; // Format enum to readable string
   const level = user?.currentLevelName || 'N/A Level';
 
@@ -57,10 +60,10 @@ const Landing = () => {
                 {currentSemester}, {currentSession}
               </span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
               <div className="flex items-center gap-1">
                 <BookOpen className="w-4 h-4" />
-                <span>{programName}</span>
+                <span>{programCode ? `${programCode} - ` : ''}{programName}</span>
               </div>
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -88,9 +91,13 @@ const Landing = () => {
             
             <div className="text-center">
               <p className="text-muted-foreground mb-1">{departmentName}</p>
-              <p className="text-muted-foreground mb-1">{programName}</p>
+              <p className="text-muted-foreground mb-1">
+                {programCode ? `${programCode} - ` : ''}{programName}
+                {degreeType ? ` (${degreeType})` : ''}
+              </p>
               <p className="text-muted-foreground text-sm">
                 {studyMode} • {level}
+                {programDuration ? ` • ${programDuration} ${programDuration > 1 ? 'Years' : 'Year'}` : ''}
               </p>
             </div>
 
