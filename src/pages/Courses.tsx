@@ -120,23 +120,21 @@ const Courses = () => {
   const currentlyRegisteredCourseIds = registrations?.map(reg => reg.course.id) || [];
   const currentlyRegisteredCoursesMap = new Map(registrations.map(reg => [reg.course.id, reg]));
 
-
+  // Always fetch all filter options so students can switch between historical periods
   const { data: allSeasonsData, isLoading: allSeasonsLoading } = useQuery({
     queryKey: ['allSeasons'],
     queryFn: getAllSeasons,
-    enabled: !isRegistered
   });
 
   const { data: allSemestersData, isLoading: allSemestersLoading } = useQuery({
     queryKey: ['allSemesters', selectedSeasonId],
     queryFn: () => getAllSemesters(selectedSeasonId || undefined),
-    enabled: !isRegistered && !!selectedSeasonId
+    enabled: !!selectedSeasonId
   });
 
   const { data: allLevelsData, isLoading: allLevelsLoading } = useQuery({
     queryKey: ['allLevels'],
     queryFn: getAllLevels,
-    enabled: !isRegistered
   });
 
   const {
@@ -238,18 +236,11 @@ const Courses = () => {
     },
   });
 
-
-  const currentFilterSeasons = isRegistered && !isEditing
-    ? (Array.isArray(registrationsData?.data?.filterOptions?.seasons) ? registrationsData.data.filterOptions.seasons : [])
-    : (Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : []);
-
-  const currentFilterSemesters = isRegistered && !isEditing
-    ? (Array.isArray(registrationsData?.data?.filterOptions?.semesters) ? registrationsData.data.filterOptions.semesters : [])
-    : (Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : []);
-
-  const currentFilterLevels = isRegistered && !isEditing
-    ? (Array.isArray(registrationsData?.data?.filterOptions?.levels) ? registrationsData.data.filterOptions.levels : [])
-    : (Array.isArray(allLevelsData?.data?.items) ? allLevelsData.data.items : []);
+  // Use the filter options from registrations if available, otherwise fall back to all data
+  // For viewing historical registrations, always show all available options
+  const currentFilterSeasons = Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : [];
+  const currentFilterSemesters = Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : [];
+  const currentFilterLevels = Array.isArray(allLevelsData?.data?.items) ? allLevelsData.data.items : [];
 
   const availableCourses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
 
@@ -437,23 +428,21 @@ const Courses = () => {
               />
             </div>
 
-            {/* Filters for Registered Courses (only visible when not editing) */}
-            {isRegistered && !isEditing && (
-              <div className="mb-4 sm:mb-6">
-                <CourseFilters
-                  seasons={currentFilterSeasons}
-                  semesters={currentFilterSemesters}
-                  levels={currentFilterLevels}
-                  selectedSeasonId={selectedSeasonId}
-                  selectedSemesterId={selectedSemesterId}
-                  selectedLevelId={selectedLevelId}
-                  onSeasonChange={handleSeasonChange}
-                  onSemesterChange={handleSemesterChange}
-                  onLevelChange={handleLevelChange}
-                  semestersLoading={registrationsLoading}
-                />
-              </div>
-            )}
+            {/* Filters - Always visible to allow switching between historical periods */}
+            <div className="mb-4 sm:mb-6">
+              <CourseFilters
+                seasons={currentFilterSeasons}
+                semesters={currentFilterSemesters}
+                levels={currentFilterLevels}
+                selectedSeasonId={selectedSeasonId}
+                selectedSemesterId={selectedSemesterId}
+                selectedLevelId={selectedLevelId}
+                onSeasonChange={handleSeasonChange}
+                onSemesterChange={handleSemesterChange}
+                onLevelChange={handleLevelChange}
+                semestersLoading={allSemestersLoading}
+              />
+            </div>
 
             {/* Remove Selected Courses Button (only visible when NOT in edit mode) */}
             {isRegistered && !isEditing && selectedRegisteredCourseIds.length > 0 && (
