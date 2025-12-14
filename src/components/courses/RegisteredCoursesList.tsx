@@ -6,12 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Lock, Unlock } from 'lucide-react';
 import RegisteredCourseCard from './RegisteredCourseCard';
 
 interface RegisteredCoursesListProps {
   registrations: CourseRegistration[];
-  // NEW PROPS for selection and deletion
   selectedRegisteredCourseIds: number[];
   onToggleRegisteredCourseSelection: (registrationId: number, isChecked: boolean) => void;
   onDeleteIndividual: (registrationId: number) => void;
@@ -25,8 +24,8 @@ const RegisteredCoursesList = ({
 }: RegisteredCoursesListProps) => {
   if (!registrations || registrations.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
-        No registered courses found.
+      <div className="text-center py-8 text-muted-foreground">
+        No registered courses found for this period.
       </div>
     );
   }
@@ -54,23 +53,24 @@ const RegisteredCoursesList = ({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block border rounded-lg">
+      <div className="hidden md:block border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px] text-center"></TableHead>
               <TableHead>Course Code</TableHead>
               <TableHead>Course Title</TableHead>
-              <TableHead>Units</TableHead>
+              <TableHead className="text-center">Units</TableHead>
               <TableHead>Level</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Status</TableHead>
               <TableHead>Date Registered</TableHead>
               <TableHead className="w-[80px] text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {registrations.map((registration) => {
-              const canDelete = !registration.isScoreRecorded && !registration.semester.areStudentEditsLocked;
+              const isLocked = registration.semester.areStudentEditsLocked || registration.isScoreRecorded;
+              const canDelete = !isLocked;
               const isSelected = selectedRegisteredCourseIds.includes(registration.id);
 
               return (
@@ -81,17 +81,24 @@ const RegisteredCoursesList = ({
                       checked={isSelected}
                       onCheckedChange={(checked) => onToggleRegisteredCourseSelection(registration.id, checked === true)}
                       disabled={!canDelete}
-                      className="data-[state=checked]:bg-blue-700"
+                      className="data-[state=checked]:bg-primary"
                     />
                   </TableCell>
                   <TableCell className="font-medium">{registration.course.code}</TableCell>
                   <TableCell>{registration.course.title}</TableCell>
-                  <TableCell>{registration.course.creditUnit}</TableCell>
+                  <TableCell className="text-center">{registration.course.creditUnit}</TableCell>
                   <TableCell>{registration.level.name}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">
-                      Registered
-                    </Badge>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {isLocked ? (
+                        <span title="Registration locked"><Lock className="h-4 w-4 text-amber-500" /></span>
+                      ) : (
+                        <span title="Registration editable"><Unlock className="h-4 w-4 text-green-500" /></span>
+                      )}
+                      <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                        Registered
+                      </Badge>
+                    </div>
                   </TableCell>
                   <TableCell>{new Date(registration.registeredAt).toLocaleDateString()}</TableCell>
                   <TableCell className="text-center">
@@ -100,7 +107,7 @@ const RegisteredCoursesList = ({
                       size="sm"
                       onClick={() => onDeleteIndividual(registration.id)}
                       disabled={!canDelete}
-                      className="hover:bg-red-50 text-red-600 hover:text-red-700"
+                      className="hover:bg-destructive/10 text-destructive hover:text-destructive disabled:opacity-50"
                       title={!canDelete ? (registration.isScoreRecorded ? "Cannot delete: Score recorded" : "Cannot delete: Registration period locked") : "Delete course"}
                     >
                       <Trash2 className="h-4 w-4" />
