@@ -71,13 +71,11 @@ export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ 
   return response.data;
 };
 
-// --- ADD THIS FUNCTION HERE ---
 /**
  * Fetches all levels from the backend.
  * @returns A promise that resolves to an ApiResponse containing an array of Level objects.
  */
-export const getAllLevels = async (): Promise<ApiResponse<{ items: Level[] }>> => {
-  const response = await api.get('/levels'); // Assuming your backend route for levels is /levels
+export const getAllLevels = async (): Promise<ApiResponse<{ items?: Level[], levels?: Level[] }>> => {
+  const response = await api.get('/levels');
   return response.data;
 };
-// --- END ADDITION ---

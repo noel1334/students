@@ -2,7 +2,8 @@
 
 import React from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge'; // Make sure this is imported
+import { Badge } from '@/components/ui/badge';
+import { Lock, Unlock } from 'lucide-react';
 
 interface CourseCardProps {
   code: string;
@@ -12,8 +13,9 @@ interface CourseCardProps {
   onSelect: () => void;
   isElective?: boolean;
   isCarryOver?: boolean;
-  isAlreadyRegistered?: boolean; // NEW: Indicates if this course is currently registered
-  isCheckboxDisabled?: boolean; // NEW: Controls if the checkbox is disabled
+  isAlreadyRegistered?: boolean;
+  isCheckboxDisabled?: boolean;
+  isLocked?: boolean; // NEW: Show lock/unlock icon
 }
 
 const CourseCard = ({
@@ -24,29 +26,37 @@ const CourseCard = ({
   onSelect,
   isElective = false,
   isCarryOver = false,
-  isAlreadyRegistered = false, // Default to false
-  isCheckboxDisabled = false // Default to false
+  isAlreadyRegistered = false,
+  isCheckboxDisabled = false,
+  isLocked = false
 }: CourseCardProps) => {
   return (
-    <div className={`flex items-center justify-between border-b border-gray-100 py-3 ${isCarryOver ? 'bg-red-50' : isElective ? 'bg-blue-50' : ''}`}>
+    <div className={`flex items-center justify-between border-b border-border py-3 ${isCarryOver ? 'bg-destructive/10' : isElective ? 'bg-primary/10' : ''}`}>
       <div className="flex items-center">
         <div className="mr-4">
           <Checkbox
             id={`course-${code}`}
             checked={isSelected}
             onCheckedChange={onSelect}
-            disabled={isCheckboxDisabled} // Use the new prop to disable
-            className="data-[state=checked]:bg-blue-700"
+            disabled={isCheckboxDisabled}
+            className="data-[state=checked]:bg-primary"
           />
         </div>
         <div>
-          <div className="flex items-center">
+          <div className="flex items-center flex-wrap gap-1">
             <span className="font-medium text-foreground">{code}</span>
-            {isCarryOver && <Badge className="ml-2 px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">Carryover</Badge>}
-            {isElective && <Badge className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">Elective</Badge>}
-            {/* NEW: Indicator for already registered courses */}
+            {isCarryOver && <Badge className="px-2 py-0.5 text-xs bg-destructive/20 text-destructive rounded">Carryover</Badge>}
+            {isElective && <Badge className="px-2 py-0.5 text-xs bg-primary/20 text-primary rounded">Elective</Badge>}
             {isAlreadyRegistered && (
-              <Badge className="ml-2 px-2 py-0.5 text-xs bg-green-100 text-green-800 rounded">Registered</Badge>
+              <Badge className="px-2 py-0.5 text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded">Registered</Badge>
+            )}
+            {/* Lock/Unlock icon for registered courses */}
+            {isAlreadyRegistered && (
+              isLocked ? (
+                <span title="Registration locked - cannot modify"><Lock className="h-4 w-4 text-amber-500 ml-1" /></span>
+              ) : (
+                <span title="Registration editable"><Unlock className="h-4 w-4 text-green-500 ml-1" /></span>
+              )
             )}
           </div>
           <p className="text-sm text-muted-foreground">{title}</p>

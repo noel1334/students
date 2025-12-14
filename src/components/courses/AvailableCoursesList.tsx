@@ -55,9 +55,8 @@ const AvailableCoursesList = ({
 
           // Determine if the checkbox for this specific course should be disabled
           // It's disabled if score recorded OR semester locked
-          const isCheckboxDisabled = isCurrentlyRegistered && (registeredReg!.isScoreRecorded || registeredReg!.semester.areStudentEditsLocked);
-          // Note: The `isAlreadyRegistered` flag in DisplayCourse will come from Courses.tsx's useMemo.
-          // We combine it with `isCurrentlyRegistered` for clarity.
+          const isLocked = isCurrentlyRegistered && (registeredReg!.isScoreRecorded || registeredReg!.semester?.areStudentEditsLocked);
+          const isCheckboxDisabled = isLocked;
 
           return (
             <CourseCard
@@ -65,13 +64,13 @@ const AvailableCoursesList = ({
               code={course.code}
               title={course.title}
               units={course.creditUnit}
-              isSelected={selectedCourses.includes(course.id)} // Whether it's checked in the UI
+              isSelected={selectedCourses.includes(course.id)}
               onSelect={() => onCourseSelect(course.id)}
               isElective={course.isElective}
               isCarryOver={course.offeringReason === 'Carryover'}
-              isAlreadyRegistered={isCurrentlyRegistered} // Pass the status (derived from map)
-              isCheckboxDisabled={isCheckboxDisabled} // Pass the disable status
-              // isRegistered prop is no longer needed as we use isAlreadyRegistered and isCheckboxDisabled
+              isAlreadyRegistered={isCurrentlyRegistered}
+              isCheckboxDisabled={isCheckboxDisabled}
+              isLocked={isLocked}
             />
           );
         })}

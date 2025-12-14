@@ -240,7 +240,11 @@ const Courses = () => {
   // For viewing historical registrations, always show all available options
   const currentFilterSeasons = Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : [];
   const currentFilterSemesters = Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : [];
-  const currentFilterLevels = Array.isArray(allLevelsData?.data?.items) ? allLevelsData.data.items : [];
+  const currentFilterLevels = Array.isArray(allLevelsData?.data?.items) 
+    ? allLevelsData.data.items 
+    : Array.isArray(allLevelsData?.data?.levels) 
+      ? allLevelsData.data.levels 
+      : [];
 
   const availableCourses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
 
