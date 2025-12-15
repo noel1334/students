@@ -11,6 +11,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Courses from "./pages/Courses";
+import CourseHistory from "./pages/CourseHistory";
 import Results from "./pages/Results";
 import Payments from "./pages/Payments";
 import Notifications from "./pages/Notifications";
@@ -79,6 +80,13 @@ const App = () => {
                 <ProtectedRoute>
                   <Layout>
                     <Courses />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/course-history" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <CourseHistory />
                   </Layout>
                 </ProtectedRoute>
               } />
