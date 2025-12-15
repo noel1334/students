@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Select,
@@ -7,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 interface Season {
   id: number;
@@ -23,6 +23,12 @@ interface Level {
   name: string;
 }
 
+interface RegistrationCounts {
+  seasons: Record<number, number>;
+  semesters: Record<number, number>;
+  levels: Record<number, number>;
+}
+
 interface CourseFiltersProps {
   seasons: Season[];
   semesters: Semester[];
@@ -34,6 +40,7 @@ interface CourseFiltersProps {
   onSemesterChange: (semesterId: number) => void;
   onLevelChange: (levelId: number) => void;
   semestersLoading: boolean;
+  registrationCounts?: RegistrationCounts;
 }
 
 const CourseFilters = ({
@@ -46,7 +53,8 @@ const CourseFilters = ({
   onSeasonChange,
   onSemesterChange,
   onLevelChange,
-  semestersLoading
+  semestersLoading,
+  registrationCounts
 }: CourseFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
@@ -60,11 +68,21 @@ const CourseFilters = ({
             <SelectValue placeholder="Select season" />
           </SelectTrigger>
           <SelectContent>
-            {seasons.map(season => (
-              <SelectItem key={season.id} value={season.id.toString()}>
-                {season.name}
-              </SelectItem>
-            ))}
+            {seasons.map(season => {
+              const count = registrationCounts?.seasons[season.id] || 0;
+              return (
+                <SelectItem key={season.id} value={season.id.toString()}>
+                  <span className="flex items-center justify-between w-full gap-2">
+                    {season.name}
+                    {count > 0 && (
+                      <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                        {count}
+                      </Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -80,11 +98,21 @@ const CourseFilters = ({
             <SelectValue placeholder="Select semester" />
           </SelectTrigger>
           <SelectContent>
-            {semesters.map(semester => (
-              <SelectItem key={semester.id} value={semester.id.toString()}>
-                {semester.name}
-              </SelectItem>
-            ))}
+            {semesters.map(semester => {
+              const count = registrationCounts?.semesters[semester.id] || 0;
+              return (
+                <SelectItem key={semester.id} value={semester.id.toString()}>
+                  <span className="flex items-center justify-between w-full gap-2">
+                    {semester.name}
+                    {count > 0 && (
+                      <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                        {count}
+                      </Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -99,11 +127,21 @@ const CourseFilters = ({
             <SelectValue placeholder="Select level" />
           </SelectTrigger>
           <SelectContent>
-            {levels.map(level => (
-              <SelectItem key={level.id} value={level.id.toString()}>
-                {level.name}
-              </SelectItem>
-            ))}
+            {levels.map(level => {
+              const count = registrationCounts?.levels[level.id] || 0;
+              return (
+                <SelectItem key={level.id} value={level.id.toString()}>
+                  <span className="flex items-center justify-between w-full gap-2">
+                    {level.name}
+                    {count > 0 && (
+                      <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                        {count}
+                      </Badge>
+                    )}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>
