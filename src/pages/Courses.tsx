@@ -1,8 +1,9 @@
 // src/pages/Courses.tsx
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { History } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import api from '@/config/api';
 import {
   getRegistrableCourses,
   registerForCourses,
@@ -22,24 +22,15 @@ import {
   deleteIndividualRegistration,
   deleteBatchRegistrations,
   updateStudentRegistrations,
-  type RegistrableCourse,
-  type Level,
-  type CourseRegistration,
-  type Season,
-  type Semester,
   type DisplayCourse,
 } from '@/services/courseApiService';
-import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 import { getMySchoolFeeRecords } from '@/services/feeApiService';
-
 
 // Import refactored components
 import CoursesHeader from '@/components/courses/CoursesHeader';
-import CourseFilters from '@/components/courses/CourseFilters';
 import CourseActions from '@/components/courses/CourseActions';
 import RegisteredCoursesList from '@/components/courses/RegisteredCoursesList';
 import AvailableCoursesList from '@/components/courses/AvailableCoursesList';
-import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
 
 const Courses = () => {
   const { user } = useAuth();
@@ -47,15 +38,10 @@ const Courses = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
-    user?.currentSeasonId ? parseInt(user.currentSeasonId) : null
-  );
-  const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(
-    user?.currentSemesterId ? parseInt(user.currentSemesterId) : null
-  );
-  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(
-    user?.currentLevelId ? parseInt(user.currentLevelId) : null
-  );
+  // Use student's current values directly from user context
+  const selectedSeasonId = user?.currentSeasonId ? parseInt(user.currentSeasonId) : null;
+  const selectedSemesterId = user?.currentSemesterId ? parseInt(user.currentSemesterId) : null;
+  const selectedLevelId = user?.currentLevelId ? parseInt(user.currentLevelId) : null;
 
   const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
   const [showRegistrationConfirm, setShowRegistrationConfirm] = useState(false);
@@ -74,9 +60,9 @@ const Courses = () => {
   const paymentRecords = Array.isArray(paymentData?.data?.records) ? paymentData.data.records : [];
 
   // Check if the current season has been fully paid
-  const hasCurrentSeasonBeenPaid = useMemo(() => {
+  const hasCurrentSeasonBeenPaid = React.useMemo(() => {
     if (!user?.currentSeasonId) return false;
-    if (paymentRecords.length === 0) return false; // No payment history = not paid
+    if (paymentRecords.length === 0) return false;
     
     const currentSeasonRecord = paymentRecords.find(
       record => record.season.id.toString() === user.currentSeasonId
@@ -97,84 +83,16 @@ const Courses = () => {
     }
   }, [hasCurrentSeasonBeenPaid, user?.currentSeasonId, paymentData, navigate, toast]);
 
-  useEffect(() => {
-    if (user && !selectedSeasonId && user.currentSeasonId) {
-      setSelectedSeasonId(parseInt(user.currentSeasonId));
-    }
-    if (user && !selectedSemesterId && user.currentSemesterId) {
-      setSelectedSemesterId(parseInt(user.currentSemesterId));
-    }
-    if (user && !selectedLevelId && user.currentLevelId) {
-      setSelectedLevelId(parseInt(user.currentLevelId));
-    }
-  }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
-
   const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
     queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
     queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
     enabled: !!selectedSeasonId && !!selectedSemesterId,
   });
 
-  // Fetch all registrations (without filters) to compute counts per filter option
-  const { data: allRegistrationsData } = useQuery({
-    queryKey: ['all-my-registrations-for-counts'],
-    queryFn: async () => {
-      // Fetch registrations without specific season/semester to get all
-      const response = await api.get('/student-registrations/me', {
-        params: { limit: 1000 } // High limit to get all registrations
-      });
-      return response.data;
-    },
-  });
-
-  // Compute registration counts per season, semester, and level
-  const registrationCounts = useMemo(() => {
-    const allRegs = Array.isArray(allRegistrationsData?.data?.items) ? allRegistrationsData.data.items : [];
-    const counts = {
-      seasons: {} as Record<number, number>,
-      semesters: {} as Record<number, number>,
-      levels: {} as Record<number, number>,
-    };
-    
-    allRegs.forEach((reg: CourseRegistration) => {
-      // Count by season
-      if (reg.season?.id) {
-        counts.seasons[reg.season.id] = (counts.seasons[reg.season.id] || 0) + 1;
-      }
-      // Count by semester
-      if (reg.semester?.id) {
-        counts.semesters[reg.semester.id] = (counts.semesters[reg.semester.id] || 0) + 1;
-      }
-      // Count by level
-      if (reg.level?.id) {
-        counts.levels[reg.level.id] = (counts.levels[reg.level.id] || 0) + 1;
-      }
-    });
-    
-    return counts;
-  }, [allRegistrationsData]);
-
   const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
   const isRegistered = registrations.length > 0;
   const currentlyRegisteredCourseIds = registrations?.map(reg => reg.course.id) || [];
   const currentlyRegisteredCoursesMap = new Map(registrations.map(reg => [reg.course.id, reg]));
-
-  // Always fetch all filter options so students can switch between historical periods
-  const { data: allSeasonsData, isLoading: allSeasonsLoading } = useQuery({
-    queryKey: ['allSeasons'],
-    queryFn: getAllSeasons,
-  });
-
-  const { data: allSemestersData, isLoading: allSemestersLoading } = useQuery({
-    queryKey: ['allSemesters', selectedSeasonId],
-    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
-    enabled: !!selectedSeasonId
-  });
-
-  const { data: allLevelsData, isLoading: allLevelsLoading } = useQuery({
-    queryKey: ['allLevels'],
-    queryFn: getAllLevels,
-  });
 
   const {
     data: coursesData,
@@ -199,7 +117,6 @@ const Courses = () => {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      // MORE ROBUST ERROR MESSAGE EXTRACTION
       const errorMessage = error.response?.data?.message ||
                            error.message ||
                            "An unexpected error occurred.";
@@ -224,7 +141,6 @@ const Courses = () => {
       setIsEditing(false);
     },
     onError: (error: any) => {
-      // Apply same robust error message extraction here too
       const errorMessage = error.response?.data?.message ||
                            error.message ||
                            "An unexpected error occurred.";
@@ -235,7 +151,6 @@ const Courses = () => {
       });
     },
   });
-
 
   const deleteIndividualMutation = useMutation({
     mutationFn: deleteIndividualRegistration,
@@ -275,33 +190,19 @@ const Courses = () => {
     },
   });
 
-  // Use the filter options from registrations if available, otherwise fall back to all data
-  // For viewing historical registrations, always show all available options
-  const currentFilterSeasons = Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : [];
-  const currentFilterSemesters = Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : [];
-  const currentFilterLevels = Array.isArray(allLevelsData?.data?.items) 
-    ? allLevelsData.data.items 
-    : Array.isArray(allLevelsData?.data?.levels) 
-      ? allLevelsData.data.levels 
-      : [];
-
   const availableCourses = Array.isArray(coursesData?.data?.availableCourses) ? coursesData.data.availableCourses : [];
 
   // Create a combined list of courses for editing mode
   const combinedCoursesForEditing = React.useMemo(() => {
-    // This Map should be of type Map<number, DisplayCourse>
     const courseMap = new Map<number, DisplayCourse>();
 
-    // Add all available courses first
     availableCourses.forEach(course => {
-      courseMap.set(course.id, { ...course, isAlreadyRegistered: false }); // Explicitly mark as not registered yet
+      courseMap.set(course.id, { ...course, isAlreadyRegistered: false });
     });
 
-    // Overlay with currently registered courses, marking them as registered
     registrations.forEach(reg => {
       const existingCourse = courseMap.get(reg.course.id);
       if (existingCourse) {
-        // If the course is already in availableCourses, just update its status
         courseMap.set(reg.course.id, { ...existingCourse, isAlreadyRegistered: true });
       } else {
         courseMap.set(reg.course.id, {
@@ -317,15 +218,8 @@ const Courses = () => {
       }
     });
 
-    // Sort the combined list for consistent display
     return Array.from(courseMap.values()).sort((a, b) => a.code.localeCompare(b.code));
   }, [availableCourses, registrations]);
-
-
-  const selectedSeason = currentFilterSeasons.find(s => s.id === selectedSeasonId);
-  const selectedSemester = currentFilterSemesters.find(s => s.id === selectedSemesterId);
-  const selectedLevel = currentFilterLevels.find(l => l.id === selectedLevelId);
-
 
   const handleCourseSelect = (courseId: number) => {
     setSelectedCourses(prev => {
@@ -352,7 +246,7 @@ const Courses = () => {
     }
 
     const coursesToSubmit = selectedCourses.map(courseId => {
-      return { courseId }; // Only send courseId
+      return { courseId };
     });
 
     if (isEditing) {
@@ -364,7 +258,7 @@ const Courses = () => {
       });
     } else {
       registerMutation.mutate(coursesToSubmit.map(c => ({
-        ...c, // Spread courseId
+        ...c,
         seasonId: selectedSeasonId!,
         semesterId: selectedSemesterId!,
         levelId: selectedLevelId!,
@@ -381,22 +275,6 @@ const Courses = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setSelectedCourses([]);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleSeasonChange = (seasonId: number) => {
-    setSelectedSeasonId(seasonId);
-    setSelectedSemesterId(null);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleSemesterChange = (semesterId: number) => {
-    setSelectedSemesterId(semesterId);
-    setSelectedRegisteredCourseIds([]);
-  };
-
-  const handleLevelChange = (levelId: number) => {
-    setSelectedLevelId(levelId);
     setSelectedRegisteredCourseIds([]);
   };
 
@@ -429,9 +307,7 @@ const Courses = () => {
     setShowDeleteConfirm(false);
   };
 
-
   if (coursesLoading || registrationsLoading ||
-      (!isRegistered && (allSeasonsLoading || allSemestersLoading || allLevelsLoading)) ||
       deleteIndividualMutation.isPending || deleteBatchMutation.isPending ||
       updateRegistrationMutation.isPending || registerMutation.isPending) {
     return (
@@ -447,45 +323,55 @@ const Courses = () => {
     <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
       <div className="max-w-6xl mx-auto">
         <CoursesHeader
-            selectedSeason={selectedSeason}
-            selectedSemester={selectedSemester}
-            selectedLevel={selectedLevel}
             userCurrentSeasonName={user?.currentSeasonName}
             userCurrentSemesterName={user?.currentSemesterName}
             userCurrentLevelName={user?.currentLevelName}
             isViewingRegistrations={isRegistered && !isEditing}
-            registrationSeason={selectedSeason?.name}
-            registrationSemester={selectedSemester?.name}
-            registrationLevel={selectedLevel?.name}
+            registrationSeason={user?.currentSeasonName}
+            registrationSemester={user?.currentSemesterName}
+            registrationLevel={user?.currentLevelName}
           />
 
           <div className="bg-card rounded-lg border border-border p-3 sm:p-6 mb-4 sm:mb-6">
             {/* Top Actions */}
             <div className="flex flex-col gap-3 sm:gap-4 mb-4 sm:mb-6">
-              <CourseActions
-                isRegistered={isRegistered}
-                isEditing={isEditing}
-                onEditRegistration={handleEditRegistration}
-                onCancelEdit={handleCancelEdit}
-                registrations={registrations}
-              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <CourseActions
+                  isRegistered={isRegistered}
+                  isEditing={isEditing}
+                  onEditRegistration={handleEditRegistration}
+                  onCancelEdit={handleCancelEdit}
+                  registrations={registrations}
+                />
+                
+                {/* View History Button */}
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/course-history')}
+                  className="flex items-center gap-2"
+                >
+                  <History className="h-4 w-4" />
+                  View Course History
+                </Button>
+              </div>
             </div>
 
-            {/* Filters - Always visible to allow switching between historical periods */}
-            <div className="mb-4 sm:mb-6">
-              <CourseFilters
-                seasons={currentFilterSeasons}
-                semesters={currentFilterSemesters}
-                levels={currentFilterLevels}
-                selectedSeasonId={selectedSeasonId}
-                selectedSemesterId={selectedSemesterId}
-                selectedLevelId={selectedLevelId}
-                onSeasonChange={handleSeasonChange}
-                onSemesterChange={handleSemesterChange}
-                onLevelChange={handleLevelChange}
-                semestersLoading={allSemestersLoading}
-                registrationCounts={registrationCounts}
-              />
+            {/* Current Period Display */}
+            <div className="mb-4 sm:mb-6 p-3 bg-muted/50 rounded-lg">
+              <div className="flex flex-col sm:flex-row gap-4 text-sm">
+                <div className="flex-1">
+                  <span className="text-muted-foreground">Season:</span>
+                  <span className="ml-2 font-medium">{user?.currentSeasonName || 'Not set'}</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-muted-foreground">Semester:</span>
+                  <span className="ml-2 font-medium">{user?.currentSemesterName || 'Not set'}</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-muted-foreground">Level:</span>
+                  <span className="ml-2 font-medium">{user?.currentLevelName || 'Not set'}</span>
+                </div>
+              </div>
             </div>
 
             {/* Remove Selected Courses Button (only visible when NOT in edit mode) */}
@@ -501,7 +387,6 @@ const Courses = () => {
               </div>
             )}
 
-
             {/* Error message */}
             {coursesError && (
               <div className="text-red-600 mb-4">
@@ -511,7 +396,7 @@ const Courses = () => {
 
             {!selectedSeasonId || !selectedSemesterId || !selectedLevelId ? (
               <div className="text-center py-8 text-muted-foreground">
-                Please select season, semester, and level to view available courses.
+                Your current academic period is not set. Please contact the admin.
               </div>
             ) : (
               <div className="space-y-8">
@@ -553,19 +438,18 @@ const Courses = () => {
                   {isEditing ? "Confirm Course Update" : "Confirm Course Registration"}
                 </DialogTitle>
                 <DialogDescription>
-                  You are about to {isEditing ? "update" : "register"} {selectedCourses.length} courses for {selectedSeason?.name} {selectedSemester?.name}.
+                  You are about to {isEditing ? "update" : "register"} {selectedCourses.length} courses for {user?.currentSeasonName} {user?.currentSemesterName}.
                   This action cannot be undone.
                 </DialogDescription>
               </DialogHeader>
               <div className="my-4 max-h-[300px] overflow-y-auto">
-                {/* Use the correct source for courses in the confirmation dialog */}
                 {(isEditing ? combinedCoursesForEditing : availableCourses)
                   .filter(course => selectedCourses.includes(course.id))
                   .map(course => (
                     <div key={course.id} className="mb-2 flex justify-between">
                       <div>
                         <p className="font-medium">{course.code}</p>
-                        <p className="text-sm text-gray-600">{course.title}</p>
+                        <p className="text-sm text-muted-foreground">{course.title}</p>
                       </div>
                       <p className="text-sm">{course.creditUnit} units</p>
                     </div>
