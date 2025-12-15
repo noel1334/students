@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import api from '@/config/api';
 import {
   getRegistrableCourses,
   registerForCourses,
@@ -26,7 +27,7 @@ import {
   type CourseRegistration,
   type Season,
   type Semester,
-  type DisplayCourse, // IMPORT NEW DisplayCourse interface
+  type DisplayCourse,
 } from '@/services/courseApiService';
 import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 import { getMySchoolFeeRecords } from '@/services/feeApiService';
@@ -108,12 +109,50 @@ const Courses = () => {
     }
   }, [user, selectedSeasonId, selectedSemesterId, selectedLevelId]);
 
-
   const { data: registrationsData, isLoading: registrationsLoading } = useQuery({
     queryKey: ['my-registrations', selectedSeasonId, selectedSemesterId],
     queryFn: () => getMyRegistrations(selectedSeasonId!, selectedSemesterId!),
     enabled: !!selectedSeasonId && !!selectedSemesterId,
   });
+
+  // Fetch all registrations (without filters) to compute counts per filter option
+  const { data: allRegistrationsData } = useQuery({
+    queryKey: ['all-my-registrations-for-counts'],
+    queryFn: async () => {
+      // Fetch registrations without specific season/semester to get all
+      const response = await api.get('/student-registrations/me', {
+        params: { limit: 1000 } // High limit to get all registrations
+      });
+      return response.data;
+    },
+  });
+
+  // Compute registration counts per season, semester, and level
+  const registrationCounts = useMemo(() => {
+    const allRegs = Array.isArray(allRegistrationsData?.data?.items) ? allRegistrationsData.data.items : [];
+    const counts = {
+      seasons: {} as Record<number, number>,
+      semesters: {} as Record<number, number>,
+      levels: {} as Record<number, number>,
+    };
+    
+    allRegs.forEach((reg: CourseRegistration) => {
+      // Count by season
+      if (reg.season?.id) {
+        counts.seasons[reg.season.id] = (counts.seasons[reg.season.id] || 0) + 1;
+      }
+      // Count by semester
+      if (reg.semester?.id) {
+        counts.semesters[reg.semester.id] = (counts.semesters[reg.semester.id] || 0) + 1;
+      }
+      // Count by level
+      if (reg.level?.id) {
+        counts.levels[reg.level.id] = (counts.levels[reg.level.id] || 0) + 1;
+      }
+    });
+    
+    return counts;
+  }, [allRegistrationsData]);
 
   const registrations = Array.isArray(registrationsData?.data?.items) ? registrationsData.data.items : [];
   const isRegistered = registrations.length > 0;
@@ -445,6 +484,7 @@ const Courses = () => {
                 onSemesterChange={handleSemesterChange}
                 onLevelChange={handleLevelChange}
                 semestersLoading={allSemestersLoading}
+                registrationCounts={registrationCounts}
               />
             </div>
 
