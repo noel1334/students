@@ -24,7 +24,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/config/api';
-import { getAllSeasons, getAllSemesters, getAllLevels } from '@/services/academicPeriodsApiService';
 
 interface CourseRegistration {
   id: number;
@@ -58,94 +57,96 @@ const CourseHistory = () => {
   
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [selectedSemesterId, setSelectedSemesterId] = useState<number | null>(null);
-  const [selectedLevelId, setSelectedLevelId] = useState<number | null>(null);
+  // Level filter explicitly removed
 
   // Fetch all registrations for the student
   const { data: allRegistrationsData, isLoading: registrationsLoading } = useQuery({
-    queryKey: ['all-my-registrations'],
+    queryKey: ['all-my-registrations', user?.id],
     queryFn: async () => {
+      if (!user?.id) return { data: { items: [] } };
+      // Assuming 'api' baseURL is 'http://localhost:3000/api/v1', so path is relative
       const response = await api.get('/student-registrations/me', {
         params: { limit: 1000 }
       });
       return response.data;
     },
-  });
-
-  // Fetch filter options
-  const { data: allSeasonsData, isLoading: seasonsLoading } = useQuery({
-    queryKey: ['allSeasons'],
-    queryFn: getAllSeasons,
-  });
-
-  const { data: allSemestersData, isLoading: semestersLoading } = useQuery({
-    queryKey: ['allSemesters', selectedSeasonId],
-    queryFn: () => getAllSemesters(selectedSeasonId || undefined),
-    enabled: !!selectedSeasonId
-  });
-
-  const { data: allLevelsData, isLoading: levelsLoading } = useQuery({
-    queryKey: ['allLevels'],
-    queryFn: getAllLevels,
+    enabled: !!user?.id,
   });
 
   const allRegistrations: CourseRegistration[] = useMemo(() => {
     return Array.isArray(allRegistrationsData?.data?.items) ? allRegistrationsData.data.items : [];
   }, [allRegistrationsData]);
 
-  const seasons = Array.isArray(allSeasonsData?.data?.seasons) ? allSeasonsData.data.seasons : [];
-  const semesters = Array.isArray(allSemestersData?.data?.semesters) ? allSemestersData.data.semesters : [];
-  const levels = Array.isArray(allLevelsData?.data?.items) 
-    ? allLevelsData.data.items 
-    : Array.isArray(allLevelsData?.data?.levels) 
-      ? allLevelsData.data.levels 
-      : [];
+  // Dynamically generate unique seasons from registered courses
+  const uniqueSeasons = useMemo(() => {
+    const seasonMap = new Map<number, { id: number; name: string }>();
+    allRegistrations.forEach(reg => {
+      if (reg.season) {
+        seasonMap.set(reg.season.id, reg.season);
+      }
+    });
+    return Array.from(seasonMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allRegistrations]);
+
+  // Dynamically generate unique semesters from registered courses, filtered by selected season
+  const uniqueSemesters = useMemo(() => {
+    const semesterMap = new Map<number, { id: number; name: string; areStudentEditsLocked?: boolean }>();
+    allRegistrations.forEach(reg => {
+      // Only include semesters if they belong to the selected season, or all if no season is selected
+      if (reg.semester && (!selectedSeasonId || reg.season?.id === selectedSeasonId)) {
+        semesterMap.set(reg.semester.id, reg.semester);
+      }
+    });
+    return Array.from(semesterMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [allRegistrations, selectedSeasonId]);
 
   // Compute counts per filter option
   const registrationCounts = useMemo(() => {
     const counts = {
       seasons: {} as Record<number, number>,
       semesters: {} as Record<number, number>,
-      levels: {} as Record<number, number>,
     };
     
     allRegistrations.forEach((reg) => {
       if (reg.season?.id) {
         counts.seasons[reg.season.id] = (counts.seasons[reg.season.id] || 0) + 1;
       }
-      if (reg.semester?.id) {
+      // Count semesters based on the current context (selected season or all)
+      if (reg.semester?.id && (!selectedSeasonId || reg.season?.id === selectedSeasonId)) {
         counts.semesters[reg.semester.id] = (counts.semesters[reg.semester.id] || 0) + 1;
-      }
-      if (reg.level?.id) {
-        counts.levels[reg.level.id] = (counts.levels[reg.level.id] || 0) + 1;
       }
     });
     
     return counts;
-  }, [allRegistrations]);
+  }, [allRegistrations, selectedSeasonId]);
 
   // Filter registrations based on selected filters
   const filteredRegistrations = useMemo(() => {
     return allRegistrations.filter(reg => {
       if (selectedSeasonId && reg.season?.id !== selectedSeasonId) return false;
       if (selectedSemesterId && reg.semester?.id !== selectedSemesterId) return false;
-      if (selectedLevelId && reg.level?.id !== selectedLevelId) return false;
       return true;
     });
-  }, [allRegistrations, selectedSeasonId, selectedSemesterId, selectedLevelId]);
+  }, [allRegistrations, selectedSeasonId, selectedSemesterId]);
 
-  // Get unique period info for display
-  const selectedSeason = seasons.find((s: any) => s.id === selectedSeasonId);
-  const selectedSemester = semesters.find((s: any) => s.id === selectedSemesterId);
-  const selectedLevel = levels.find((l: any) => l.id === selectedLevelId);
+  // Get selected period info for display
+  const selectedSeason = uniqueSeasons.find((s: any) => s.id === selectedSeasonId);
+  const selectedSemester = uniqueSemesters.find((s: any) => s.id === selectedSemesterId);
 
-  const handleSeasonChange = (seasonId: number) => {
-    setSelectedSeasonId(seasonId);
-    setSelectedSemesterId(null);
+  const handleSeasonChange = (value: string) => {
+    const id = value === 'all' ? null : parseInt(value);
+    setSelectedSeasonId(id);
+    setSelectedSemesterId(null); // IMPORTANT: Reset semester when season changes
+  };
+
+  const handleSemesterChange = (value: string) => {
+    const id = value === 'all' ? null : parseInt(value);
+    setSelectedSemesterId(id);
   };
 
   const totalCredits = filteredRegistrations.reduce((sum, reg) => sum + (reg.course.creditUnit || 0), 0);
 
-  const isLoading = registrationsLoading || seasonsLoading || levelsLoading;
+  const isLoading = registrationsLoading;
 
   if (isLoading) {
     return (
@@ -193,7 +194,7 @@ const CourseHistory = () => {
                 <p className="font-medium">{user?.departmentName || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">Program</p>
+                <p className="font-muted-foreground">Program</p>
                 <p className="font-medium">{user?.programName || 'N/A'}</p>
               </div>
             </div>
@@ -207,14 +208,24 @@ const CourseHistory = () => {
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium mb-1.5">Season</label>
                 <Select 
-                  value={selectedSeasonId?.toString() || ''} 
-                  onValueChange={(value) => handleSeasonChange(parseInt(value))}
+                  value={selectedSeasonId?.toString() || 'all'} 
+                  onValueChange={handleSeasonChange}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Seasons" />
                   </SelectTrigger>
                   <SelectContent>
-                    {seasons.map((season: any) => {
+                    <SelectItem value="all">
+                      <span className="flex items-center justify-between w-full gap-2">
+                        All Seasons
+                        {allRegistrations.length > 0 && (
+                          <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                            {allRegistrations.length}
+                          </Badge>
+                        )}
+                      </span>
+                    </SelectItem>
+                    {uniqueSeasons.map((season: any) => {
                       const count = registrationCounts.seasons[season.id] || 0;
                       return (
                         <SelectItem key={season.id} value={season.id.toString()}>
@@ -236,15 +247,35 @@ const CourseHistory = () => {
               <div className="flex-1 min-w-0">
                 <label className="block text-sm font-medium mb-1.5">Semester</label>
                 <Select 
-                  value={selectedSemesterId?.toString() || ''} 
-                  onValueChange={(value) => setSelectedSemesterId(parseInt(value))}
-                  disabled={!selectedSeasonId || semestersLoading}
+                  value={selectedSemesterId?.toString() || 'all'} 
+                  onValueChange={handleSemesterChange}
+                  // Disabled if no season is selected OR if there are no unique semesters for the selected season
+                  disabled={selectedSeasonId === null ? false : uniqueSemesters.length === 0}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="All Semesters" />
                   </SelectTrigger>
                   <SelectContent>
-                    {semesters.map((semester: any) => {
+                    <SelectItem value="all">
+                      <span className="flex items-center justify-between w-full gap-2">
+                        All Semesters
+                        {/* Show count for the selected season's registrations, or all registrations if no season is selected */}
+                        {selectedSeasonId !== null ? (
+                          registrationCounts.seasons[selectedSeasonId] > 0 && (
+                             <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                                {registrationCounts.seasons[selectedSeasonId]}
+                             </Badge>
+                          )
+                        ) : (
+                          allRegistrations.length > 0 && (
+                             <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
+                                {allRegistrations.length}
+                             </Badge>
+                          )
+                        )}
+                      </span>
+                    </SelectItem>
+                    {uniqueSemesters.map((semester: any) => {
                       const count = registrationCounts.semesters[semester.id] || 0;
                       return (
                         <SelectItem key={semester.id} value={semester.id.toString()}>
@@ -263,43 +294,16 @@ const CourseHistory = () => {
                 </Select>
               </div>
 
-              <div className="flex-1 min-w-0">
-                <label className="block text-sm font-medium mb-1.5">Level</label>
-                <Select 
-                  value={selectedLevelId?.toString() || ''} 
-                  onValueChange={(value) => setSelectedLevelId(parseInt(value))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="All Levels" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {levels.map((level: any) => {
-                      const count = registrationCounts.levels[level.id] || 0;
-                      return (
-                        <SelectItem key={level.id} value={level.id.toString()}>
-                          <span className="flex items-center justify-between w-full gap-2">
-                            {level.name}
-                            {count > 0 && (
-                              <Badge variant="secondary" className="ml-2 text-xs px-1.5 py-0">
-                                {count}
-                              </Badge>
-                            )}
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/* Removed Level filter as per request */}
             </div>
 
           </CardContent>
         </Card>
 
         {/* Period Display */}
-        {(selectedSeason || selectedSemester || selectedLevel) && (
+        {(selectedSeason || selectedSemester) && (
           <div className="mb-4 text-sm text-muted-foreground">
-            Showing: {selectedSeason?.name || 'All Seasons'} - {selectedSemester?.name || 'All Semesters'} - {selectedLevel?.name || 'All Levels'}
+            Showing: {selectedSeason?.name || 'All Seasons'} - {selectedSemester?.name || 'All Semesters'}
           </div>
         )}
 

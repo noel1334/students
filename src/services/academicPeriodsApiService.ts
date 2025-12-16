@@ -54,6 +54,7 @@ export interface Level {
  */
 export const getAllSeasons = async (): Promise<ApiResponse<{ seasons: Season[], totalPages: number, currentPage: number, totalSeasons: number }>> => {
   const response = await api.get('/seasons');
+  console.log(response)
   return response.data;
 };
 
@@ -68,6 +69,7 @@ export const getAllSemesters = async (seasonId?: number): Promise<ApiResponse<{ 
     params.seasonId = seasonId;
   }
   const response = await api.get('/semesters', { params });
+  console.log(response)
   return response.data;
 };
 
