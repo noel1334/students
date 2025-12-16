@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Unlock } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -24,32 +24,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/config/api';
-
-interface CourseRegistration {
-  id: number;
-  course: {
-    id: number;
-    code: string;
-    title: string;
-    creditUnit: number;
-    courseType?: string;
-  };
-  level: {
-    id: number;
-    name: string;
-  };
-  season: {
-    id: number;
-    name: string;
-  };
-  semester: {
-    id: number;
-    name: string;
-    areStudentEditsLocked?: boolean;
-  };
-  registeredAt: string;
-  isScoreRecorded?: boolean;
-}
+import CourseFormDownloader from '@/components/courses/CourseFormDownloader';
+import { CourseRegistration } from '@/services/courseApiService';
 
 const CourseHistory = () => {
   const { user } = useAuth();
@@ -300,15 +276,27 @@ const CourseHistory = () => {
           </CardContent>
         </Card>
 
-        {/* Period Display */}
-        {(selectedSeason || selectedSemester) && (
-          <div className="mb-4 text-sm text-muted-foreground">
-            Showing: {selectedSeason?.name || 'All Seasons'} - {selectedSemester?.name || 'All Semesters'}
-          </div>
-        )}
+        {/* Period Display & Download Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          {(selectedSeason || selectedSemester) && (
+            <div className="text-sm text-muted-foreground">
+              Showing: {selectedSeason?.name || 'All Seasons'} - {selectedSemester?.name || 'All Semesters'}
+            </div>
+          )}
+          
+          {/* Download Button - Only show when specific season AND semester are selected */}
+          {selectedSeasonId && selectedSemesterId && filteredRegistrations.length > 0 && (
+            <CourseFormDownloader registrations={filteredRegistrations}>
+              <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                <Download className="h-4 w-4 mr-2" />
+                Download Registration Form
+              </Button>
+            </CourseFormDownloader>
+          )}
+        </div>
 
-        {/* Registered Courses Table */}
-        <Card>
+        {/* Registered Courses Table - Desktop View */}
+        <Card className="hidden sm:block">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-lg">
@@ -374,6 +362,75 @@ const CourseHistory = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Registered Courses - Mobile Card View */}
+        <div className="sm:hidden space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">
+              Registered Courses ({filteredRegistrations.length})
+            </h2>
+            <Badge variant="outline">Total: {totalCredits} Units</Badge>
+          </div>
+          
+          {filteredRegistrations.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                {allRegistrations.length === 0 
+                  ? "No course registrations found."
+                  : "No courses found for the selected filters."}
+              </CardContent>
+            </Card>
+          ) : (
+            filteredRegistrations.map((reg) => {
+              const isLocked = reg.semester?.areStudentEditsLocked || reg.isScoreRecorded;
+              return (
+                <Card key={reg.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="font-semibold text-sm">{reg.course.code}</p>
+                        <p className="text-sm text-muted-foreground">{reg.course.title}</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {isLocked ? (
+                          <Lock className="h-4 w-4 text-muted-foreground" />
+                        ) : (
+                          <Unlock className="h-4 w-4 text-green-500" />
+                        )}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-muted-foreground">Units: </span>
+                        <span className="font-medium">{reg.course.creditUnit}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Level: </span>
+                        <span className="font-medium">{reg.level?.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Semester: </span>
+                        <span className="font-medium">{reg.semester?.name}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Season: </span>
+                        <span className="font-medium">{reg.season?.name}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border">
+                      <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20 text-xs">
+                        Registered
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(reg.registeredAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
