@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import UserAvatar from '@/components/UserAvatar';
+import { useUniversitySettings } from '@/hooks/useUniversitySettings';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { data: universitySettings } = useUniversitySettings();
   
   // Close sidebar on small screens when route changes
   useEffect(() => {
@@ -137,9 +139,19 @@ const Sidebar = () => {
       >
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="w-9 h-9" />
-            <h1 className="text-xl font-bold text-primary">ScholarHub</h1>
+          <div className="flex items-center gap-3 min-w-0">
+            {universitySettings?.logoUrl ? (
+              <img
+                src={universitySettings.logoUrl}
+                alt={universitySettings.acronym || universitySettings.name || 'School Logo'}
+                className="w-9 h-9 object-contain rounded"
+              />
+            ) : (
+              <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="w-9 h-9" />
+            )}
+            <h1 className="text-xl font-bold text-primary truncate">
+              {universitySettings?.acronym || universitySettings?.name || 'ScholarHub'}
+            </h1>
           </div>
           <button 
             onClick={toggleSidebar} 

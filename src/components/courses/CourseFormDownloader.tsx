@@ -3,16 +3,19 @@
 import React, { useRef, cloneElement, ReactElement } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseRegistration } from '@/services/courseApiService';
+import { useUniversitySettings } from '@/hooks/useUniversitySettings';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 interface CourseFormDownloaderProps {
   registrations: CourseRegistration[];
   children: ReactElement; // Accepts a React element (the button) as children
+  mode?: 'download' | 'print';
 }
 
-const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderProps) => {
+const CourseFormDownloader = ({ registrations, children, mode = 'download' }: CourseFormDownloaderProps) => {
   const { user } = useAuth();
+  const { data: universitySettings } = useUniversitySettings();
   const formRef = useRef<HTMLDivElement>(null);
 
   const downloadPDF = async () => {
@@ -66,6 +69,32 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
     }
   };
 
+  const printForm = () => {
+    if (!formRef.current || !user) return;
+    const printWindow = window.open('', '_blank', 'width=900,height=1000');
+    if (!printWindow) return;
+    const content = formRef.current.innerHTML;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Course Registration Form</title>
+          <style>
+            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; color: #000; background: #fff; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>${content}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 400);
+  };
+
   if (!registrations || registrations.length === 0) {
     return null; // Don't render anything if there are no registrations
   }
@@ -73,7 +102,7 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
   return (
     <>
       {/* Clone the child element (the Button) and add the onClick handler */}
-      {cloneElement(children, { onClick: downloadPDF })}
+      {cloneElement(children, { onClick: mode === 'print' ? printForm : downloadPDF })}
 
       {/* Hidden form for PDF generation - only visible to print media or temporarily by JS */}
       {/* Keeping 'print:block' for actual printing if needed, but 'hidden' is problematic. */}
@@ -101,8 +130,9 @@ const CourseFormDownloader = ({ registrations, children }: CourseFormDownloaderP
           {/* School Logo */}
           <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
             <img 
-              src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" 
-              alt="School Logo" 
+              src={universitySettings?.logoUrl || "/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png"}
+              alt={universitySettings?.acronym || "School Logo"}
+              crossOrigin="anonymous"
               style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
             />
           </div>

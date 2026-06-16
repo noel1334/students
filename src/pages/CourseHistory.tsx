@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lock, Unlock, Download } from 'lucide-react';
+import { ArrowLeft, Lock, Unlock, Download, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -286,12 +286,20 @@ const CourseHistory = () => {
           
           {/* Download Button - Only show when specific season AND semester are selected */}
           {selectedSeasonId && selectedSemesterId && filteredRegistrations.length > 0 && (
-            <CourseFormDownloader registrations={filteredRegistrations}>
-              <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                <Download className="h-4 w-4 mr-2" />
-                Download Registration Form
-              </Button>
-            </CourseFormDownloader>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <CourseFormDownloader registrations={filteredRegistrations} mode="download">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+              </CourseFormDownloader>
+              <CourseFormDownloader registrations={filteredRegistrations} mode="print">
+                <Button variant="default" size="sm" className="w-full sm:w-auto">
+                  <Printer className="h-4 w-4 mr-2" />
+                  Print
+                </Button>
+              </CourseFormDownloader>
+            </div>
           )}
         </div>
 
