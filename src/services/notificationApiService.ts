@@ -6,11 +6,13 @@ import api from '@/config/api';
 
 export interface Notification {
   id: number;
-  title: string;
+  title?: string;
   message: string;
-  type: 'exam_assignment' | 'payment_reminder' | 'general' | 'info' | 'warning';
+  type?: 'exam_assignment' | 'payment_reminder' | 'general' | 'info' | 'warning';
   isRead: boolean;
   createdAt: string;
+  recipientType?: string;
+  recipientId?: number;
   metadata?: {
     examId?: number;
     paymentId?: number;
@@ -19,10 +21,12 @@ export interface Notification {
 }
 
 export interface NotificationsResponse {
-  items: Notification[];
+  items: Notification[]; // alias of notifications for backward compatibility
+  notifications: Notification[];
   totalPages: number;
   currentPage: number;
   totalItems: number;
+  totalNotifications: number;
   unreadCount: number;
 }
 
@@ -37,33 +41,44 @@ export const getMyNotifications = async (
   const params = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-    ...(unreadOnly && { unreadOnly: 'true' }),
+    ...(unreadOnly && { isRead: 'false' }),
   });
 
   const response = await api.get(`/notifications/me?${params}`);
-  return response.data.data;
+  const data = response.data?.data ?? {};
+  const notifications: Notification[] = data.notifications ?? data.items ?? [];
+  return {
+    items: notifications,
+    notifications,
+    totalPages: data.totalPages ?? 1,
+    currentPage: data.currentPage ?? page,
+    totalItems: data.totalNotifications ?? data.totalItems ?? notifications.length,
+    totalNotifications: data.totalNotifications ?? data.totalItems ?? notifications.length,
+    unreadCount: data.unreadCount ?? notifications.filter(n => !n.isRead).length,
+  };
 };
 
 /**
  * Marks a notification as read
  */
 export const markNotificationAsRead = async (notificationId: number): Promise<void> => {
-  await api.patch(`/notifications/${notificationId}/read`);
+  await api.patch(`/notifications/${notificationId}/read`, { isRead: true });
 };
 
 /**
  * Marks all notifications as read
  */
 export const markAllNotificationsAsRead = async (): Promise<void> => {
-  await api.patch('/notifications/mark-all-read');
+  await api.patch('/notifications/me/mark-all-read');
 };
 
 /**
  * Gets the unread notification count
  */
 export const getUnreadNotificationCount = async (): Promise<number> => {
-  const response = await api.get('/notifications/unread-count');
-  return response.data.data.count;
+  // Backend exposes unreadCount via /notifications/me. Fetch minimal payload.
+  const response = await api.get('/notifications/me?page=1&limit=1');
+  return response.data?.data?.unreadCount ?? 0;
 };
 
 /**

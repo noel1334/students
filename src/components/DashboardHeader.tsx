@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Menu, Settings, User, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import UserAvatar from '@/components/UserAvatar';
-import { getMyNotifications, getUnreadNotificationCount, markNotificationAsRead } from '@/services/notificationApiService';
+import { getMyNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '@/services/notificationApiService';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,28 +25,35 @@ import { formatDistanceToNow } from 'date-fns';
 const DashboardHeader = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [notificationOpen, setNotificationOpen] = useState(false);
-  
-  // Fetch unread notification count
-  const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unreadNotificationCount'],
-    queryFn: getUnreadNotificationCount,
-    refetchInterval: 30000, // Refetch every 30 seconds
-  });
 
-  // Fetch recent notifications
+  // Fetch recent notifications (also gives us unreadCount)
   const { data: notificationsData, refetch: refetchNotifications } = useQuery({
     queryKey: ['recentNotifications'],
     queryFn: () => getMyNotifications(1, 5),
-    enabled: notificationOpen,
+    refetchInterval: 30000,
   });
+
+  const unreadCount = notificationsData?.unreadCount ?? 0;
 
   const handleNotificationClick = async (notificationId: number) => {
     try {
       await markNotificationAsRead(notificationId);
       refetchNotifications();
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsAsRead();
+      refetchNotifications();
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    } catch (error) {
+      console.error('Failed to mark all as read:', error);
     }
   };
   
@@ -104,7 +111,13 @@ const DashboardHeader = () => {
           {/* Notification Bell */}
           <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative"
+                onMouseEnter={() => setNotificationOpen(true)}
+                aria-label="Notifications"
+              >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <Badge 
@@ -116,11 +129,25 @@ const DashboardHeader = () => {
                 )}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
+            <PopoverContent
+              className="w-80 p-0"
+              align="end"
+              onMouseLeave={() => setNotificationOpen(false)}
+            >
               <div className="flex items-center justify-between p-4 border-b">
                 <h3 className="font-semibold">Notifications</h3>
                 {unreadCount > 0 && (
-                  <Badge variant="secondary">{unreadCount} unread</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{unreadCount} unread</Badge>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={handleMarkAllRead}
+                    >
+                      Mark all read
+                    </Button>
+                  </div>
                 )}
               </div>
               <ScrollArea className="h-[400px]">
@@ -132,14 +159,18 @@ const DashboardHeader = () => {
                         className={`p-4 hover:bg-accent cursor-pointer transition-colors ${
                           !notification.isRead ? 'bg-accent/50' : ''
                         }`}
-                        onClick={() => handleNotificationClick(notification.id)}
+                        onClick={() => {
+                          handleNotificationClick(notification.id);
+                          setNotificationOpen(false);
+                          navigate('/notifications');
+                        }}
                       >
                         <div className="flex gap-3">
-                          <span className="text-xl">{getNotificationIcon(notification.type)}</span>
+                          <span className="text-xl">{getNotificationIcon(notification.type || 'general')}</span>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-medium text-sm leading-tight">
-                                {notification.title}
+                                {notification.title || 'Notification'}
                               </p>
                               {!notification.isRead && (
                                 <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0 mt-1" />
