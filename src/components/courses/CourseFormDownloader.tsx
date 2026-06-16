@@ -1,6 +1,6 @@
 // src/components/courses/CourseFormDownloader.tsx
 
-import React, { useRef, cloneElement, ReactElement } from 'react';
+import React, { useRef, useState, cloneElement, ReactElement } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { CourseRegistration } from '@/services/courseApiService';
 import { useUniversitySettings } from '@/hooks/useUniversitySettings';
@@ -17,6 +17,9 @@ const CourseFormDownloader = ({ registrations, children, mode = 'download' }: Co
   const { user } = useAuth();
   const { data: universitySettings } = useUniversitySettings();
   const formRef = useRef<HTMLDivElement>(null);
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  const showLogo = !!universitySettings?.logoUrl && !logoFailed;
 
   const downloadPDF = async () => {
     if (!formRef.current || !user) {
@@ -80,8 +83,22 @@ const CourseFormDownloader = ({ registrations, children, mode = 'download' }: Co
         <head>
           <title>Course Registration Form</title>
           <style>
-            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; color: #000; background: #fff; }
-            @media print { body { padding: 0; } }
+            @page { size: A4; margin: 12mm; }
+            * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            html, body { margin: 0; padding: 0; font-family: Arial, sans-serif; color: #000; background: #fff; }
+            body { padding: 16px; }
+            h1, h2, h3 { page-break-after: avoid; }
+            table { width: 100%; border-collapse: collapse; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            thead { display: table-header-group; }
+            tfoot { display: table-footer-group; }
+            img { max-width: 100%; }
+            .page-break { page-break-before: always; }
+            @media print {
+              body { padding: 0; }
+              .no-print { display: none !important; }
+              a { color: inherit; text-decoration: none; }
+            }
           </style>
         </head>
         <body>${content}</body>
@@ -127,15 +144,22 @@ const CourseFormDownloader = ({ registrations, children, mode = 'download' }: Co
             <p style={{ fontSize: '12px', color: '#374151' }}>{user?.currentSemesterName}</p>
           </div>
 
-          {/* School Logo */}
-          <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
-            <img 
-              src={universitySettings?.logoUrl || "/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png"}
-              alt={universitySettings?.acronym || "School Logo"}
-              crossOrigin="anonymous"
-              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-            />
-          </div>
+          {/* School Logo - falls back to acronym text if logoUrl missing or fails */}
+          {showLogo ? (
+            <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', overflow: 'hidden' }}>
+              <img
+                src={universitySettings!.logoUrl as string}
+                alt={universitySettings?.acronym || 'School Logo'}
+                crossOrigin="anonymous"
+                onError={() => setLogoFailed(true)}
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+          ) : (
+            <div style={{ width: '80px', height: '80px', border: '2px solid #d1d5db', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', fontWeight: 'bold', fontSize: '14px', color: '#111827', textAlign: 'center', padding: '4px' }}>
+              {universitySettings?.acronym || universitySettings?.name || 'SCHOOL'}
+            </div>
+          )}
         </div>
 
         {/* Student Details */}
