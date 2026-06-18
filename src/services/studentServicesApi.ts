@@ -59,6 +59,14 @@ export interface StudentProfileData {
   createdAt?: string;
   updatedAt?: string;
   studentDetails?: any;
+  medicalFitness?: {
+    id?: number;
+    bloodGroup?: string | null;
+    genotype?: string | null;
+    fileUrl?: string | null;
+    status?: string | null;
+    rejectionReason?: string | null;
+  } | null;
   _count?: {
     registrations: number;
     results: number;
@@ -78,18 +86,22 @@ export const getStudentProfile = async (): Promise<ApiResponse<{ student: Studen
 };
 
 export interface UpdateStudentProfileData {
-  // Student table fields
-  profileImg?: string;
+  // Student table fields (self-editable)
+  profileImg?: string | null;
   password?: string;
-  
-  // StudentDetails fields
-  dob?: string;
+
+  // StudentDetails fields (self-editable)
+  dob?: string | null;
   gender?: string;
-  address?: string;
-  phone?: string;
-  guardianName?: string;
-  guardianPhone?: string;
-  signatureImg?: string;
+  address?: string | null;
+  phone?: string | null;
+  guardianName?: string | null;
+  guardianPhone?: string | null;
+
+  // MedicalFitness fields (self-editable)
+  bloodGroup?: string | null;
+  genotype?: string | null;
+  fileUrl?: string | null;
 }
 
 export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {

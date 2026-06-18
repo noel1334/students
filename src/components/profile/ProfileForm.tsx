@@ -26,9 +26,10 @@ interface ProfileFormProps {
     session: string;
   };
   studentData: StudentProfileData;
+  onProfileUpdated?: () => void | Promise<void>;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onProfileUpdated }) => {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [selectedState, setSelectedState] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionName>('bioData');
@@ -78,8 +79,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
       yearOfGraduation: '',
       admissionNumber: studentData.regNo || '',
       // Medical Records
-      bloodGroup: '',
-      genotype: '',
+      bloodGroup: studentData.medicalFitness?.bloodGroup || '',
+      genotype: studentData.medicalFitness?.genotype || '',
       allergies: '',
       chronicConditions: '',
       disabilities: '',
@@ -124,22 +125,25 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
       setIsSubmitting(true);
       const formData = methods.getValues();
       
-      // Map form data to API structure (only editable fields)
-      const updateData = {
+      // Map form data to API structure (only backend self-editable fields)
+      const updateData: Record<string, any> = {
         dob: formData.dateOfBirth || undefined,
         gender: formData.gender || undefined,
         address: formData.permanentHomeAddress || undefined,
         phone: formData.phoneNumber || undefined,
         guardianName: formData.sponsorName || undefined,
         guardianPhone: formData.sponsorPhone || undefined,
-        signatureImg: signature || undefined,
+        bloodGroup: formData.bloodGroup || undefined,
+        genotype: formData.genotype || undefined,
       };
+      Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
 
       const response = await updateStudentProfile(updateData);
       
       if (response.status === 'success') {
         toast.success("Profile information updated successfully");
         setReviewModalOpen(false);
+        await onProfileUpdated?.();
       } else {
         toast.error(response.message || "Failed to update profile");
       }
