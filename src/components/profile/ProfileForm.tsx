@@ -5,14 +5,12 @@ import BioDataSection from '@/components/profile/BioDataSection';
 import AdmissionSection from '@/components/profile/AdmissionSection';
 import MedicalRecordSection from '@/components/profile/MedicalRecordSection';
 import NextOfKinSection from '@/components/profile/NextOfKinSection';
-import ParentsSection from '@/components/profile/ParentsSection';
-import SignatureUploadSection from '@/components/profile/SignatureUploadSection';
 import ReviewFormModal from '@/components/profile/ReviewFormModal';
 import ProfileFormActions from '@/components/profile/ProfileFormActions';
 import { updateStudentProfile, StudentProfileData } from '@/services/studentServicesApi';
 
 // Define all possible section names
-type SectionName = 'bioData' | 'admission' | 'medicalRecord' | 'nextOfKin' | 'parents' | 'signatureUpload';
+type SectionName = 'bioData' | 'admission' | 'medicalRecord' | 'guardian';
 
 interface ProfileFormProps {
   studentInfo: {
@@ -30,10 +28,7 @@ interface ProfileFormProps {
 }
 
 const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onProfileUpdated }) => {
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [selectedState, setSelectedState] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<SectionName>('bioData');
-  const [signature, setSignature] = useState<string | null>(studentData.studentDetails?.signatureImg || null);
   const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,24 +49,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
       regNo: studentData.regNo || '',
       dateOfBirth: studentData.studentDetails?.dob ? new Date(studentData.studentDetails.dob).toISOString().split('T')[0] : '',
       gender: studentData.studentDetails?.gender || '',
-      country: '',
-      state: '',
-      lga: '',
-      placeOfBirth: '',
-      maritalStatus: '',
       phoneNumber: studentData.studentDetails?.phone || '',
-      homeEmailAddress: '',
-      maidenName: '',
       permanentHomeAddress: studentData.studentDetails?.address || '',
-      contactAddress: studentData.studentDetails?.address || '',
-      contactTelephone: studentData.studentDetails?.phone || '',
-      hall: '',
-      room: '',
-      hobbies: '',
-      games: '',
-      religion: '',
-      nin: '',
-      jambRegNumber: studentData.jambRegNo || '',
       // Admission details (read-only)
       admissionMode: studentData.entryMode || '',
       yearOfEntry: studentData.yearOfAdmission?.toString() || '',
@@ -81,31 +60,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
       // Medical Records
       bloodGroup: studentData.medicalFitness?.bloodGroup || '',
       genotype: studentData.medicalFitness?.genotype || '',
-      allergies: '',
-      chronicConditions: '',
-      disabilities: '',
-      // Next of Kin
-      nextOfKinName: '',
-      nextOfKinRelation: '',
-      nextOfKinPhone: '',
-      nextOfKinAddress: '',
-      nextOfKinEmail: '',
-      // Sponsor (Guardian)
+      // Guardian / Sponsor
       sponsorName: studentData.studentDetails?.guardianName || '',
-      sponsorRelation: '',
       sponsorPhone: studentData.studentDetails?.guardianPhone || '',
-      sponsorAddress: '',
-      sponsorEmail: '',
-      // Parents
-      fatherName: '',
-      fatherOccupation: '',
-      fatherPhone: '',
-      fatherEmail: '',
-      motherName: '',
-      motherOccupation: '',
-      motherPhone: '',
-      motherEmail: '',
-      parentAddress: '',
     }
   });
 
@@ -172,10 +129,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
           control={methods.control}
           openSection={isSectionOpen('bioData')}
           onToggleSection={() => handleSectionToggle('bioData')}
-          selectedCountry={selectedCountry}
-          setSelectedCountry={setSelectedCountry}
-          selectedState={selectedState}
-          setSelectedState={setSelectedState}
         />
 
         {/* Other sections remain unchanged but use the new toggle approach */}
@@ -195,21 +148,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
 
         <NextOfKinSection
           control={methods.control}
-          openSection={isSectionOpen('nextOfKin')}
-          onToggleSection={() => handleSectionToggle('nextOfKin')}
-        />
-
-        <ParentsSection
-          control={methods.control}
-          openSection={isSectionOpen('parents')}
-          onToggleSection={() => handleSectionToggle('parents')}
-        />
-
-        <SignatureUploadSection
-          openSection={isSectionOpen('signatureUpload')}
-          onToggleSection={() => handleSectionToggle('signatureUpload')}
-          signature={signature}
-          setSignature={setSignature}
+          openSection={isSectionOpen('guardian')}
+          onToggleSection={() => handleSectionToggle('guardian')}
         />
 
         <ProfileFormActions />

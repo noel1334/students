@@ -19,7 +19,7 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
           <FormItem>
             <FormLabel>First Name</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} readOnly className="bg-muted" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -34,7 +34,7 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
           <FormItem>
             <FormLabel>Last Name</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} readOnly className="bg-muted" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -47,9 +47,9 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
         name="email"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Email *</FormLabel>
+            <FormLabel>Email</FormLabel>
             <FormControl>
-              <Input {...field} readOnly className="bg-gray-100" />
+              <Input {...field} readOnly className="bg-muted" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -64,7 +64,22 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
           <FormItem>
             <FormLabel>Other Name</FormLabel>
             <FormControl>
-              <Input {...field} />
+              <Input {...field} readOnly className="bg-muted" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      {/* Registration Number - Read Only */}
+      <FormField
+        control={control}
+        name="regNo"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Registration Number</FormLabel>
+            <FormControl>
+              <Input {...field} readOnly className="bg-muted" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -77,7 +92,7 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
         name="dateOfBirth"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Date of Birth *</FormLabel>
+            <FormLabel>Date of Birth</FormLabel>
             <FormControl>
               <Input type="date" {...field} />
             </FormControl>
@@ -95,7 +110,7 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
             <FormLabel>Gender</FormLabel>
             <Select
               onValueChange={field.onChange}
-              defaultValue={field.value}
+              value={field.value}
             >
               <FormControl>
                 <SelectTrigger>
@@ -103,54 +118,10 @@ const PersonalInfoFields = ({ control }: PersonalInfoFieldsProps) => {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="MALE">Male</SelectItem>
+                <SelectItem value="FEMALE">Female</SelectItem>
               </SelectContent>
             </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Marital Status */}
-      <FormField
-        control={control}
-        name="maritalStatus"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Marital Status</FormLabel>
-            <Select
-              onValueChange={field.onChange}
-              defaultValue={field.value}
-            >
-              <FormControl>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-              </FormControl>
-              <SelectContent>
-                <SelectItem value="Single">Single</SelectItem>
-                <SelectItem value="Married">Married</SelectItem>
-                <SelectItem value="Divorced">Divorced</SelectItem>
-                <SelectItem value="Widowed">Widowed</SelectItem>
-              </SelectContent>
-            </Select>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-
-      {/* Maiden Name */}
-      <FormField
-        control={control}
-        name="maidenName"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Maiden Name</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
             <FormMessage />
           </FormItem>
         )}
