@@ -12,35 +12,36 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const response = await getStudentProfile();
-        if (response.status === 'success' && response.data?.student) {
-          setStudentData(response.data.student);
-          setAvatar(response.data.student.profileImg || null);
-        } else {
-          toast({
-            title: "Error",
-            description: response.message || "Failed to fetch profile data",
-            variant: "destructive"
-          });
-        }
-      } catch (error: any) {
-        console.error('Error fetching profile:', error);
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const response = await getStudentProfile();
+      if (response.status === 'success' && response.data?.student) {
+        setStudentData(response.data.student);
+        setAvatar(response.data.student.profileImg || null);
+      } else {
         toast({
           title: "Error",
-          description: error.response?.data?.message || "Failed to load profile data",
+          description: response.message || "Failed to fetch profile data",
           variant: "destructive"
         });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error: any) {
+      console.error('Error fetching profile:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to load profile data",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProfile();
-  }, [toast]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (loading) {
     return (
@@ -84,7 +85,7 @@ const Profile = () => {
         />
 
         {/* Profile Form */}
-        <ProfileForm studentInfo={studentInfo} studentData={studentData} />
+        <ProfileForm studentInfo={studentInfo} studentData={studentData} onProfileUpdated={fetchProfile} />
       </div>
     </div>
   );
