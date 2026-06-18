@@ -32,34 +32,20 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
   // Group data into sections for better organization
   const sections = {
     "Personal Information": [
-      'firstName', 'lastName', 'otherName', 'email', 'regNo', 
-      'dateOfBirth', 'gender', 'placeOfBirth', 'maritalStatus'
-    ],
-    "Location": [
-      'country', 'state', 'lga'
+      'firstName', 'lastName', 'otherName', 'email', 'regNo',
+      'dateOfBirth', 'gender'
     ],
     "Contact Information": [
-      'phoneNumber', 'homeEmailAddress', 'permanentHomeAddress', 
-      'contactAddress', 'contactTelephone', 'hall', 'room'
-    ],
-    "Additional Information": [
-      'hobbies', 'games', 'religion', 'nin', 'jambRegNumber', 'maidenName'
+      'phoneNumber', 'permanentHomeAddress'
     ],
     "Admission Details": [
       'admissionMode', 'yearOfEntry', 'currentLevel', 'yearOfGraduation', 'admissionNumber'
     ],
     "Medical Records": [
-      'bloodGroup', 'genotype', 'allergies', 'chronicConditions', 'disabilities'
+      'bloodGroup', 'genotype'
     ],
-    "Next of Kin": [
-      'nextOfKinName', 'nextOfKinRelation', 'nextOfKinPhone', 'nextOfKinAddress', 'nextOfKinEmail'
-    ],
-    "Sponsor": [
-      'sponsorName', 'sponsorRelation', 'sponsorPhone', 'sponsorAddress', 'sponsorEmail'
-    ],
-    "Parents": [
-      'fatherName', 'fatherOccupation', 'fatherPhone', 'fatherEmail',
-      'motherName', 'motherOccupation', 'motherPhone', 'motherEmail', 'parentAddress'
+    "Guardian / Sponsor": [
+      'sponsorName', 'sponsorPhone'
     ]
   };
 

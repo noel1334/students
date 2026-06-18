@@ -2,7 +2,6 @@
 import React from 'react';
 import { FileCheck, Upload } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Control } from 'react-hook-form';
@@ -58,7 +57,7 @@ const MedicalRecordSection = ({
                   <FormLabel>Blood Group</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -90,7 +89,7 @@ const MedicalRecordSection = ({
                   <FormLabel>Genotype</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -109,70 +108,13 @@ const MedicalRecordSection = ({
                 </FormItem>
               )}
             />
-
-            {/* Allergies */}
-            <FormField
-              control={control}
-              name="allergies"
-              render={({ field }) => (
-                <FormItem className="col-span-1 md:col-span-2">
-                  <FormLabel>Allergies (if any)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="List any allergies you have" 
-                      className="resize-none" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Chronic Conditions */}
-            <FormField
-              control={control}
-              name="chronicConditions"
-              render={({ field }) => (
-                <FormItem className="col-span-1 md:col-span-2">
-                  <FormLabel>Chronic Conditions (if any)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="List any chronic conditions you have" 
-                      className="resize-none" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Disabilities */}
-            <FormField
-              control={control}
-              name="disabilities"
-              render={({ field }) => (
-                <FormItem className="col-span-1 md:col-span-2">
-                  <FormLabel>Disabilities (if any)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="List any disabilities you have" 
-                      className="resize-none" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
 
           <div className="mt-6">
-            <div className="text-sm font-medium mb-2">Medical Documents</div>
+            <div className="text-sm font-medium mb-2">Medical Fitness Document</div>
             <div className="border border-dashed border-border rounded-md p-6 flex flex-col items-center justify-center">
               <Upload className="h-10 w-10 text-muted-foreground mb-2" />
-              <p className="text-sm text-muted-foreground mb-2">Upload medical reports or certificates</p>
+              <p className="text-sm text-muted-foreground mb-2">Upload your medical fitness certificate</p>
               <label 
                 htmlFor="document-upload" 
                 className="px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/80 text-sm font-medium cursor-pointer"
@@ -185,7 +127,6 @@ const MedicalRecordSection = ({
                 accept=".pdf,.doc,.docx,.jpg,.png"
                 className="hidden"
                 onChange={handleDocumentChange}
-                multiple
               />
             </div>
 
