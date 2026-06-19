@@ -415,26 +415,24 @@ const ExamAssignments = () => {
   if (loading) {
     /* ... Skeleton UI ... */
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        {" "}
-        <Skeleton className="h-12 w-64" />{" "}
-        <div className="grid gap-4">
-          {" "}
+      <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+        <Skeleton className="h-10 sm:h-12 w-48 sm:w-64" />
+        <div className="grid gap-3 sm:gap-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full" />
-          ))}{" "}
-        </div>{" "}
+            <Skeleton key={i} className="h-36 sm:h-48 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-1 sm:gap-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
           CBT Exam Schedule
         </h1>
-        <p className="text-muted-foreground text-sm md:text-base">
+        <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
           View and download your exam session assignments
         </p>
       </div>
@@ -454,12 +452,12 @@ const ExamAssignments = () => {
 
       {filteredAssignments.length === 0 && assignments.length > 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-muted-foreground">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+            <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
               No exams match your filters
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
               Try adjusting your filters to see more results
             </p>
           </CardContent>
@@ -467,31 +465,27 @@ const ExamAssignments = () => {
       ) : assignments.length === 0 ? (
         <Card>
           {" "}
-          <CardContent className="flex flex-col items-center justify-center py-12">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
             {" "}
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />{" "}
-            <p className="text-lg font-medium text-muted-foreground">
+            <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />{" "}
+            <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
               No exam assignments found
             </p>{" "}
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
               You don't have any exam sessions assigned yet
             </p>{" "}
           </CardContent>{" "}
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {filteredAssignments.map((assignment) => (
             <Card
               key={assignment.id}
-              className="hover:shadow-md transition-shadow"
+              className="hover:shadow-md transition-shadow overflow-hidden"
             >
-              {" "}
-              <CardContent className="pt-6 px-4 sm:px-6">
-                {" "}
-                <div className="flex gap-3 sm:gap-4 items-start">
-                  {" "}
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 shrink-0 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                    {" "}
+              <CardContent className="pt-4 sm:pt-6 px-3 sm:px-4 md:px-6">
+                <div className="flex gap-2 sm:gap-4 items-start">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 shrink-0 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
                     {user?.profileImage ? (
                       <img
                         src={user.profileImage}
@@ -499,13 +493,12 @@ const ExamAssignments = () => {
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
-                      <span className="text-2xl font-bold text-gray-600">
-                        {" "}
+                      <span className="text-lg sm:text-2xl font-bold text-gray-600">
                         {user?.avatarLetter ||
                           user?.name?.charAt(0) ||
-                          "S"}{" "}
+                          "S"}
                       </span>
-                    )}{" "}
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-3">
                     {" "}
@@ -534,9 +527,9 @@ const ExamAssignments = () => {
                         {assignment.examSession.exam.examType}{" "}
                       </Badge>{" "}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                       {" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Student:
@@ -545,7 +538,7 @@ const ExamAssignments = () => {
                           {assignment.student.name}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Reg No:
@@ -554,7 +547,7 @@ const ExamAssignments = () => {
                           {assignment.student.regNo}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Department:
@@ -563,7 +556,7 @@ const ExamAssignments = () => {
                           {assignment.student.department.name}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Program:
@@ -573,24 +566,24 @@ const ExamAssignments = () => {
                         </span>{" "}
                       </div>{" "}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
                       {" "}
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {" "}
-                        <Calendar className="h-5 w-5 text-primary mt-0.5" />{" "}
-                        <div>
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />{" "}
+                        <div className="min-w-0">
                           {" "}
-                          <p className="text-sm font-medium text-foreground">
+                          <p className="text-xs sm:text-sm font-medium text-foreground">
                             Date & Time
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {" "}
                             {format(
                               new Date(assignment.examSession.startTime),
                               "PPP"
                             )}{" "}
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {" "}
                             {format(
                               new Date(assignment.examSession.startTime),
@@ -604,26 +597,26 @@ const ExamAssignments = () => {
                           </p>{" "}
                         </div>{" "}
                       </div>{" "}
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {" "}
-                        <Clock className="h-5 w-5 text-primary mt-0.5" />{" "}
-                        <div>
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />{" "}
+                        <div className="min-w-0">
                           {" "}
-                          <p className="text-sm font-medium text-foreground">
+                          <p className="text-xs sm:text-sm font-medium text-foreground">
                             Session
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {assignment.examSession.sessionName}
                           </p>{" "}
                           {assignment.seatNumber && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Seat: {assignment.seatNumber}
                             </p>
                           )}{" "}
                         </div>{" "}
                       </div>{" "}
                     </div>
-                    <div className="pt-2">
+                    <div className="pt-1 sm:pt-2">
                       {" "}
                       <ExamCountdown
                         startTime={assignment.examSession.startTime}
@@ -673,30 +666,30 @@ const ExamAssignments = () => {
       )}
       {selectedAssignment && (
         /* ... View Details Modal ... */ <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4"
           onClick={() => setSelectedAssignment(null)}
         >
           {" "}
           <Card
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-1 sm:mx-0"
             onClick={(e) => e.stopPropagation()}
           >
             {" "}
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               {" "}
-              <CardTitle>Exam Assignment Details</CardTitle>{" "}
-              <CardDescription>
+              <CardTitle className="text-base sm:text-lg">Exam Assignment Details</CardTitle>{" "}
+              <CardDescription className="text-xs sm:text-sm">
                 Complete information about your exam session
               </CardDescription>{" "}
             </CardHeader>{" "}
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 px-4 pb-4 sm:px-6 sm:pb-6">
               {" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Student Information
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Name:</span>{" "}
@@ -722,10 +715,10 @@ const ExamAssignments = () => {
               </div>{" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Exam Details
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Course:</span>{" "}
@@ -750,10 +743,10 @@ const ExamAssignments = () => {
               </div>{" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Session Details
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Session:</span>{" "}
@@ -791,19 +784,19 @@ const ExamAssignments = () => {
                   </p>{" "}
                 </div>{" "}
               </div>{" "}
-              <div className="flex gap-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
                 {" "}
                 <Button
                   onClick={() => setSelectedAssignment(null)}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                 >
                   {" "}
                   Close{" "}
                 </Button>{" "}
                 <Button
                   onClick={() => handleDownload(selectedAssignment)}
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                   disabled={
                     checkingPayment === selectedAssignment.examSession.exam.id
                   }
