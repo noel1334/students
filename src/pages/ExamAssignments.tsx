@@ -427,12 +427,12 @@ const ExamAssignments = () => {
   }
 
   return (
-    <div className="container mx-auto p-4 md:p-6 space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+    <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col gap-1 sm:gap-2">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
           CBT Exam Schedule
         </h1>
-        <p className="text-muted-foreground text-sm md:text-base">
+        <p className="text-muted-foreground text-xs sm:text-sm md:text-base">
           View and download your exam session assignments
         </p>
       </div>
@@ -477,19 +477,15 @@ const ExamAssignments = () => {
           </CardContent>{" "}
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 sm:gap-4">
           {filteredAssignments.map((assignment) => (
             <Card
               key={assignment.id}
-              className="hover:shadow-md transition-shadow"
+              className="hover:shadow-md transition-shadow overflow-hidden"
             >
-              {" "}
-              <CardContent className="pt-6 px-4 sm:px-6">
-                {" "}
-                <div className="flex gap-3 sm:gap-4 items-start">
-                  {" "}
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 shrink-0 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
-                    {" "}
+              <CardContent className="pt-4 sm:pt-6 px-3 sm:px-4 md:px-6">
+                <div className="flex gap-2 sm:gap-4 items-start">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 shrink-0 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
                     {user?.profileImage ? (
                       <img
                         src={user.profileImage}
@@ -497,13 +493,12 @@ const ExamAssignments = () => {
                         className="w-full h-full object-cover rounded-lg"
                       />
                     ) : (
-                      <span className="text-2xl font-bold text-gray-600">
-                        {" "}
+                      <span className="text-lg sm:text-2xl font-bold text-gray-600">
                         {user?.avatarLetter ||
                           user?.name?.charAt(0) ||
-                          "S"}{" "}
+                          "S"}
                       </span>
-                    )}{" "}
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-3">
                     {" "}
