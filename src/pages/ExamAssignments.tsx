@@ -527,9 +527,9 @@ const ExamAssignments = () => {
                         {assignment.examSession.exam.examType}{" "}
                       </Badge>{" "}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
                       {" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Student:
@@ -538,7 +538,7 @@ const ExamAssignments = () => {
                           {assignment.student.name}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Reg No:
@@ -547,7 +547,7 @@ const ExamAssignments = () => {
                           {assignment.student.regNo}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Department:
@@ -556,7 +556,7 @@ const ExamAssignments = () => {
                           {assignment.student.department.name}
                         </span>{" "}
                       </div>{" "}
-                      <div>
+                      <div className="truncate">
                         {" "}
                         <span className="text-muted-foreground">
                           Program:
@@ -566,24 +566,24 @@ const ExamAssignments = () => {
                         </span>{" "}
                       </div>{" "}
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 pt-1 sm:pt-2">
                       {" "}
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {" "}
-                        <Calendar className="h-5 w-5 text-primary mt-0.5" />{" "}
-                        <div>
+                        <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />{" "}
+                        <div className="min-w-0">
                           {" "}
-                          <p className="text-sm font-medium text-foreground">
+                          <p className="text-xs sm:text-sm font-medium text-foreground">
                             Date & Time
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {" "}
                             {format(
                               new Date(assignment.examSession.startTime),
                               "PPP"
                             )}{" "}
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {" "}
                             {format(
                               new Date(assignment.examSession.startTime),
@@ -597,26 +597,26 @@ const ExamAssignments = () => {
                           </p>{" "}
                         </div>{" "}
                       </div>{" "}
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2 sm:gap-3">
                         {" "}
-                        <Clock className="h-5 w-5 text-primary mt-0.5" />{" "}
-                        <div>
+                        <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary mt-0.5 shrink-0" />{" "}
+                        <div className="min-w-0">
                           {" "}
-                          <p className="text-sm font-medium text-foreground">
+                          <p className="text-xs sm:text-sm font-medium text-foreground">
                             Session
                           </p>{" "}
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs sm:text-sm text-muted-foreground">
                             {assignment.examSession.sessionName}
                           </p>{" "}
                           {assignment.seatNumber && (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-xs sm:text-sm text-muted-foreground">
                               Seat: {assignment.seatNumber}
                             </p>
                           )}{" "}
                         </div>{" "}
                       </div>{" "}
                     </div>
-                    <div className="pt-2">
+                    <div className="pt-1 sm:pt-2">
                       {" "}
                       <ExamCountdown
                         startTime={assignment.examSession.startTime}
