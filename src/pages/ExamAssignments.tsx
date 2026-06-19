@@ -486,11 +486,11 @@ const ExamAssignments = () => {
               className="hover:shadow-md transition-shadow"
             >
               {" "}
-              <CardContent className="pt-6">
+              <CardContent className="pt-6 px-4 sm:px-6">
                 {" "}
-                <div className="flex gap-4 items-start">
+                <div className="flex gap-3 sm:gap-4 items-start">
                   {" "}
-                  <div className="w-20 h-20 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100">
+                  <div className="w-14 h-14 sm:w-20 sm:h-20 shrink-0 border-2 border-gray-300 rounded-lg flex items-center justify-center bg-gray-100 overflow-hidden">
                     {" "}
                     {user?.profileImage ? (
                       <img
@@ -507,18 +507,18 @@ const ExamAssignments = () => {
                       </span>
                     )}{" "}
                   </div>
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 min-w-0 space-y-3">
                     {" "}
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-2 sm:gap-4 flex-wrap">
                       {" "}
                       <div>
                         {" "}
-                        <h3 className="text-xl font-semibold text-foreground">
+                        <h3 className="text-base sm:text-xl font-semibold text-foreground break-words">
                           {" "}
                           {assignment.examSession.exam.course.code} -{" "}
                           {assignment.examSession.exam.course.title}{" "}
                         </h3>{" "}
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
                           {" "}
                           {assignment.examSession.exam.title}{" "}
                         </p>{" "}
@@ -629,12 +629,13 @@ const ExamAssignments = () => {
                         startTime={assignment.examSession.startTime}
                       />{" "}
                     </div>
-                    <div className="flex gap-2 pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
                       {" "}
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleView(assignment)}
+                        className="w-full sm:w-auto"
                       >
                         {" "}
                         <Eye className="h-4 w-4 mr-2" /> View Details{" "}
@@ -646,6 +647,7 @@ const ExamAssignments = () => {
                         disabled={
                           checkingPayment === assignment.examSession.exam.id
                         }
+                        className="w-full sm:w-auto"
                       >
                         {" "}
                         {checkingPayment === assignment.examSession.exam.id ? (
