@@ -415,15 +415,13 @@ const ExamAssignments = () => {
   if (loading) {
     /* ... Skeleton UI ... */
     return (
-      <div className="container mx-auto p-6 space-y-6">
-        {" "}
-        <Skeleton className="h-12 w-64" />{" "}
-        <div className="grid gap-4">
-          {" "}
+      <div className="container mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+        <Skeleton className="h-10 sm:h-12 w-48 sm:w-64" />
+        <div className="grid gap-3 sm:gap-4">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 w-full" />
-          ))}{" "}
-        </div>{" "}
+            <Skeleton key={i} className="h-36 sm:h-48 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
