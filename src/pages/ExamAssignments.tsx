@@ -743,10 +743,10 @@ const ExamAssignments = () => {
               </div>{" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Session Details
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Session:</span>{" "}
@@ -784,19 +784,19 @@ const ExamAssignments = () => {
                   </p>{" "}
                 </div>{" "}
               </div>{" "}
-              <div className="flex gap-2 pt-4">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
                 {" "}
                 <Button
                   onClick={() => setSelectedAssignment(null)}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                 >
                   {" "}
                   Close{" "}
                 </Button>{" "}
                 <Button
                   onClick={() => handleDownload(selectedAssignment)}
-                  className="flex-1"
+                  className="flex-1 text-xs sm:text-sm h-9 sm:h-10"
                   disabled={
                     checkingPayment === selectedAssignment.examSession.exam.id
                   }
