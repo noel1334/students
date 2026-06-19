@@ -666,23 +666,23 @@ const ExamAssignments = () => {
       )}
       {selectedAssignment && (
         /* ... View Details Modal ... */ <div
-          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4"
           onClick={() => setSelectedAssignment(null)}
         >
           {" "}
           <Card
-            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-1 sm:mx-0"
             onClick={(e) => e.stopPropagation()}
           >
             {" "}
-            <CardHeader>
+            <CardHeader className="px-4 py-4 sm:px-6 sm:py-6">
               {" "}
-              <CardTitle>Exam Assignment Details</CardTitle>{" "}
-              <CardDescription>
+              <CardTitle className="text-base sm:text-lg">Exam Assignment Details</CardTitle>{" "}
+              <CardDescription className="text-xs sm:text-sm">
                 Complete information about your exam session
               </CardDescription>{" "}
             </CardHeader>{" "}
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 px-4 pb-4 sm:px-6 sm:pb-6">
               {" "}
               <div>
                 {" "}
