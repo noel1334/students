@@ -686,10 +686,10 @@ const ExamAssignments = () => {
               {" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Student Information
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Name:</span>{" "}
@@ -715,10 +715,10 @@ const ExamAssignments = () => {
               </div>{" "}
               <div>
                 {" "}
-                <h3 className="font-semibold text-lg mb-3">
+                <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3">
                   Exam Details
                 </h3>{" "}
-                <div className="space-y-2 text-sm">
+                <div className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                   {" "}
                   <p>
                     <span className="font-medium">Course:</span>{" "}
