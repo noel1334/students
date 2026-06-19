@@ -452,12 +452,12 @@ const ExamAssignments = () => {
 
       {filteredAssignments.length === 0 && assignments.length > 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-lg font-medium text-muted-foreground">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
+            <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />
+            <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
               No exams match your filters
             </p>
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
               Try adjusting your filters to see more results
             </p>
           </CardContent>
@@ -465,13 +465,13 @@ const ExamAssignments = () => {
       ) : assignments.length === 0 ? (
         <Card>
           {" "}
-          <CardContent className="flex flex-col items-center justify-center py-12">
+          <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12 px-4">
             {" "}
-            <FileText className="h-12 w-12 text-muted-foreground mb-4" />{" "}
-            <p className="text-lg font-medium text-muted-foreground">
+            <FileText className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-3 sm:mb-4" />{" "}
+            <p className="text-base sm:text-lg font-medium text-muted-foreground text-center">
               No exam assignments found
             </p>{" "}
-            <p className="text-sm text-muted-foreground mt-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-2 text-center">
               You don't have any exam sessions assigned yet
             </p>{" "}
           </CardContent>{" "}
