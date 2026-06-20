@@ -2,6 +2,7 @@
 import React from 'react';
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ChangePasswordDialog from './ChangePasswordDialog';
 
 const ProfileFormActions = () => {
   return (
@@ -13,18 +14,20 @@ const ProfileFormActions = () => {
         <Eye className="mr-2" size={18} />
         Review and Update
       </Button>
-      
-      <div className="flex gap-2">
+
+      <ChangePasswordDialog />
+
+      <div className="flex flex-col sm:flex-row gap-2">
         <Button
           type="button"
           variant="outline"
-          className="flex-1 py-3"
+          className="w-full sm:flex-1 py-3"
         >
           Print Profile Records
         </Button>
         <Button
           type="button"
-          className="flex-1 py-3"
+          className="w-full sm:flex-1 py-3"
         >
           Print Medical Records
         </Button>
