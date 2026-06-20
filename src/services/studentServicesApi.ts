@@ -89,6 +89,7 @@ export interface UpdateStudentProfileData {
   // Student table fields (self-editable)
   profileImg?: string | null;
   password?: string;
+  currentPassword?: string;
 
   // StudentDetails fields (self-editable)
   dob?: string | null;
