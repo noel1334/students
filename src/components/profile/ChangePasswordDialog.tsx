@@ -16,19 +16,27 @@ import { updateStudentProfile } from '@/services/studentServicesApi';
 
 const ChangePasswordDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrent, setShowCurrent] = useState(false);
   const [show, setShow] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const reset = () => {
+    setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
+    setShowCurrent(false);
     setShow(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!currentPassword) {
+      toast.error('Please enter your current password');
+      return;
+    }
     if (newPassword.length < 8) {
       toast.error('Password must be at least 8 characters long');
       return;
@@ -37,9 +45,16 @@ const ChangePasswordDialog: React.FC = () => {
       toast.error('Passwords do not match');
       return;
     }
+    if (newPassword === currentPassword) {
+      toast.error('New password must be different from current password');
+      return;
+    }
     try {
       setSubmitting(true);
-      const response = await updateStudentProfile({ password: newPassword });
+      const response = await updateStudentProfile({
+        currentPassword,
+        password: newPassword,
+      });
       if (response.status === 'success') {
         toast.success('Password updated successfully');
         reset();
@@ -49,7 +64,12 @@ const ChangePasswordDialog: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error updating password:', error);
-      toast.error(error.response?.data?.message || 'Failed to update password');
+      const msg = error.response?.data?.message || '';
+      if (error.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
+        toast.error(msg || 'Current password is incorrect');
+      } else {
+        toast.error(msg || 'Failed to update password');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -68,6 +88,28 @@ const ChangePasswordDialog: React.FC = () => {
           <DialogTitle>Change Password</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="currentPassword">Current Password</Label>
+            <div className="relative">
+              <Input
+                id="currentPassword"
+                type={showCurrent ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter your current password"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent((s) => !s)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
+                aria-label={showCurrent ? 'Hide password' : 'Show password'}
+              >
+                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
             <div className="relative">
