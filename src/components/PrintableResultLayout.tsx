@@ -1,13 +1,15 @@
 import React, { forwardRef } from 'react';
 import { ResultDetail } from '@/services/resultApiService';
+import { UniversitySetting } from '@/services/universitySettingApiService';
 
 interface PrintableResultLayoutProps {
   resultDetail: ResultDetail;
   totalQualityPoints: number;
+  universitySettings?: UniversitySetting | null;
 }
 
 const PrintableResultLayout = forwardRef<HTMLDivElement, PrintableResultLayoutProps>(
-  ({ resultDetail, totalQualityPoints }, ref) => {
+  ({ resultDetail, totalQualityPoints, universitySettings }, ref) => {
     const getClassification = (cgpa: number) => {
       if (cgpa >= 4.5) return 'First Class';
       if (cgpa >= 3.5) return 'Second Class Upper';
@@ -22,6 +24,9 @@ const PrintableResultLayout = forwardRef<HTMLDivElement, PrintableResultLayoutPr
       return '#1f2937';
     };
 
+    const hod = resultDetail.departmentSignatures?.hod;
+    const examiner = resultDetail.departmentSignatures?.examiner;
+
     return (
       <div
         ref={ref}
@@ -33,6 +38,33 @@ const PrintableResultLayout = forwardRef<HTMLDivElement, PrintableResultLayoutPr
           minHeight: '100%',
         }}
       >
+        {/* School Header */}
+        {universitySettings && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', marginBottom: '16px', textAlign: 'center' }}>
+            {universitySettings.logoUrl && (
+              <img
+                src={universitySettings.logoUrl}
+                alt={universitySettings.acronym || universitySettings.name}
+                crossOrigin="anonymous"
+                style={{ width: '70px', height: '70px', objectFit: 'contain' }}
+              />
+            )}
+            <div>
+              <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0, color: '#111827', textTransform: 'uppercase' }}>
+                {universitySettings.name}
+              </h1>
+              {universitySettings.address && (
+                <p style={{ fontSize: '12px', color: '#374151', margin: '4px 0 0 0' }}>{universitySettings.address}</p>
+              )}
+              {(universitySettings.email || universitySettings.phone) && (
+                <p style={{ fontSize: '11px', color: '#6b7280', margin: '2px 0 0 0' }}>
+                  {universitySettings.email}{universitySettings.email && universitySettings.phone ? ' • ' : ''}{universitySettings.phone}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid #e5e7eb', paddingBottom: '16px' }}>
           <h1 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: '0 0 8px 0' }}>
@@ -165,6 +197,44 @@ const PrintableResultLayout = forwardRef<HTMLDivElement, PrintableResultLayoutPr
             </p>
           </div>
         </div>
+
+        {/* Signatures */}
+        {(examiner || hod) && (
+          <div style={{ marginTop: '48px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+            <div style={{ textAlign: 'center' }}>
+              {examiner?.signatureImg ? (
+                <img
+                  src={examiner.signatureImg}
+                  alt="Examiner signature"
+                  crossOrigin="anonymous"
+                  style={{ height: '60px', objectFit: 'contain', margin: '0 auto 4px' }}
+                />
+              ) : (
+                <div style={{ height: '60px' }} />
+              )}
+              <div style={{ borderTop: '1px solid #1f2937', paddingTop: '6px', fontSize: '13px' }}>
+                <p style={{ margin: 0, fontWeight: 600, color: '#1f2937' }}>{examiner?.name || '________________'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#6b7280' }}>Examiner</p>
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              {hod?.signatureImg ? (
+                <img
+                  src={hod.signatureImg}
+                  alt="HOD signature"
+                  crossOrigin="anonymous"
+                  style={{ height: '60px', objectFit: 'contain', margin: '0 auto 4px' }}
+                />
+              ) : (
+                <div style={{ height: '60px' }} />
+              )}
+              <div style={{ borderTop: '1px solid #1f2937', paddingTop: '6px', fontSize: '13px' }}>
+                <p style={{ margin: 0, fontWeight: 600, color: '#1f2937' }}>{hod?.name || '________________'}</p>
+                <p style={{ margin: '2px 0 0 0', fontSize: '11px', color: '#6b7280' }}>Head of Department</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
