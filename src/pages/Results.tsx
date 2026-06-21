@@ -382,6 +382,7 @@ useEffect(() => {
                 resultDetail={resultDetail}
                 totalQualityPoints={totalQualityPoints}
                 universitySettings={universitySettings}
+                studentProfileImg={user?.profileImage || null}
               />
             )}
           </div>
