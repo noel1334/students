@@ -56,6 +56,16 @@ export interface ResultDetail {
     name: string;
   } | null;
   courseScores: CourseScore[];
+  departmentSignatures?: {
+    hod?: {
+      name: string;
+      signatureImg?: string | null;
+    } | null;
+    examiner?: {
+      name: string;
+      signatureImg?: string | null;
+    } | null;
+  };
 }
 
 export interface ResultMinimal {
