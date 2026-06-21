@@ -26,6 +26,7 @@ import PrintableResultLayout from '@/components/PrintableResultLayout';
 import { Download, Printer, FileText } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUniversitySettings } from '@/hooks/useUniversitySettings';
 import { 
   getStudentResultHistory, 
   getResultById,
@@ -37,6 +38,7 @@ import { toast } from 'sonner';
 
 const Results = () => {
   const { user } = useAuth();
+  const { data: universitySettings } = useUniversitySettings();
   const [availableResults, setAvailableResults] = useState<ResultMinimal[]>([]);
   const [selectedResultId, setSelectedResultId] = useState<number | null>(null);
   const [resultDetail, setResultDetail] = useState<ResultDetail | null>(null);
@@ -379,6 +381,7 @@ useEffect(() => {
                 ref={printableRef}
                 resultDetail={resultDetail}
                 totalQualityPoints={totalQualityPoints}
+                universitySettings={universitySettings}
               />
             )}
           </div>
