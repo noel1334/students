@@ -397,12 +397,87 @@ const Settings = () => {
                       )}
                     />
 
-                    <Button type="submit" className="bg-primary hover:bg-primary/90">
+                    <Button type="submit" disabled={submittingPwd} className="bg-primary hover:bg-primary/90">
                       <Save size={16} className="mr-2" />
-                      Save Changes
+                      {submittingPwd ? 'Updating...' : 'Save Changes'}
                     </Button>
                   </form>
                 </Form>
+              </div>
+            )}
+
+            {activeTab === 'profileImage' && (
+              <div>
+                <h2 className="text-lg font-medium mb-4">Profile Image</h2>
+                <p className="text-muted-foreground mb-6">
+                  Upload a new profile photo. Square images work best.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start">
+                  <Avatar className="w-32 h-32 border-4 border-primary/20">
+                    {currentAvatar ? (
+                      <AvatarImage src={currentAvatar} alt={user?.name || 'Profile'} />
+                    ) : (
+                      <AvatarFallback className="bg-primary/10 text-primary text-3xl">
+                        {initial}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+
+                  <div className="flex-1 w-full space-y-3">
+                    <div>
+                      <Label
+                        htmlFor="settings-avatar-upload"
+                        className="inline-flex items-center gap-2 cursor-pointer px-4 py-2 rounded-md border bg-background hover:bg-accent text-sm font-medium"
+                      >
+                        <Upload size={16} />
+                        Choose Image
+                      </Label>
+                      <input
+                        id="settings-avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageSelect}
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        PNG or JPG. Max size 2MB.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        onClick={handleSaveImage}
+                        disabled={!avatarPreview || savingImage}
+                      >
+                        <Save size={16} className="mr-2" />
+                        {savingImage ? 'Saving...' : 'Save Image'}
+                      </Button>
+                      {avatarPreview && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setAvatarPreview(null)}
+                          disabled={savingImage}
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {user?.profileImage && !avatarPreview && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={handleRemoveImage}
+                          disabled={savingImage}
+                        >
+                          <Trash2 size={16} className="mr-2" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
