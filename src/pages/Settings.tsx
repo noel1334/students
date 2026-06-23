@@ -26,10 +26,16 @@ import {
   Settings as SettingsIcon,
   Moon,
   Sun,
-  Palette
+  Palette,
+  User as UserIcon,
+  Upload,
+  Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { updateStudentProfile } from '@/services/studentServicesApi';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Popover,
   PopoverContent,
@@ -37,12 +43,15 @@ import {
 } from "@/components/ui/popover";
 
 const passwordSchema = z.object({
-  currentPassword: z.string().min(6, "Password must be at least 6 characters"),
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(8, "Password must be at least 8 characters"),
 }).refine(data => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
+}).refine(data => data.newPassword !== data.currentPassword, {
+  message: "New password must be different from current password",
+  path: ["newPassword"]
 });
 
 const Settings = () => {
@@ -51,6 +60,10 @@ const Settings = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('appearance');
   const { theme, toggleTheme } = useTheme();
+  const { user, fetchUserProfile } = useAuth();
+  const [submittingPwd, setSubmittingPwd] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [savingImage, setSavingImage] = useState(false);
 
   const form = useForm<z.infer<typeof passwordSchema>>({
     resolver: zodResolver(passwordSchema),
@@ -61,10 +74,86 @@ const Settings = () => {
     }
   });
 
-  const onSubmit = (data: z.infer<typeof passwordSchema>) => {
-    toast.success("Password changed successfully!");
-    form.reset();
+  const onSubmit = async (data: z.infer<typeof passwordSchema>) => {
+    try {
+      setSubmittingPwd(true);
+      const response = await updateStudentProfile({
+        currentPassword: data.currentPassword,
+        password: data.newPassword,
+      });
+      if (response.status === 'success') {
+        toast.success('Password updated successfully');
+        form.reset();
+      } else {
+        toast.error(response.message || 'Failed to update password');
+      }
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || '';
+      if (error?.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
+        toast.error(msg || 'Current password is incorrect');
+      } else {
+        toast.error(msg || 'Failed to update password');
+      }
+    } finally {
+      setSubmittingPwd(false);
+    }
   };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be smaller than 2MB');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveImage = async () => {
+    if (!avatarPreview) return;
+    try {
+      setSavingImage(true);
+      const response = await updateStudentProfile({ profileImg: avatarPreview });
+      if (response.status === 'success') {
+        toast.success('Profile image updated');
+        setAvatarPreview(null);
+        await fetchUserProfile();
+      } else {
+        toast.error(response.message || 'Failed to update image');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update image');
+    } finally {
+      setSavingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    try {
+      setSavingImage(true);
+      const response = await updateStudentProfile({ profileImg: null });
+      if (response.status === 'success') {
+        toast.success('Profile image removed');
+        setAvatarPreview(null);
+        await fetchUserProfile();
+      } else {
+        toast.error(response.message || 'Failed to remove image');
+      }
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to remove image');
+    } finally {
+      setSavingImage(false);
+    }
+  };
+
+  const currentAvatar = avatarPreview || user?.profileImage || null;
+  const initial = (user?.name || 'U').charAt(0).toUpperCase();
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -89,7 +178,19 @@ const Settings = () => {
                 <Palette size={18} />
                 <span>Appearance</span>
               </button>
-              
+
+              <button
+                onClick={() => setActiveTab('profileImage')}
+                className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
+                  activeTab === 'profileImage'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-foreground hover:bg-accent hover:text-accent-foreground'
+                }`}
+              >
+                <UserIcon size={18} />
+                <span>Profile Image</span>
+              </button>
+
               <button
                 onClick={() => setActiveTab('password')}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md transition-colors ${
