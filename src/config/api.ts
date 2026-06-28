@@ -12,7 +12,7 @@ export const setLogoutCallback = (callback: (showToast?: boolean) => void) => {
 };
 
 // Base URL for your backend API
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://ums-backend-gbo7.onrender.com/api/v1';
 
 // Create axios instance with default config
 const api = axios.create({
