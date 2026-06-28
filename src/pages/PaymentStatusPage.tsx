@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 
-// --- Import Stripe completion services for BOTH types of payments ---
-// Ensure handleStripeCancellation is imported
 import { completeSchoolFeeStripePayment, handleStripeCancellation } from '@/services/feeApiService';
 import { completeHostelBookingStripePayment } from '@/services/hostelApiService';
 
@@ -27,71 +25,56 @@ const PaymentStatusPage = () => {
     const sessionId = searchParams.get('session_id');
     const statusFromUrl = searchParams.get('status');
     const currentPurpose: PaymentPurpose = searchParams.get('purpose') as PaymentPurpose;
-    // Get the school_fee_id from the URL, which is sent on Stripe cancellation for school fees
     const schoolFeeIdFromUrl = searchParams.get('school_fee_id');
-    // For hostel bookings, the related_id might be used for post-success redirection
     const relatedIdFromUrl = searchParams.get('related_id');
 
     setPaymentPurpose(currentPurpose);
 
-    // Set dynamic redirect path based on purpose and any related ID
-    if (currentPurpose === 'hostelBooking' && relatedIdFromUrl) {
-      setRedirectPath(`/hostel-bookings/${relatedIdFromUrl}`);
+    // FIXED: Dynamically route the redirect back to the correct dashboard path
+    if (currentPurpose === 'hostelBooking') {
+      if (relatedIdFromUrl) {
+        setRedirectPath(`/hostel-bookings/${relatedIdFromUrl}`);
+      } else {
+        setRedirectPath('/hostel'); // Redirect back to Hostel page on general failure/fallback
+      }
     } else {
       setRedirectPath('/payments');
     }
 
     const processPayment = async () => {
-        // --- 1. Handle explicit cancellation from Stripe redirect ---
         if (statusFromUrl === 'cancelled') {
             setStatus('cancelled');
             setMessage('Your payment was cancelled. You have not been charged.');
 
-            // Perform backend cleanup for cancelled Stripe school fee payments
             if (currentPurpose === 'schoolFee' && schoolFeeIdFromUrl) {
                 try {
                     console.log(`Attempting cleanup for cancelled school fee ID: ${schoolFeeIdFromUrl}`);
                     await handleStripeCancellation(schoolFeeIdFromUrl);
-                    console.log(`Cleanup successful for school fee ID: ${schoolFeeIdFromUrl}`);
                 } catch (cleanupError) {
                     console.error(`Failed to perform cleanup for cancelled school fee ID ${schoolFeeIdFromUrl}:`, cleanupError);
-                    // Log the error for debugging, but don't prevent the user from seeing the cancellation message.
                 }
             }
-            // Add similar cleanup logic here for hostel booking cancellations if applicable
-            // For example:
-            // if (currentPurpose === 'hostelBooking' && hostelBookingIdFromUrl) {
-            //     try { /* call hostel booking specific cancellation cleanup service */ }
-            //     catch (e) { /* log error */ }
-            // }
-
-            return; // Exit processPayment, just show cancelled status
+            return;
         }
 
-        // --- 2. Basic validation: sessionId is essential for verification ---
         if (!sessionId) {
             setStatus('failed');
             setMessage('Invalid payment session. No Stripe session ID found in the URL.');
-            console.error('Missing sessionId in URL for payment-status.');
             return;
         }
 
-        // --- 3. Validate 'purpose' to dispatch to the correct backend service ---
         if (!currentPurpose || (currentPurpose !== 'schoolFee' && currentPurpose !== 'hostelBooking')) {
             setStatus('failed');
             setMessage(`Unknown or missing payment purpose ("${currentPurpose || 'none'}"). Contact support.`);
-            console.error(`Invalid payment purpose: ${currentPurpose}. Session ID: ${sessionId}`);
             return;
         }
 
-        // --- MAIN LOGIC: Call the appropriate service based on purpose ---
         try {
-            setMessage(`Verifying ${currentPurpose.replace('hostelBooking', 'hostel booking').replace('schoolFee', 'school fee')} payment...`);
+            setMessage(`Verifying ${currentPurpose === 'hostelBooking' ? 'hostel booking' : 'school fee'} payment...`);
 
             if (currentPurpose === 'schoolFee') {
                 await completeSchoolFeeStripePayment(sessionId);
             } else if (currentPurpose === 'hostelBooking') {
-                // This call will create the HostelBooking and PaymentReceipt on success
                 await completeHostelBookingStripePayment(sessionId);
             }
 
@@ -105,12 +88,8 @@ const PaymentStatusPage = () => {
         }
     };
 
-    // Dependencies for the useEffect hook:
-    // searchParams: to react to changes in URL query parameters.
-    // navigate: part of react-router-dom, included for best practice though not directly used in logic.
-    // paymentPurpose: ensures cleanup logic runs if purpose is dynamically set.
     processPayment();
-  }, [searchParams, navigate, paymentPurpose]);
+  }, [searchParams, navigate]);
 
   const StatusDisplay = () => {
     switch (status) {
@@ -150,7 +129,9 @@ const PaymentStatusPage = () => {
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <Button asChild className="mt-4">
-            <Link to={redirectPath}>Return to {paymentPurpose === 'hostelBooking' ? 'Hostel Booking' : 'Payment'} Dashboard</Link>
+            <Link to={redirectPath}>
+              Return to {paymentPurpose === 'hostelBooking' ? 'Hostel' : 'Payment'} Dashboard
+            </Link>
           </Button>
         </CardContent>
       </Card>
