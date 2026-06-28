@@ -1,4 +1,5 @@
 // src/pages/Payments.tsx
+
 import React, { useState, useRef, useEffect, useCallback, useMemo, forwardRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { Button } from '@/components/ui/button';
@@ -62,7 +63,6 @@ type GatewayKey = 'flutterwave' | 'paystack' | 'stripe';
 
 // ============================================================================
 // --- 1. DEDICATED RECEIPT COMPONENT ---
-// This is the component that will be populated with data and printed.
 // ============================================================================
 const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | null, user: any }>(({ record, user }, ref) => {
     if (!record || !user) {
@@ -143,8 +143,7 @@ const ReceiptComponent = forwardRef<HTMLDivElement, { record: SchoolFeeRecord | 
 });
 
 // ============================================================================
-// --- 2. PAYMENT STATUS COMPONENT (Now a presentational component) ---
-// It receives data as props from the main Payments component.
+// --- 2. PAYMENT STATUS COMPONENT ---
 // ============================================================================
 const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[], loading: boolean, error: string | null }) => {
     const summary = useMemo(() => {
@@ -165,7 +164,6 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                 <SummaryCard title="Balance Due" amount={summary.balanceDue} variant="danger" />
             </div>
 
-            {/* Mobile Card View */}
             <div className="block sm:hidden space-y-3">
                 <h3 className="font-semibold text-base mb-3">Transaction History</h3>
                 {records.length > 0 ? (
@@ -195,7 +193,6 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
                 )}
             </div>
 
-            {/* Desktop Table View */}
             <div className="hidden sm:block border rounded-lg overflow-hidden">
                 <div className="p-4 bg-muted/50 border-b"><h3 className="font-semibold text-base">Transaction History</h3></div>
                 {records.length > 0 ? (
@@ -227,7 +224,6 @@ const PaymentStatus = ({ records, loading, error }: { records: SchoolFeeRecord[]
     );
 };
 
-// --- Helper Sub-components (kept as they are) ---
 const SummaryCard = ({ title, amount, variant = 'default' }: { title: string, amount: number, variant?: 'default' | 'success' | 'danger' }) => {
     const colorClasses = {
         default: 'bg-gray-100 text-gray-800',
@@ -277,17 +273,14 @@ const Payments = () => {
     const { toast } = useToast();
     const receiptRef = useRef<HTMLDivElement>(null);
 
-    // --- State for "Current Fees" section ---
     const [currentBalance, setCurrentBalance] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // --- State for "Payment History" section ---
     const [paymentRecords, setPaymentRecords] = useState<SchoolFeeRecord[]>([]);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [historyError, setHistoryError] = useState<string | null>(null);
 
-    // --- Other State ---
     const [selectedSemester, setSelectedSemester] = useState('1st');
     const [selectedSession, setSelectedSession] = useState('2023/2024');
     const [seasonId, setSeasonId] = useState<string | null>(null);
@@ -295,15 +288,12 @@ const Payments = () => {
     const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<GatewayKey | null>(null);
 
-    // --- Logic for Printing ---
-    // Find the most recent record that has been successfully paid.
     const latestPaidRecord = useMemo(() => {
         return [...paymentRecords]
             .filter(record => record.paymentStatus === 'PAID' && record.payments.length > 0)
             .sort((a, b) => new Date(b.payments[0].paymentDate).getTime() - new Date(a.payments[0].paymentDate).getTime())[0];
     }, [paymentRecords]);
 
-    // Check if the current season has been fully paid
     const hasCurrentSeasonBeenPaid = useMemo(() => {
         if (!user?.currentSeasonId || !paymentRecords.length) return false;
 
@@ -319,7 +309,6 @@ const Payments = () => {
         documentTitle: `Payment_Receipt_${latestPaidRecord?.season?.name || 'current'}`,
     });
 
-    // --- Data Fetching and Handlers ---
     const fetchHistory = useCallback(async () => {
         setHistoryLoading(true);
         setHistoryError(null);
@@ -394,18 +383,19 @@ const Payments = () => {
             default: handlePaymentFailure("Invalid payment method selected.", "System");
         }
     };
+
     const initiateStripePayment = async () => {
-        if (!user?.email || !user?.name || !seasonId) {
-            return handlePaymentFailure("User details or academic session are missing.", "Stripe");
+        if (!user?.email || !user?.name || !seasonId || !user?.currentSemesterId) {
+            return handlePaymentFailure("User details, academic session, or current semester are missing.", "Stripe");
         }
         try {
             const stripeData = await createStripeSession(
                 parseInt(user.id),
                 parseInt(seasonId, 10),
-                1,
+                parseInt(user.currentSemesterId, 10), // FIXED: Uses the dynamic active semester ID instead of hardcoded 1
                 currentBalance,
                 'STRIPE',
-                'schoolFee', // <--- THIS IS THE CRUCIAL CHANGE
+                'schoolFee', 
                 user.email,
                 user.name
             );
@@ -415,30 +405,24 @@ const Payments = () => {
             const stripe = await loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY!);
             if (!stripe) throw new Error("Stripe.js failed to load.");
 
-
             const { error } = await stripe.redirectToCheckout({ sessionId: stripeData.sessionId });
             if (error) throw new Error(error.message);
-
-
 
         } catch (error) {
             handlePaymentFailure(error, "Stripe");
         }
     };
 
-
-
-
     const initiatePaystackPayment = () => {
-        if (!user?.email) {
-            return handlePaymentFailure("User email is required for Paystack.", "Paystack");
+        if (!user?.email || !seasonId || !user?.currentSemesterId) {
+            return handlePaymentFailure("Required user or academic details are missing for Paystack.", "Paystack");
         }
         try {
             const paystack = new PaystackPop();
             paystack.newTransaction({
                 key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY!,
                 email: user.email,
-                amount: currentBalance * 100, // Paystack uses kobo
+                amount: currentBalance * 100, 
                 ref: `UMS_SF_${Date.now()}`,
                 onSuccess: async (transaction) => {
                     try {
@@ -447,7 +431,7 @@ const Payments = () => {
                             studentId: user.id,
                             amount: currentBalance,
                             seasonId: parseInt(seasonId!, 10),
-                            semesterId: 1, // Example semester ID
+                            semesterId: parseInt(user.currentSemesterId, 10), // FIXED: Uses the dynamic active semester ID instead of hardcoded 1
                         });
                         await handlePaymentSuccess("Paystack");
                     } catch (verificationError) {
@@ -484,8 +468,8 @@ const Payments = () => {
     const handleFlutterwavePayment = useFlutterwave(flutterwaveConfig);
 
     const initiateFlutterwavePayment = () => {
-        if (!user?.email || !user?.name) {
-            return handlePaymentFailure("User details are missing.", "Flutterwave");
+        if (!user?.email || !user?.name || !seasonId || !user?.currentSemesterId) {
+            return handlePaymentFailure("Required user or academic details are missing for Flutterwave.", "Flutterwave");
         }
         handleFlutterwavePayment({
             callback: async (response) => {
@@ -497,7 +481,7 @@ const Payments = () => {
                             studentId: user.id,
                             amount: currentBalance,
                             seasonId: parseInt(seasonId!, 10),
-                            semesterId: 1, // Example semester ID
+                            semesterId: parseInt(user.currentSemesterId, 10), // FIXED: Uses the dynamic active semester ID instead of hardcoded 1
                         });
                         await handlePaymentSuccess("Flutterwave");
                     } catch (verificationError) {
@@ -512,7 +496,6 @@ const Payments = () => {
             },
         });
     };
-
 
     return (
         <div className="flex-1 p-3 sm:p-4 md:p-6 lg:p-8 overflow-auto bg-background print:hidden">
@@ -563,7 +546,6 @@ const Payments = () => {
                     </div>
                 </div>
 
-                {/* This div holds the receipt component but is positioned off-screen for printing */}
                 <div className="fixed -left-[9999px] top-0 print:static print:left-0">
                     <ReceiptComponent ref={receiptRef} record={latestPaidRecord} user={user} />
                 </div>
