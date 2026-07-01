@@ -4,6 +4,7 @@ import { Control } from 'react-hook-form';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import PersonalInfoFields from './bio-data/PersonalInfoFields';
 import ContactFields from './bio-data/ContactFields';
+import ExtendedBioDataFields from './ExtendedBioDataFields';
 
 interface BioDataSectionProps {
   control: Control<any>;
@@ -29,6 +30,7 @@ const BioDataSection = ({
       <CollapsibleContent className="pt-4 px-1">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <PersonalInfoFields control={control} />
+          <ExtendedBioDataFields control={control} />
           <ContactFields control={control} />
         </div>
       </CollapsibleContent>
