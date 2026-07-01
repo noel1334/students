@@ -67,10 +67,64 @@ export interface StudentProfileData {
     status?: string | null;
     rejectionReason?: string | null;
   } | null;
+  admissionOfferDetails?: {
+    id?: number;
+    hasPaidAcceptanceFee?: boolean;
+    isAccepted?: boolean;
+    applicationProfile?: {
+      id?: number;
+      bioData?: ApplicantBioData | null;
+      contactInfo?: ApplicantContactInfo | null;
+      nextOfKin?: ApplicantNextOfKin | null;
+      guardianInfo?: ApplicantGuardianInfo | null;
+      uploadedDocuments?: Array<{
+        id?: number;
+        documentType?: string;
+        fileUrl?: string;
+        status?: string;
+      }>;
+    } | null;
+  } | null;
   _count?: {
     registrations: number;
     results: number;
   };
+}
+
+export interface ApplicantBioData {
+  firstName?: string | null;
+  lastName?: string | null;
+  middleName?: string | null;
+  gender?: string | null;
+  dateOfBirth?: string | null;
+  nationality?: string | null;
+  placeOfBirth?: string | null;
+  religion?: string | null;
+  maritalStatus?: string | null;
+}
+
+export interface ApplicantContactInfo {
+  countryOfResidence?: string | null;
+  stateOfResidence?: string | null;
+  lgaOfResidence?: string | null;
+  residentialAddress?: string | null;
+}
+
+export interface ApplicantNextOfKin {
+  fullName?: string | null;
+  relationship?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+}
+
+export interface ApplicantGuardianInfo {
+  fullName?: string | null;
+  relationship?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  occupation?: string | null;
 }
 
 // This interface describes the *overall API response wrapper*
@@ -103,6 +157,12 @@ export interface UpdateStudentProfileData {
   bloodGroup?: string | null;
   genotype?: string | null;
   fileUrl?: string | null;
+
+  // ApplicationProfile sub-model updates (self-editable)
+  bioData?: Partial<ApplicantBioData>;
+  contactInfo?: Partial<ApplicantContactInfo>;
+  nextOfKin?: Partial<ApplicantNextOfKin>;
+  guardianInfo?: Partial<ApplicantGuardianInfo>;
 }
 
 export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {

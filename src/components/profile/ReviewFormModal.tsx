@@ -32,11 +32,12 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
   // Group data into sections for better organization
   const sections = {
     "Personal Information": [
-      'firstName', 'lastName', 'otherName', 'email', 'regNo',
-      'dateOfBirth', 'gender'
+      'firstName', 'lastName', 'middleName', 'otherName', 'email', 'regNo',
+      'dateOfBirth', 'gender', 'nationality', 'placeOfBirth', 'religion', 'maritalStatus'
     ],
     "Contact Information": [
-      'phoneNumber', 'permanentHomeAddress'
+      'phoneNumber', 'permanentHomeAddress',
+      'countryOfResidence', 'stateOfResidence', 'lgaOfResidence', 'residentialAddress'
     ],
     "Admission Details": [
       'admissionMode', 'yearOfEntry', 'currentLevel', 'yearOfGraduation', 'admissionNumber'
@@ -44,7 +45,14 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
     "Medical Records": [
       'bloodGroup', 'genotype'
     ],
-    "Guardian / Sponsor": [
+    "Next of Kin": [
+      'nokFullName', 'nokRelationship', 'nokPhone', 'nokEmail', 'nokAddress'
+    ],
+    "Guardian Information": [
+      'guardianFullName', 'guardianRelationship', 'guardianPhoneInfo',
+      'guardianEmail', 'guardianOccupation', 'guardianAddress'
+    ],
+    "Sponsor": [
       'sponsorName', 'sponsorPhone'
     ]
   };
