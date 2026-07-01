@@ -29,17 +29,22 @@ const CourseFormDownloader = ({ registrations, children, mode = 'download' }: Co
 
     try {
       // --- IMPORTANT: Make the element temporarily visible for html2canvas ---
-      formRef.current.classList.remove('hidden'); // Temporarily make it visible
+      // Move off-screen instead of unhiding to avoid disrupting the mobile layout
+      const el = formRef.current;
+      const prevStyle = el.getAttribute('style') || '';
+      el.classList.remove('hidden');
+      el.style.cssText = prevStyle + ';position:fixed;left:-10000px;top:0;width:210mm;min-height:297mm;background:#ffffff;padding:32px;color:#000000;font-family:Arial, sans-serif;z-index:-1;';
 
-
-      const canvas = await html2canvas(formRef.current, {
+      const canvas = await html2canvas(el, {
         useCORS: true, // Important if you have images from different origins (e.g., user profile image, school logo)
         // Adjust scale for higher quality PDF, but can increase processing time
         // scale: 2,
+        windowWidth: 794,
       });
 
       // --- IMPORTANT: Hide the element again after capturing ---
-      formRef.current.classList.add('hidden'); // Hide it again
+      el.setAttribute('style', prevStyle);
+      el.classList.add('hidden');
 
 
       const imgData = canvas.toDataURL('image/png');
