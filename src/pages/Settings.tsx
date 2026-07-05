@@ -78,7 +78,6 @@ const Settings = () => {
     try {
       setSubmittingPwd(true);
       const response = await updateStudentProfile({
-        currentPassword: data.currentPassword,
         password: data.newPassword,
       });
       if (response.status === 'success') {

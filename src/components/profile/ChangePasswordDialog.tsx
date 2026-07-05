@@ -52,7 +52,6 @@ const ChangePasswordDialog: React.FC = () => {
     try {
       setSubmitting(true);
       const response = await updateStudentProfile({
-        currentPassword,
         password: newPassword,
       });
       if (response.status === 'success') {
@@ -65,7 +64,9 @@ const ChangePasswordDialog: React.FC = () => {
     } catch (error: any) {
       console.error('Error updating password:', error);
       const msg = error.response?.data?.message || '';
-      if (error.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
+      if (/not allowed to update 'currentPassword'/i.test(msg)) {
+        toast.error('Please try again. Password update payload was rejected.');
+      } else if (error.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
         toast.error(msg || 'Current password is incorrect');
       } else {
         toast.error(msg || 'Failed to update password');

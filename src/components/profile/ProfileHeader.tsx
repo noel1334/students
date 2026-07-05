@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, Upload } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { updateStudentProfile } from '@/services/studentServicesApi';
 
 interface ProfileHeaderProps {
   studentInfo: {
@@ -16,24 +17,54 @@ interface ProfileHeaderProps {
   };
   avatar: string | null;
   setAvatar: React.Dispatch<React.SetStateAction<string | null>>;
+  onProfileUpdated?: () => void | Promise<void>;
 }
 
 const ProfileHeader = ({
   studentInfo,
   avatar,
-  setAvatar
+  setAvatar,
+  onProfileUpdated
 }: ProfileHeaderProps) => {
+  const [savingAvatar, setSavingAvatar] = useState(false);
   
   // Handle avatar upload
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file');
+      return;
     }
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be smaller than 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const imageData = reader.result as string;
+      setAvatar(imageData);
+
+      try {
+        setSavingAvatar(true);
+        const response = await updateStudentProfile({ profileImg: imageData });
+        if (response.status === 'success') {
+          toast.success('Profile image updated');
+          await onProfileUpdated?.();
+        } else {
+          toast.error(response.message || 'Failed to update profile image');
+        }
+      } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Failed to update profile image');
+      } finally {
+        setSavingAvatar(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -64,9 +95,9 @@ const ProfileHeader = ({
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <label 
                   htmlFor="avatar-upload" 
-                  className="bg-primary text-primary-foreground rounded-full p-2 cursor-pointer"
+                  className="bg-primary text-primary-foreground rounded-full p-2 cursor-pointer inline-flex items-center justify-center"
                 >
-                  Upload
+                  <Upload className="h-4 w-4" />
                 </label>
                 <input
                   id="avatar-upload"
@@ -74,9 +105,11 @@ const ProfileHeader = ({
                   accept="image/*"
                   className="hidden"
                   onChange={handleAvatarChange}
+                  disabled={savingAvatar}
                 />
               </div>
             </div>
+            {savingAvatar && <p className="text-xs text-muted-foreground mb-2">Saving profile image...</p>}
             
             <h2 className="text-xl font-bold">{studentInfo.name}</h2>
             <p className="text-sm text-muted-foreground">{studentInfo.regNo}</p>
