@@ -166,6 +166,7 @@ export interface UpdateStudentProfileData {
 }
 
 export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {
-  const response = await api.put('/students/me', data);
+  const { currentPassword, ...allowedData } = data;
+  const response = await api.put('/students/me', allowedData);
   return response.data;
 };
