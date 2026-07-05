@@ -82,6 +82,7 @@ const Profile = () => {
           studentInfo={studentInfo}
           avatar={avatar}
           setAvatar={setAvatar}
+          onProfileUpdated={fetchProfile}
         />
 
         {/* Profile Form */}

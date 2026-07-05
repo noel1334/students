@@ -43,10 +43,11 @@ const AdmissionSection = ({
                   <FormLabel>Mode of Admission</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
+                    disabled
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-muted">
                         <SelectValue placeholder="Select admission mode" />
                       </SelectTrigger>
                     </FormControl>
@@ -70,7 +71,7 @@ const AdmissionSection = ({
                 <FormItem>
                   <FormLabel>Year of Entry</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} readOnly disabled className="bg-muted" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,10 +87,11 @@ const AdmissionSection = ({
                   <FormLabel>Current Level</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    value={field.value}
+                    disabled
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-muted">
                         <SelectValue placeholder="Select level" />
                       </SelectTrigger>
                     </FormControl>
@@ -115,7 +117,7 @@ const AdmissionSection = ({
                 <FormItem>
                   <FormLabel>Expected Year of Graduation</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} readOnly disabled className="bg-muted" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,7 +132,7 @@ const AdmissionSection = ({
                 <FormItem>
                   <FormLabel>Admission Number</FormLabel>
                   <FormControl>
-                    <Input {...field} readOnly className="bg-muted" />
+                    <Input {...field} readOnly disabled className="bg-muted" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
