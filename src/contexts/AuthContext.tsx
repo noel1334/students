@@ -141,12 +141,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         console.warn('API returned success but no valid student profile data. Clearing user session.', response);
         await signOut(false);
+        throw new Error('Profile fetch returned no student data.');
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      // NOTE: We REMOVED the manual signOut call from here.
-      // The API interceptor will now automatically catch the 401/403 error
-      // and call the globally registered signOut function. This prevents duplicate calls.
+      // Re-throw so callers (e.g. signIn) know the login flow could not complete
+      // and don't navigate the user into a protected route without a session.
+      throw error;
     } finally {
       setLoading(false); 
     }
