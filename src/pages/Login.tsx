@@ -1,6 +1,6 @@
 // src/pages/Login.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,13 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
+
+  // If a session is already established (e.g. fetchUserProfile finished after
+  // signIn resolved), send the user to the dashboard automatically.
+  useEffect(() => {
+    if (user) navigate('/', { replace: true });
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +28,7 @@ const Login = () => {
 
     try {
       await signIn(identifier, password);
-      navigate('/');
+      navigate('/', { replace: true });
     } catch (error) {
       // Error handled in auth context
     } finally {
