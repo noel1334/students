@@ -167,6 +167,20 @@ export interface UpdateStudentProfileData {
 
 export const updateStudentProfile = async (data: UpdateStudentProfileData): Promise<ApiResponse<{ student: StudentProfileData }>> => {
   const { currentPassword, ...allowedData } = data;
-  const response = await api.put('/students/me', allowedData);
+  // Backend PUT route is /students/:id (self or admin). Resolve current student id from cached profile.
+  let studentId: string | number | undefined;
+  try {
+    const cached = localStorage.getItem('currentUser');
+    if (cached) studentId = JSON.parse(cached)?.id;
+  } catch { /* ignore */ }
+  if (!studentId) {
+    // Fallback: fetch profile to discover id
+    const me = await api.get('/students/me');
+    studentId = me.data?.data?.student?.id;
+  }
+  if (!studentId) {
+    throw new Error('Unable to resolve current student id for update.');
+  }
+  const response = await api.put(`/students/${studentId}`, allowedData);
   return response.data;
 };
