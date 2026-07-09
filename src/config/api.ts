@@ -17,7 +17,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'https://ums-backend-gbo7.onren
 // Create axios instance with default config
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
