@@ -51,11 +51,11 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <TooltipProvider>
+        <BrowserRouter>
           <AuthProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
@@ -173,9 +173,9 @@ const App = () => {
                 </ProtectedRoute>
               } />
             </Routes>
-          </BrowserRouter>
-        </AuthProvider>
-      </TooltipProvider>
+            </TooltipProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
   );
