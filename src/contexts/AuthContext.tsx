@@ -145,13 +145,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error: any) {
       console.error('Error fetching profile:', error);
-      // Re-throw so callers (e.g. signIn) know the login flow could not complete
-      // and don't navigate the user into a protected route without a session.
+      // Clear any stale auth so ProtectedRoute redirects to /login.
+      // The 401 case is already handled by the axios interceptor -> signOut,
+      // but we also want to bail out on 403 / 500 / network errors etc.
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('currentUser');
+      delete api.defaults.headers.common['Authorization'];
+      setUser(null);
+      toast({
+        title: 'Session error',
+        description:
+          error?.response?.data?.message ||
+          'We could not load your profile. Please sign in again.',
+        variant: 'destructive',
+      });
+      // Re-throw so callers (e.g. signIn) know the login flow could not complete.
       throw error;
     } finally {
       setLoading(false); 
     }
-  }, [signOut]);
+  }, [signOut, toast]);
 
   useEffect(() => {
     const token = localStorage.getItem('authToken');
