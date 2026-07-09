@@ -16,8 +16,9 @@ const Login = () => {
   const navigate = useNavigate();
   const { signIn, user } = useAuth();
 
-  // If a session is already established (e.g. fetchUserProfile finished after
-  // signIn resolved), send the user to the dashboard automatically.
+  // Only redirect once the AuthProvider has fully loaded the user profile
+  // (fetchUserProfile completes after signIn resolves). This avoids racing
+  // ProtectedRoute, which would bounce back to /login while user is still null.
   useEffect(() => {
     if (user) navigate('/', { replace: true });
   }, [user, navigate]);
@@ -25,12 +26,11 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       await signIn(identifier, password);
-      navigate('/', { replace: true });
+      // Do NOT navigate here — let the effect above run when `user` is set.
     } catch (error) {
-      // Error handled in auth context
+      // Error toast handled in AuthContext
     } finally {
       setIsLoading(false);
     }
