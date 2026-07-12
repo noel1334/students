@@ -46,8 +46,6 @@ const Login = () => {
       {/* CHANGE 2: Use theme-aware card color and remove shadow which may not look good in dark mode */}
       <div className="w-full max-w-md p-8 space-y-8 bg-card rounded-lg border">
         <div className="text-center">
-          <img src="/lovable-uploads/7383ea93-4c04-4010-aab8-ce6d9fcba973.png" alt="Logo" className="mx-auto h-16 w-16" />
-          {/* CHANGE 3: Use theme-aware text colors */}
           <h2 className="mt-6 text-3xl font-bold text-primary">Welcome Back</h2>
           <p className="mt-2 text-muted-foreground">Sign in to your account</p>
         </div>
