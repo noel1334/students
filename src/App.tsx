@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,29 +8,48 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Landing from "./pages/Landing";
-import Dashboard from "./pages/Dashboard";
-import Courses from "./pages/Courses";
-import CourseHistory from "./pages/CourseHistory";
-import Results from "./pages/Results";
-import Payments from "./pages/Payments";
-import Notifications from "./pages/Notifications";
-import Hostel from "./pages/Hostel";
-import HostelBookingDetails from "./pages/HostelBookingDetails";
-import Profile from "./pages/Profile";
-import Support from "./pages/Support";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
+import ErrorBoundary from '@/components/ErrorBoundary';
 import Sidebar from "./components/Sidebar";
 import TopBar from "./components/TopBar";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import PaymentStatusPage from './pages/PaymentStatusPage';
-import ExamAssignments from './pages/ExamAssignments';
-import ExamPaymentHistory from './pages/ExamPaymentHistory';
+import { Loader2 } from 'lucide-react';
 
-// Create a client
-const queryClient = new QueryClient();
+// Route-level code splitting: each page ships as its own JS chunk so the
+// initial bundle doesn't include every page's dependencies.
+const Landing = lazy(() => import('./pages/Landing'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Courses = lazy(() => import('./pages/Courses'));
+const CourseHistory = lazy(() => import('./pages/CourseHistory'));
+const Results = lazy(() => import('./pages/Results'));
+const Payments = lazy(() => import('./pages/Payments'));
+const Notifications = lazy(() => import('./pages/Notifications'));
+const Hostel = lazy(() => import('./pages/Hostel'));
+const HostelBookingDetails = lazy(() => import('./pages/HostelBookingDetails'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Support = lazy(() => import('./pages/Support'));
+const Settings = lazy(() => import('./pages/Settings'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const PaymentStatusPage = lazy(() => import('./pages/PaymentStatusPage'));
+const ExamAssignments = lazy(() => import('./pages/ExamAssignments'));
+const ExamPaymentHistory = lazy(() => import('./pages/ExamPaymentHistory'));
+
+// Create a client with sensible defaults for a student portal.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+const RouteFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 // Layout component to conditionally render the sidebar
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -49,14 +68,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-            <Routes>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <BrowserRouter>
+            <AuthProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Suspense fallback={<RouteFallback />}>
+                <Routes>
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -165,19 +186,17 @@ const App = () => {
                   </Layout>
                 </ProtectedRoute>
               } />
-              <Route path="*" element={
-                <ProtectedRoute>
-                  <Layout>
-                    <NotFound />
-                  </Layout>
-                </ProtectedRoute>
-              } />
-            </Routes>
-            </TooltipProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+              {/* Public 404 — unauthenticated users get a real 404 instead of
+                  being bounced to /login for unknown URLs. */}
+              <Route path="*" element={<NotFound />} />
+                </Routes>
+                </Suspense>
+              </TooltipProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
