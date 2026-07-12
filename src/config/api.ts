@@ -93,6 +93,8 @@ export const endpoints = {
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     profile: '/auth/profile',
+    forgotPassword: '/auth/forgot-password',
+    resetPassword: '/auth/reset-password',
   },
   users: {
     profile: '/users/profile',

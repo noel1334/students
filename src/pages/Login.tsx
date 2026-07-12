@@ -88,6 +88,11 @@ const Login = () => {
                 </button>
               </div>
             </div>
+            <div className="text-right">
+              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           {/* CHANGE 4: Use the primary button variant, which is already themed */}
