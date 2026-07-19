@@ -4,35 +4,31 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ChangePasswordDialog from './ChangePasswordDialog';
 
-const ProfileFormActions = () => {
+interface Props {
+  disabled?: boolean;
+}
+
+const ProfileFormActions: React.FC<Props> = ({ disabled }) => {
   return (
-    <div className="flex flex-col gap-4">
-      <Button
-        type="submit"
-        className="w-full py-3"
-      >
-        <Eye className="mr-2" size={18} />
-        Review and Update
-      </Button>
-
-      <ChangePasswordDialog />
-
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full sm:flex-1 py-3"
-        >
-          Print Profile Records
-        </Button>
-        <Button
-          type="button"
-          className="w-full sm:flex-1 py-3"
-        >
-          Print Medical Records
+    <>
+      {/* Sticky mobile action bar */}
+      <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur border-t p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <Button type="submit" className="w-full" disabled={disabled}>
+          <Eye className="mr-2" size={16} /> Review and Update
         </Button>
       </div>
-    </div>
+
+      <div className="hidden sm:flex flex-col gap-4">
+        <Button type="submit" className="w-full py-3" disabled={disabled}>
+          <Eye className="mr-2" size={18} />
+          Review and Update
+        </Button>
+        <ChangePasswordDialog />
+      </div>
+      <div className="sm:hidden">
+        <ChangePasswordDialog />
+      </div>
+    </>
   );
 };
 

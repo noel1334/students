@@ -47,7 +47,17 @@ const ExtendedBioDataFields = ({ control }: Props) => (
       render={({ field }) => (
         <FormItem>
           <FormLabel>Religion</FormLabel>
-          <FormControl><Input {...field} /></FormControl>
+          <Select onValueChange={field.onChange} value={field.value || ''}>
+            <FormControl>
+              <SelectTrigger><SelectValue placeholder="Select religion" /></SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="CHRISTIANITY">Christianity</SelectItem>
+              <SelectItem value="ISLAM">Islam</SelectItem>
+              <SelectItem value="TRADITIONAL">Traditional</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+            </SelectContent>
+          </Select>
           <FormMessage />
         </FormItem>
       )}

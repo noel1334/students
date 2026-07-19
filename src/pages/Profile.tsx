@@ -1,64 +1,38 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import ProfileHeader from '@/components/profile/ProfileHeader';
 import ProfileForm from '@/components/profile/ProfileForm';
-import { getStudentProfile, StudentProfileData } from '@/services/studentServicesApi';
-import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { useStudentProfile } from '@/hooks/useStudentProfile';
 
 const Profile = () => {
-  const [avatar, setAvatar] = useState<string | null>(null);
-  const [studentData, setStudentData] = useState<StudentProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const { data: studentData, isLoading, isError, error, refetch, isRefetching } = useStudentProfile();
 
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-      const response = await getStudentProfile();
-      if (response.status === 'success' && response.data?.student) {
-        setStudentData(response.data.student);
-        setAvatar(response.data.student.profileImg || null);
-      } else {
-        toast({
-          title: "Error",
-          description: response.message || "Failed to fetch profile data",
-          variant: "destructive"
-        });
-      }
-    } catch (error: any) {
-      console.error('Error fetching profile:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to load profile data",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProfile();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-96 w-full" />
+        <div className="max-w-4xl mx-auto space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-40 w-full" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-14 w-full" />
+          ))}
         </div>
       </div>
     );
   }
 
-  if (!studentData) {
+  if (isError || !studentData) {
     return (
       <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
-        <div className="max-w-4xl mx-auto">
-          <p className="text-center text-muted-foreground">No profile data available</p>
+        <div className="max-w-md mx-auto text-center space-y-4 mt-10">
+          <p className="text-muted-foreground">
+            {(error as Error)?.message || "Unable to load your profile."}
+          </p>
+          <Button onClick={() => refetch()} disabled={isRefetching}>
+            {isRefetching ? "Retrying…" : "Retry"}
+          </Button>
         </div>
       </div>
     );
@@ -76,17 +50,10 @@ const Profile = () => {
   };
 
   return (
-    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background">
+    <div className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto bg-background pb-28 sm:pb-8">
       <div className="max-w-4xl mx-auto">
-        <ProfileHeader
-          studentInfo={studentInfo}
-          avatar={avatar}
-          setAvatar={setAvatar}
-          onProfileUpdated={fetchProfile}
-        />
-
-        {/* Profile Form */}
-        <ProfileForm studentInfo={studentInfo} studentData={studentData} onProfileUpdated={fetchProfile} />
+        <ProfileHeader studentInfo={studentInfo} avatar={studentData.profileImg || null} />
+        <ProfileForm studentInfo={studentInfo} studentData={studentData} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import BioDataSection from '@/components/profile/BioDataSection';
 import AdmissionSection from '@/components/profile/AdmissionSection';
@@ -10,7 +11,23 @@ import NextOfKinInfoSection from '@/components/profile/NextOfKinInfoSection';
 import GuardianInfoSection from '@/components/profile/GuardianInfoSection';
 import ReviewFormModal from '@/components/profile/ReviewFormModal';
 import ProfileFormActions from '@/components/profile/ProfileFormActions';
-import { updateStudentProfile, StudentProfileData } from '@/services/studentServicesApi';
+import { StudentProfileData } from '@/services/studentServicesApi';
+import { useUpdateStudentProfile } from '@/hooks/useStudentProfile';
+import {
+  studentProfileSchema,
+  StudentProfileFormValues,
+  GENDER_VALUES,
+  MARITAL_VALUES,
+  RELIGION_VALUES,
+  BLOOD_GROUP_VALUES,
+  GENOTYPE_VALUES,
+  RELATIONSHIP_VALUES,
+} from '@/lib/validation/studentProfile';
+
+const coerce = <T extends readonly string[]>(v: unknown, allowed: T): T[number] | '' => {
+  const s = typeof v === 'string' ? v.toUpperCase() : '';
+  return (allowed as readonly string[]).includes(s) ? (s as T[number]) : '';
+};
 
 // Define all possible section names
 type SectionName = 'bioData' | 'contactInfo' | 'admission' | 'medicalRecord' | 'nextOfKin' | 'guardian' | 'sponsor';
@@ -27,14 +44,13 @@ interface ProfileFormProps {
     session: string;
   };
   studentData: StudentProfileData;
-  onProfileUpdated?: () => void | Promise<void>;
 }
 
-const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onProfileUpdated }) => {
+const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) => {
   const [activeSection, setActiveSection] = useState<SectionName>('bioData');
   const [medicalDocuments, setMedicalDocuments] = useState<File[]>([]);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const updateMutation = useUpdateStudentProfile();
 
   // Split name into parts
   const nameParts = studentData.name?.split(' ') || [];
@@ -50,7 +66,9 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
   const guardian = appProfile?.guardianInfo || {};
 
   // Initialize the form with actual student data
-  const methods = useForm({
+  const methods = useForm<StudentProfileFormValues>({
+    resolver: zodResolver(studentProfileSchema),
+    mode: 'onBlur',
     defaultValues: {
       firstName: firstName,
       lastName: lastName,
@@ -60,15 +78,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
       dateOfBirth: (studentData.studentDetails?.dob || bio.dateOfBirth)
         ? new Date(studentData.studentDetails?.dob || (bio.dateOfBirth as string)).toISOString().split('T')[0]
         : '',
-      gender: studentData.studentDetails?.gender || bio.gender || '',
+      gender: coerce(studentData.studentDetails?.gender || bio.gender, GENDER_VALUES),
       phoneNumber: studentData.studentDetails?.phone || '',
       permanentHomeAddress: studentData.studentDetails?.address || '',
       // Extended bio-data (applicationProfile.bioData)
       middleName: bio.middleName || '',
       nationality: bio.nationality || '',
       placeOfBirth: bio.placeOfBirth || '',
-      religion: bio.religion || '',
-      maritalStatus: bio.maritalStatus || '',
+      religion: coerce(bio.religion, RELIGION_VALUES),
+      maritalStatus: coerce(bio.maritalStatus, MARITAL_VALUES),
       // Contact info (applicationProfile.contactInfo)
       countryOfResidence: contact.countryOfResidence || '',
       stateOfResidence: contact.stateOfResidence || '',
@@ -81,20 +99,20 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
       yearOfGraduation: '',
       admissionNumber: studentData.regNo || '',
       // Medical Records
-      bloodGroup: studentData.medicalFitness?.bloodGroup || '',
-      genotype: studentData.medicalFitness?.genotype || '',
+      bloodGroup: coerce(studentData.medicalFitness?.bloodGroup, BLOOD_GROUP_VALUES),
+      genotype: coerce(studentData.medicalFitness?.genotype, GENOTYPE_VALUES),
       // Sponsor (studentDetails.guardianName/Phone - legacy sponsor)
       sponsorName: studentData.studentDetails?.guardianName || '',
       sponsorPhone: studentData.studentDetails?.guardianPhone || '',
       // Next of Kin (applicationProfile.nextOfKin)
       nokFullName: nok.fullName || '',
-      nokRelationship: nok.relationship || '',
+      nokRelationship: coerce(nok.relationship, RELATIONSHIP_VALUES),
       nokPhone: nok.phone || '',
       nokEmail: nok.email || '',
       nokAddress: nok.address || '',
       // Guardian Info (applicationProfile.guardianInfo)
       guardianFullName: guardian.fullName || '',
-      guardianRelationship: guardian.relationship || '',
+      guardianRelationship: coerce(guardian.relationship, RELATIONSHIP_VALUES),
       guardianPhoneInfo: guardian.phone || '',
       guardianEmail: guardian.email || '',
       guardianOccupation: guardian.occupation || '',
@@ -102,20 +120,11 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
     }
   });
 
-  // Open review modal with current form data
-  const handleReviewForm = () => {
-    setReviewModalOpen(true);
-  };
-
-  // Handle form submission
-  const onSubmit = (data: any) => {
-    handleReviewForm(); // Open the review modal instead of submitting right away
-  };
+  const onSubmit = () => setReviewModalOpen(true);
 
   // Final submission after review
   const handleFinalSubmit = async () => {
     try {
-      setIsSubmitting(true);
       const formData = methods.getValues();
 
       // Map form data to backend structure (self-editable fields only)
@@ -174,20 +183,17 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
       });
       Object.keys(updateData).forEach((k) => updateData[k] === undefined && delete updateData[k]);
 
-      const response = await updateStudentProfile(updateData);
-      
+      const response = await updateMutation.mutateAsync(updateData);
       if (response.status === 'success') {
-        toast.success("Profile information updated successfully");
+        toast.success('Profile information updated successfully');
         setReviewModalOpen(false);
-        await onProfileUpdated?.();
+        methods.reset(methods.getValues()); // clears dirty state
       } else {
-        toast.error(response.message || "Failed to update profile");
+        toast.error(response.message || 'Failed to update profile');
       }
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast.error(error.response?.data?.message || "Failed to update profile");
-    } finally {
-      setIsSubmitting(false);
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     }
   };
 
@@ -249,16 +255,19 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData, onP
           onToggleSection={() => handleSectionToggle('sponsor')}
         />
 
-        <ProfileFormActions />
+        <ProfileFormActions
+          disabled={!methods.formState.isDirty || updateMutation.isPending}
+        />
       </form>
 
       {/* Review Modal */}
       <ReviewFormModal
         formData={methods.getValues()}
+        dirtyFields={methods.formState.dirtyFields as Record<string, boolean>}
         open={reviewModalOpen}
         onOpenChange={setReviewModalOpen}
         onConfirm={handleFinalSubmit}
-        isSubmitting={isSubmitting}
+        isSubmitting={updateMutation.isPending}
       />
     </FormProvider>
   );

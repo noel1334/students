@@ -1,76 +1,104 @@
-## App Audit — Standard-Level Improvements
+## Student Profile — Full Overhaul
 
-Here's what I found reviewing your student portal. Nothing here is broken — these are gaps you'd typically close before considering the app "production-standard."
+Goal: bring the student profile to production quality — matches backend exactly, validates every input, safer image/password flows, faster loads with react-query, and clean a11y/mobile UX.
 
-### 1. SEO & Metadata (index.html)
-- `<title>` is `student-dashboard`, description is `student-dashboard`, og:description is `"t"`, twitter tags contain the wrong content.
-- Fix: proper app title (e.g. "Student Portal — <University>"), real meta description (<160 chars), matching `og:title`/`og:description`/`og:type=website`/`twitter:card=summary_large_image`, `lang` per your audience, favicon.
-- Add per-page `<title>` updates (Dashboard, Profile, Courses, etc.) via a small `useDocumentTitle` hook.
+### 1. Data layer (react-query + service tightening)
 
-### 2. Authentication hardening
-- **No `/forgot-password` and `/reset-password` pages.** Students who forget their password have no recovery path.
-- **No email verification / account status messaging** on login failures beyond the generic toast.
-- **Password rules:** Register only checks length ≥ 6. Standard is ≥ 8 with complexity, plus a "show strength" indicator and confirm-match live feedback.
-- **Session timeout UX:** Interceptor refreshes silently, but there's no warning banner before forced logout on refresh failure.
-- **Remember me / stay signed in** toggle is missing on Login.
+- Add `src/hooks/useStudentProfile.ts` using `@tanstack/react-query`:
+  - `useStudentProfile()` — `queryKey: ['student','me']`, `queryFn: getStudentProfile`, staleTime 5m.
+  - `useUpdateStudentProfile()` — `useMutation` calling `updateStudentProfile`, with optimistic cache patch and `invalidateQueries(['student','me'])` on success.
+- `studentServicesApi.ts`:
+  - Split payload types: `StudentDetailsUpdate`, `MedicalFitnessUpdate`, `BioDataUpdate`, `ContactInfoUpdate`, `NextOfKinUpdate`, `GuardianInfoUpdate`, `PasswordUpdate`, `ProfileImageUpdate`.
+  - Add `uploadProfileImage(base64)` and `changePassword({ currentPassword, password })` as thin wrappers so callers don't compose payloads by hand.
+  - Cache student id from `getStudentProfile` response instead of `localStorage.currentUser` (single source of truth).
 
-### 3. Route & error handling
-- `NotFound` is rendered inside `ProtectedRoute` — unauthenticated users hitting a bad URL get bounced to login instead of a 404.
-- Public 404 should be outside `ProtectedRoute`.
-- **No Error Boundary** wrapping `<Routes>`. A single render error today = white screen.
-- **No global loading skeleton** for lazy pages; consider `React.lazy` + `Suspense` to shrink initial bundle (all 19 pages ship in one chunk today).
+### 2. Validation (zod + react-hook-form)
 
-### 4. Data-fetching consistency
-- `@tanstack/react-query` is installed and set up (`QueryClientProvider`) but most pages use raw `useEffect` + service calls. Migrating to `useQuery`/`useMutation` gives you caching, retries, background refetch, and removes a lot of duplicate loading/error state.
-- Add default `queryClient` options: `staleTime`, `retry`, `refetchOnWindowFocus: false` where appropriate.
+- New `src/lib/validation/studentProfile.ts` with a zod schema mirroring backend rules:
+  - `phone` — E.164-ish regex, optional.
+  - `email` — nested nokEmail/guardianEmail must be valid or empty.
+  - `dateOfBirth` — must be past, min age 10.
+  - `gender` — enum `MALE|FEMALE`.
+  - `maritalStatus`, `religion`, `bloodGroup`, `genotype` — enum selects.
+  - Text length caps (name 60, address 200, etc.).
+- `ProfileForm` uses `useForm({ resolver: zodResolver(schema) })`; inline `FormMessage` per field; Save disabled when `!isDirty || !isValid || isSubmitting`.
+- Per-section dirty indicators (dot on accordion header) using `formState.dirtyFields`.
 
-### 5. Forms & validation
-- `react-hook-form` + `zod` + `@hookform/resolvers` are all installed but Login/Register/Support/Profile forms use manual `useState` + ad-hoc validation.
-- Standard: move to `useForm` + `zodResolver` for consistent inline errors, disabled-submit-until-valid, and typed payloads.
+### 3. Field completeness vs backend
 
-### 6. Accessibility (a11y)
-- Password show/hide `<button>` has no `aria-label` (screen readers announce nothing).
-- Form inputs mostly OK (Label wired via htmlFor), but confirm all icon-only buttons in Sidebar/TopBar have `aria-label`.
-- Ensure focus ring is visible in dark mode (check `--ring` token contrast).
-- Add `skip-to-content` link for keyboard users.
+Audit every field in `updateStudent` service and expose it once, with the right control:
 
-### 7. Security posture
-- Tokens in `localStorage` are XSS-readable. Standard is httpOnly cookies from the backend; if you must keep localStorage, add a strict CSP header via `vercel.json`.
-- No CSP / security headers configured in `vercel.json`.
-- `console.error` leaks in production build — strip via Vite `esbuild.drop: ['console','debugger']` for prod builds only.
-- Dependency audit: run `bun audit` / check for known CVEs (axios, jspdf versions).
+- **BioData**: firstName/lastName (read-only from account), middleName, gender (Select), dateOfBirth (shadcn DatePicker), nationality (Combobox of ISO countries), placeOfBirth, religion (Select), maritalStatus (Select).
+- **ContactInfo**: countryOfResidence (Combobox), stateOfResidence + lgaOfResidence (Nigerian states/LGAs cascading Select), residentialAddress (Textarea).
+- **StudentDetails**: phone (with country prefix hint), address, dob mirror.
+- **MedicalFitness**: bloodGroup (Select A+/A-/…/O-), genotype (Select AA/AS/AC/SS/SC), fileUrl (upload → returns URL, preview & remove).
+- **NextOfKin**: fullName, relationship (Select), phone, email, address.
+- **GuardianInfo**: fullName, relationship, phone, email, occupation, address.
+- **Admission accordion**: keep every field `disabled` + tooltip "Managed by the registry".
+- Remove any field currently in UI that has no backend target (audit + delete).
 
-### 8. Environment & config
-- `.env` is checked in — verify no secrets there and add `.env.example` for onboarding.
-- `VITE_API_URL` has a hardcoded Render fallback; production should require the env var and fail fast if missing.
+### 4. Profile image upload
 
-### 9. UX polish
-- **Empty states**: courses/notifications/payments lists likely show a blank area when empty — add illustrations + CTA.
-- **Loading skeletons** instead of spinners on Dashboard/Courses/Results for perceived speed.
-- **Toast noise**: on every 401 the interceptor triggers a toast; ensure it doesn't stack when multiple requests fail simultaneously.
-- **Pagination or virtualization** on Course History / Notifications if lists can grow beyond ~50 rows.
-- **Offline handling**: no `navigator.onLine` awareness; a small banner when offline helps.
+- New `ProfileImageDialog`:
+  - Drop/click zone, accept `image/png,image/jpeg,image/webp`, max 2 MB (client-side check + toast on reject).
+  - Square crop preview (`react-easy-crop`, add dep).
+  - Convert cropped canvas → base64 → `uploadProfileImage`.
+  - Progress state, error toast, success toast.
+  - "Remove photo" action sends `{ profileImg: null }`.
+- Header avatar shows initials fallback when `profileImg` null; keyboard-focusable with `aria-label="Change profile photo"`.
 
-### 10. Print / PDF flows
-- `PrintableResultLayout` and `HostelReceipt` use `html2canvas` + `jspdf`. Ensure they render off-DOM (invisible container) and that fonts embed correctly — otherwise PDFs look different across browsers.
+### 5. Password change
 
-### 11. Testing & quality gates
-- No tests present. Standard: at minimum a Vitest smoke test per route ("renders without crashing") and one E2E happy path (login → dashboard) via Playwright.
-- Add `lint-staged` + a CI check on push.
+- Rework `ChangePasswordDialog`:
+  - Fields: currentPassword, newPassword, confirmPassword — all with show/hide (`aria-pressed`).
+  - zod: min 8, must contain upper+lower+digit.
+  - Live strength meter (weak/fair/strong).
+  - Submit calls `changePassword`; on success show toast and (optional) trigger `signOut()` so the user re-authenticates with the new password.
+  - Surface backend field errors (e.g., "Current password is incorrect") on the right field.
 
-### 12. Observability
-- No error tracking (Sentry/LogRocket). A single `window.onerror` + `unhandledrejection` reporter would surface issues you can't reproduce locally.
-- Add basic analytics (page views) if you need adoption metrics.
+### 6. Page structure & UX
 
----
+- Rebuild `Profile.tsx`:
+  - React-query loading → per-section `Skeleton`s (not one big block).
+  - Error state with retry button.
+  - Sticky action bar at bottom on mobile with Save / Discard.
+- `ProfileForm`:
+  - Accordion sections stay, but only one open at a time is optional (allow multiple).
+  - `ReviewFormModal` shows only fields that changed (`dirtyFields`), grouped by section, with a "Confirm & Save" button.
+- Toasts standardised via `sonner`.
 
-### Suggested priority
-1. **Fix `index.html` SEO tags + add password reset pages** (user-visible / trust)
-2. **Move NotFound out of ProtectedRoute + add ErrorBoundary + lazy-load routes** (stability + perf)
-3. **Migrate forms to react-hook-form/zod** (consistency, fewer bugs)
-4. **Migrate data fetching to react-query** (caching, less code)
-5. **Security headers in `vercel.json` + drop console in prod** (hardening)
-6. **A11y sweep + loading skeletons + empty states** (polish)
-7. **Sentry + a few Vitest/Playwright tests** (long-term health)
+### 7. Accessibility & mobile
 
-Tell me which of these you want me to implement (all, a subset, or the top-priority group) and I'll build a focused plan for it.
+- Every input has an explicit `<Label htmlFor>` (via shadcn `FormLabel` — already wired) and `aria-invalid` when errored.
+- Password toggle buttons: `aria-label` + `aria-pressed` (already added in Login/Register; apply same here).
+- Accordion triggers use `aria-expanded` (Radix handles it — ensure we use shadcn `Accordion` instead of custom `Collapsible` triangles).
+- Mobile:
+  - Grid becomes single column below `sm`.
+  - Sticky bottom action bar with safe-area padding.
+  - Review modal becomes a full-screen `Sheet` on mobile.
+- Focus-visible ring restored on all interactive elements (Tailwind default token).
+
+### Technical notes
+
+- New deps: `react-easy-crop` (image crop), `libphonenumber-js` (optional phone validation) — small footprint.
+- Files to add:
+  - `src/hooks/useStudentProfile.ts`
+  - `src/lib/validation/studentProfile.ts`
+  - `src/lib/data/nigeria-states.ts` (states + LGA map)
+  - `src/lib/data/countries.ts`
+  - `src/components/profile/ProfileImageDialog.tsx`
+- Files to modify:
+  - `src/pages/Profile.tsx`
+  - `src/services/studentServicesApi.ts`
+  - `src/components/profile/ProfileForm.tsx`
+  - `src/components/profile/ProfileHeader.tsx`
+  - `src/components/profile/ChangePasswordDialog.tsx`
+  - All `profile/*Section.tsx` (swap Collapsible for Accordion, add validation messages, wire selects/date pickers)
+  - `src/components/profile/ReviewFormModal.tsx` (diff-only display)
+- No backend changes required — plan is 100% frontend and aligned with the `updateStudent` shape you shared.
+
+### Out of scope
+
+- Redesigning other pages.
+- Backend endpoint changes.
+- Adding fields the backend doesn't accept.
