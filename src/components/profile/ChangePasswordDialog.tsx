@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -12,67 +14,64 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { KeyRound, Eye, EyeOff } from 'lucide-react';
-import { updateStudentProfile } from '@/services/studentServicesApi';
+import { useChangePassword } from '@/hooks/useStudentProfile';
+import { passwordSchema, passwordStrength } from '@/lib/validation/studentProfile';
+import { z } from 'zod';
+
+type FormValues = z.infer<typeof passwordSchema>;
+
+const StrengthBar: React.FC<{ pw: string }> = ({ pw }) => {
+  const { score, label } = passwordStrength(pw);
+  const colors = ['bg-destructive', 'bg-destructive', 'bg-yellow-500', 'bg-emerald-500', 'bg-emerald-600'];
+  return (
+    <div className="space-y-1">
+      <div className="flex gap-1" aria-hidden>
+        {[0, 1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className={`h-1 flex-1 rounded ${i < score ? colors[score] : 'bg-muted'}`}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground">Strength: {label}</p>
+    </div>
+  );
+};
 
 const ChangePasswordDialog: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [showCurrent, setShowCurrent] = useState(false);
   const [show, setShow] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const mutation = useChangePassword();
 
-  const reset = () => {
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setShowCurrent(false);
-    setShow(false);
-  };
+  const form = useForm<FormValues>({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
+    mode: 'onBlur',
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!currentPassword) {
-      toast.error('Please enter your current password');
-      return;
-    }
-    if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters long');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-    if (newPassword === currentPassword) {
-      toast.error('New password must be different from current password');
-      return;
-    }
+  const newPassword = form.watch('newPassword');
+
+  const onSubmit = async (values: FormValues) => {
     try {
-      setSubmitting(true);
-      const response = await updateStudentProfile({
-        password: newPassword,
+      const response = await mutation.mutateAsync({
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword,
       });
       if (response.status === 'success') {
         toast.success('Password updated successfully');
-        reset();
+        form.reset();
         setOpen(false);
       } else {
         toast.error(response.message || 'Failed to update password');
       }
     } catch (error: any) {
-      console.error('Error updating password:', error);
       const msg = error.response?.data?.message || '';
-      if (/not allowed to update 'currentPassword'/i.test(msg)) {
-        toast.error('Please try again. Password update payload was rejected.');
-      } else if (error.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
-        toast.error(msg || 'Current password is incorrect');
+      if (error.response?.status === 401 || /current password/i.test(msg) || /incorrect/i.test(msg)) {
+        form.setError('currentPassword', { message: msg || 'Current password is incorrect' });
       } else {
         toast.error(msg || 'Failed to update password');
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
