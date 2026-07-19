@@ -3,6 +3,7 @@ import { UserCheck } from 'lucide-react';
 import { Control } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface Props {
@@ -27,7 +28,22 @@ const NextOfKinInfoSection = ({ control, openSection, onToggleSection }: Props) 
             <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
           )} />
           <FormField control={control} name="nokRelationship" render={({ field }) => (
-            <FormItem><FormLabel>Relationship</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+            <FormItem>
+              <FormLabel>Relationship</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ''}>
+                <FormControl><SelectTrigger><SelectValue placeholder="Select relationship" /></SelectTrigger></FormControl>
+                <SelectContent>
+                  <SelectItem value="PARENT">Parent</SelectItem>
+                  <SelectItem value="SIBLING">Sibling</SelectItem>
+                  <SelectItem value="SPOUSE">Spouse</SelectItem>
+                  <SelectItem value="GUARDIAN">Guardian</SelectItem>
+                  <SelectItem value="RELATIVE">Relative</SelectItem>
+                  <SelectItem value="FRIEND">Friend</SelectItem>
+                  <SelectItem value="OTHER">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
           )} />
           <FormField control={control} name="nokPhone" render={({ field }) => (
             <FormItem><FormLabel>Phone</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>
