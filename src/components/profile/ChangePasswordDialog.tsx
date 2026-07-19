@@ -76,7 +76,7 @@ const ChangePasswordDialog: React.FC = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) reset(); }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) form.reset(); }}>
       <DialogTrigger asChild>
         <Button type="button" variant="outline" className="w-full py-3">
           <KeyRound className="mr-2" size={18} />
@@ -87,28 +87,31 @@ const ChangePasswordDialog: React.FC = () => {
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Current Password</Label>
             <div className="relative">
               <Input
                 id="currentPassword"
                 type={showCurrent ? 'text' : 'password'}
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
+                {...form.register('currentPassword')}
+                aria-invalid={!!form.formState.errors.currentPassword}
                 placeholder="Enter your current password"
                 autoComplete="current-password"
-                required
               />
               <button
                 type="button"
                 onClick={() => setShowCurrent((s) => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                 aria-label={showCurrent ? 'Hide password' : 'Show password'}
+                aria-pressed={showCurrent}
               >
                 {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {form.formState.errors.currentPassword && (
+              <p className="text-xs text-destructive">{form.formState.errors.currentPassword.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">New Password</Label>
@@ -116,40 +119,46 @@ const ChangePasswordDialog: React.FC = () => {
               <Input
                 id="newPassword"
                 type={show ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                {...form.register('newPassword')}
+                aria-invalid={!!form.formState.errors.newPassword}
                 placeholder="At least 8 characters"
                 autoComplete="new-password"
-                required
               />
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
                 aria-label={show ? 'Hide password' : 'Show password'}
+                aria-pressed={show}
               >
                 {show ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {form.formState.errors.newPassword && (
+              <p className="text-xs text-destructive">{form.formState.errors.newPassword.message}</p>
+            )}
+            <StrengthBar pw={newPassword || ''} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input
               id="confirmPassword"
               type={show ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              {...form.register('confirmPassword')}
+              aria-invalid={!!form.formState.errors.confirmPassword}
               placeholder="Re-enter new password"
               autoComplete="new-password"
-              required
             />
+            {form.formState.errors.confirmPassword && (
+              <p className="text-xs text-destructive">{form.formState.errors.confirmPassword.message}</p>
+            )}
           </div>
           <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={mutation.isPending}>
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting ? 'Updating...' : 'Update Password'}
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Updating...' : 'Update Password'}
             </Button>
           </DialogFooter>
         </form>
