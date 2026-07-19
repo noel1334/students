@@ -15,13 +15,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 interface ReviewFormModalProps {
   formData: Record<string, any>;
+  dirtyFields?: Record<string, boolean>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isSubmitting?: boolean;
 }
 
-const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting = false }: ReviewFormModalProps) => {
+const ReviewFormModal = ({ formData, dirtyFields, open, onOpenChange, onConfirm, isSubmitting = false }: ReviewFormModalProps) => {
   // Function to format field names from camelCase to readable text
   const formatFieldName = (fieldName: string) => {
     return fieldName
@@ -57,6 +58,9 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
     ]
   };
 
+  const isDirty = (field: string) => !dirtyFields || !!dirtyFields[field];
+  const hasAnyChanges = !dirtyFields || Object.keys(dirtyFields).length > 0;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh]">
@@ -65,15 +69,25 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
         </DialogHeader>
         
         <ScrollArea className="h-[60vh] mt-4 pr-4">
+          {!hasAnyChanges && (
+            <p className="text-sm text-muted-foreground mb-4">
+              No changes to submit. Close this dialog and edit any field first.
+            </p>
+          )}
           <Accordion type="single" collapsible className="space-y-4">
-            {Object.entries(sections).map(([sectionName, fields]) => (
+            {Object.entries(sections).map(([sectionName, fields]) => {
+              const changed = fields.filter(isDirty);
+              if (changed.length === 0) return null;
+              return (
               <AccordionItem key={sectionName} value={sectionName} className="border rounded-lg overflow-hidden">
                 <AccordionTrigger className="px-4 py-3 bg-accent hover:bg-accent/80">
-                  <h3 className="text-lg font-semibold text-accent-foreground">{sectionName}</h3>
+                  <h3 className="text-lg font-semibold text-accent-foreground">
+                    {sectionName} <span className="text-xs font-normal opacity-70">({changed.length} changed)</span>
+                  </h3>
                 </AccordionTrigger>
                 <AccordionContent className="p-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {fields.map((field) => (
+                    {changed.map((field) => (
                       <div key={field} className="flex flex-col">
                         <span className="text-sm font-medium text-muted-foreground">{formatFieldName(field)}</span>
                         <span className="text-base">
@@ -84,7 +98,8 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
                   </div>
                 </AccordionContent>
               </AccordionItem>
-            ))}
+              );
+            })}
           </Accordion>
         </ScrollArea>
         
@@ -92,7 +107,7 @@ const ReviewFormModal = ({ formData, open, onOpenChange, onConfirm, isSubmitting
           <DialogClose asChild>
             <Button variant="outline" disabled={isSubmitting}>Back to Edit</Button>
           </DialogClose>
-          <Button onClick={onConfirm} disabled={isSubmitting}>
+          <Button onClick={onConfirm} disabled={isSubmitting || !hasAnyChanges}>
             {isSubmitting ? 'Updating...' : 'Confirm Update'}
           </Button>
         </DialogFooter>
