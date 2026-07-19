@@ -13,7 +13,21 @@ import ReviewFormModal from '@/components/profile/ReviewFormModal';
 import ProfileFormActions from '@/components/profile/ProfileFormActions';
 import { StudentProfileData } from '@/services/studentServicesApi';
 import { useUpdateStudentProfile } from '@/hooks/useStudentProfile';
-import { studentProfileSchema, StudentProfileFormValues } from '@/lib/validation/studentProfile';
+import {
+  studentProfileSchema,
+  StudentProfileFormValues,
+  GENDER_VALUES,
+  MARITAL_VALUES,
+  RELIGION_VALUES,
+  BLOOD_GROUP_VALUES,
+  GENOTYPE_VALUES,
+  RELATIONSHIP_VALUES,
+} from '@/lib/validation/studentProfile';
+
+const coerce = <T extends readonly string[]>(v: unknown, allowed: T): T[number] | '' => {
+  const s = typeof v === 'string' ? v.toUpperCase() : '';
+  return (allowed as readonly string[]).includes(s) ? (s as T[number]) : '';
+};
 
 // Define all possible section names
 type SectionName = 'bioData' | 'contactInfo' | 'admission' | 'medicalRecord' | 'nextOfKin' | 'guardian' | 'sponsor';
@@ -64,15 +78,15 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
       dateOfBirth: (studentData.studentDetails?.dob || bio.dateOfBirth)
         ? new Date(studentData.studentDetails?.dob || (bio.dateOfBirth as string)).toISOString().split('T')[0]
         : '',
-      gender: studentData.studentDetails?.gender || bio.gender || '',
+      gender: coerce(studentData.studentDetails?.gender || bio.gender, GENDER_VALUES),
       phoneNumber: studentData.studentDetails?.phone || '',
       permanentHomeAddress: studentData.studentDetails?.address || '',
       // Extended bio-data (applicationProfile.bioData)
       middleName: bio.middleName || '',
       nationality: bio.nationality || '',
       placeOfBirth: bio.placeOfBirth || '',
-      religion: bio.religion || '',
-      maritalStatus: bio.maritalStatus || '',
+      religion: coerce(bio.religion, RELIGION_VALUES),
+      maritalStatus: coerce(bio.maritalStatus, MARITAL_VALUES),
       // Contact info (applicationProfile.contactInfo)
       countryOfResidence: contact.countryOfResidence || '',
       stateOfResidence: contact.stateOfResidence || '',
@@ -85,20 +99,20 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ studentInfo, studentData }) =
       yearOfGraduation: '',
       admissionNumber: studentData.regNo || '',
       // Medical Records
-      bloodGroup: studentData.medicalFitness?.bloodGroup || '',
-      genotype: studentData.medicalFitness?.genotype || '',
+      bloodGroup: coerce(studentData.medicalFitness?.bloodGroup, BLOOD_GROUP_VALUES),
+      genotype: coerce(studentData.medicalFitness?.genotype, GENOTYPE_VALUES),
       // Sponsor (studentDetails.guardianName/Phone - legacy sponsor)
       sponsorName: studentData.studentDetails?.guardianName || '',
       sponsorPhone: studentData.studentDetails?.guardianPhone || '',
       // Next of Kin (applicationProfile.nextOfKin)
       nokFullName: nok.fullName || '',
-      nokRelationship: nok.relationship || '',
+      nokRelationship: coerce(nok.relationship, RELATIONSHIP_VALUES),
       nokPhone: nok.phone || '',
       nokEmail: nok.email || '',
       nokAddress: nok.address || '',
       // Guardian Info (applicationProfile.guardianInfo)
       guardianFullName: guardian.fullName || '',
-      guardianRelationship: guardian.relationship || '',
+      guardianRelationship: coerce(guardian.relationship, RELATIONSHIP_VALUES),
       guardianPhoneInfo: guardian.phone || '',
       guardianEmail: guardian.email || '',
       guardianOccupation: guardian.occupation || '',
